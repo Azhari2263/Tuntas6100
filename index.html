@@ -520,6 +520,24 @@
             </tbody>
           </table>
         </div>
+
+        <!-- PAGINATION BAR RIWAYAT & ARSIP -->
+        <div id="archivePagination" class="border-t border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+          <div class="flex items-center gap-2">
+            <span id="archivePaginationInfo">Menampilkan 0 dari 0 arsip</span>
+            <span class="text-slate-300 hidden sm:inline">|</span>
+            <div class="flex items-center gap-1.5 hidden sm:flex">
+              <span>Baris per halaman:</span>
+              <select id="archivePageSize" onchange="changeArchivePageSize(this.value)" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-bps-blue focus:outline-none">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1" id="archivePaginationControls"></div>
+        </div>
       </div>
     </div>
 
@@ -565,6 +583,24 @@
               <!-- Dynamic rows -->
             </tbody>
           </table>
+        </div>
+
+        <!-- PAGINATION BAR MASTER PEGAWAI -->
+        <div id="masterPegawaiPagination" class="border-t border-slate-200 bg-slate-50/80 px-4 py-3 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+          <div class="flex items-center gap-2">
+            <span id="masterPegawaiPaginationInfo">Menampilkan 0 dari 0 pegawai</span>
+            <span class="text-slate-300 hidden sm:inline">|</span>
+            <div class="flex items-center gap-1.5 hidden sm:flex">
+              <span>Baris per halaman:</span>
+              <select id="masterPegawaiPageSize" onchange="changeMasterPegawaiPageSize(this.value)" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs focus:ring-1 focus:ring-bps-blue focus:outline-none">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1" id="masterPegawaiPaginationControls"></div>
         </div>
       </div>
     </div>
@@ -1174,6 +1210,16 @@
       masterPegawai: [],
       selectedPegawai: [], // Default kosong, tidak menampilkan pegawai secara otomatis
       archiveList: [],
+      archivePagination: {
+        currentPage: 1,
+        pageSize: 10,
+        currentList: []
+      },
+      masterPegawaiPagination: {
+        currentPage: 1,
+        pageSize: 10,
+        currentList: []
+      },
       nextAgenda: 555,
       previewNomor: "B-555/61513/KP.650/2026",
       isCustomNomor: false
@@ -1309,6 +1355,8 @@
 
       if (tabId === 'archive') {
         loadArchiveData();
+      } else if (tabId === 'pegawai') {
+        renderMasterPegawaiTable();
       }
     }
 
@@ -2089,6 +2137,93 @@
     }
 
     // =========================================================================
+    // HELPER GENERATOR PAGINATION (CLEAN & RESPONSIVE)
+    // =========================================================================
+    function generatePaginationHTML(currentPage, totalPages, goToFnName) {
+      if (totalPages <= 1) {
+        return `
+          <div class="flex items-center space-x-1">
+            <button type="button" disabled class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-300 text-xs cursor-not-allowed">
+              <i class="fa-solid fa-chevron-left text-[10px]"></i>
+            </button>
+            <button type="button" class="px-3 py-1.5 rounded-lg border border-bps-blue bg-bps-blue text-white text-xs font-bold shadow-xs cursor-default">
+              1
+            </button>
+            <button type="button" disabled class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-300 text-xs cursor-not-allowed">
+              <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+          </div>
+        `;
+      }
+
+      let html = `<div class="flex items-center space-x-1">`;
+
+      const prevDisabled = currentPage === 1;
+      html += `
+        <button type="button" onclick="${goToFnName}(${currentPage - 1})" ${prevDisabled ? 'disabled' : ''} 
+                title="Halaman Sebelumnya"
+                class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white ${prevDisabled ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100 cursor-pointer active:scale-95'} text-xs transition">
+          <i class="fa-solid fa-chevron-left text-[10px]"></i>
+        </button>
+      `;
+
+      let pages = [];
+      if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        if (currentPage > 3) pages.push('...');
+        
+        let start = Math.max(2, currentPage - 1);
+        let end = Math.min(totalPages - 1, currentPage + 1);
+
+        if (currentPage <= 3) {
+          start = 2;
+          end = 4;
+        } else if (currentPage >= totalPages - 2) {
+          start = totalPages - 3;
+          end = totalPages - 1;
+        }
+
+        for (let i = start; i <= end; i++) pages.push(i);
+
+        if (currentPage < totalPages - 2) pages.push('...');
+        pages.push(totalPages);
+      }
+
+      pages.forEach(p => {
+        if (p === '...') {
+          html += `<span class="px-2 py-1 text-slate-400 text-xs select-none">...</span>`;
+        } else if (p === currentPage) {
+          html += `
+            <button type="button" class="px-3 py-1.5 rounded-lg border border-bps-blue bg-bps-blue text-white text-xs font-bold shadow-xs cursor-default">
+              ${p}
+            </button>
+          `;
+        } else {
+          html += `
+            <button type="button" onclick="${goToFnName}(${p})" 
+                    class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium transition cursor-pointer active:scale-95">
+              ${p}
+            </button>
+          `;
+        }
+      });
+
+      const nextDisabled = currentPage === totalPages;
+      html += `
+        <button type="button" onclick="${goToFnName}(${currentPage + 1})" ${nextDisabled ? 'disabled' : ''} 
+                title="Halaman Berikutnya"
+                class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white ${nextDisabled ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100 cursor-pointer active:scale-95'} text-xs transition">
+          <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        </button>
+      `;
+
+      html += `</div>`;
+      return html;
+    }
+
+    // =========================================================================
     // RIWAYAT & ARSIP TABLE (CRUD LENGKAP)
     // =========================================================================
     async function loadArchiveData() {
@@ -2101,30 +2236,54 @@
         if (res.status === "success" && res.data && res.data.length > 0) {
           appState.archiveList = res.data;
           localStorage.setItem("SURTUG_ARCHIVE_LIST", JSON.stringify(appState.archiveList));
-          renderArchiveRows(appState.archiveList);
+          renderArchiveRows(appState.archiveList, 1);
         } else if (appState.archiveList && appState.archiveList.length > 0) {
-          renderArchiveRows(appState.archiveList);
+          renderArchiveRows(appState.archiveList, 1);
         } else {
           appState.archiveList = [];
-          tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada riwayat surat tugas.</td></tr>`;
+          renderArchiveRows([], 1);
         }
       } catch (err) {
         if (appState.archiveList && appState.archiveList.length > 0) {
-          renderArchiveRows(appState.archiveList);
+          renderArchiveRows(appState.archiveList, 1);
         } else {
-          tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada riwayat surat tugas atau server offline.</td></tr>`;
+          renderArchiveRows([], 1);
         }
       }
     }
 
-    function renderArchiveRows(list) {
+    function renderArchiveRows(list, page) {
+      if (list !== undefined && list !== null) {
+        appState.archivePagination.currentList = list;
+      }
+      const currentList = appState.archivePagination.currentList || appState.archiveList || [];
+      const pageSize = appState.archivePagination.pageSize || 10;
+      const totalItems = currentList.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+      if (page !== undefined && page !== null) {
+        appState.archivePagination.currentPage = Math.max(1, Math.min(page, totalPages));
+      } else {
+        appState.archivePagination.currentPage = Math.max(1, Math.min(appState.archivePagination.currentPage || 1, totalPages));
+      }
+      const currentPage = appState.archivePagination.currentPage;
+
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalItems);
+      const pageItems = currentList.slice(startIndex, endIndex);
+
       const tbody = document.getElementById("archiveTableBody");
-      if (!list || list.length === 0) {
+      const infoEl = document.getElementById("archivePaginationInfo");
+      const controlsEl = document.getElementById("archivePaginationControls");
+
+      if (totalItems === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Tidak ada arsip yang sesuai pencarian.</td></tr>`;
+        if (infoEl) infoEl.textContent = `Menampilkan 0 dari 0 arsip`;
+        if (controlsEl) controlsEl.innerHTML = generatePaginationHTML(1, 1, "goToArchivePage");
         return;
       }
 
-      tbody.innerHTML = list.map(item => `
+      tbody.innerHTML = pageItems.map(item => `
         <tr class="hover:bg-slate-50/80 transition-colors">
           <td class="p-3.5 text-center font-bold text-bps-blue font-mono">${item.noAgenda || '-'}</td>
           <td class="p-3.5 font-bold font-mono text-slate-900">${item.nomorSurat}</td>
@@ -2153,6 +2312,22 @@
           </td>
         </tr>
       `).join("");
+
+      if (infoEl) {
+        infoEl.textContent = `Menampilkan ${startIndex + 1} - ${endIndex} dari ${totalItems} arsip`;
+      }
+      if (controlsEl) {
+        controlsEl.innerHTML = generatePaginationHTML(currentPage, totalPages, "goToArchivePage");
+      }
+    }
+
+    function goToArchivePage(page) {
+      renderArchiveRows(null, page);
+    }
+
+    function changeArchivePageSize(size) {
+      appState.archivePagination.pageSize = parseInt(size, 10) || 10;
+      renderArchiveRows(null, 1);
     }
 
     function filterArchiveTable(query) {
@@ -2164,7 +2339,7 @@
                (item.tanggal && item.tanggal.toLowerCase().includes(q)) ||
                (item.noAgenda && String(item.noAgenda).includes(q));
       });
-      renderArchiveRows(filtered);
+      renderArchiveRows(filtered, 1);
     }
 
     function openAddArsipModal() {
@@ -2276,19 +2451,44 @@
     // =========================================================================
     // MASTER PEGAWAI CRUD
     // =========================================================================
-    function renderMasterPegawaiTable() {
-      renderMasterPegawaiRows(appState.masterPegawai);
+    function renderMasterPegawaiTable(list, page) {
+      renderMasterPegawaiRows(list || appState.masterPegawai, page);
     }
 
-    function renderMasterPegawaiRows(list) {
+    function renderMasterPegawaiRows(list, page) {
+      if (list !== undefined && list !== null) {
+        appState.masterPegawaiPagination.currentList = list;
+      }
+      const currentList = appState.masterPegawaiPagination.currentList || appState.masterPegawai || [];
+      const pageSize = appState.masterPegawaiPagination.pageSize || 10;
+      const totalItems = currentList.length;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+      if (page !== undefined && page !== null) {
+        appState.masterPegawaiPagination.currentPage = Math.max(1, Math.min(page, totalPages));
+      } else {
+        appState.masterPegawaiPagination.currentPage = Math.max(1, Math.min(appState.masterPegawaiPagination.currentPage || 1, totalPages));
+      }
+      const currentPage = appState.masterPegawaiPagination.currentPage;
+
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalItems);
+      const pageItems = currentList.slice(startIndex, endIndex);
+
       const tbody = document.getElementById("masterPegawaiTableBody");
-      if (!list || list.length === 0) {
+      const infoEl = document.getElementById("masterPegawaiPaginationInfo");
+      const controlsEl = document.getElementById("masterPegawaiPaginationControls");
+
+      if (totalItems === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Tidak ada data pegawai yang sesuai pencarian.</td></tr>`;
+        if (infoEl) infoEl.textContent = `Menampilkan 0 dari 0 pegawai`;
+        if (controlsEl) controlsEl.innerHTML = generatePaginationHTML(1, 1, "goToMasterPegawaiPage");
         return;
       }
-      tbody.innerHTML = list.map((p, idx) => `
+
+      tbody.innerHTML = pageItems.map((p, idx) => `
         <tr class="hover:bg-slate-50/80 transition-colors">
-          <td class="p-3.5 text-center text-slate-400 font-semibold">${idx + 1}</td>
+          <td class="p-3.5 text-center text-slate-400 font-semibold">${startIndex + idx + 1}</td>
           <td class="p-3.5 font-mono font-bold text-slate-800">${p.nip}</td>
           <td class="p-3.5 font-bold text-slate-900">${p.nama}</td>
           <td class="p-3.5 text-slate-700">${p.pangkat_gol || '-'}</td>
@@ -2310,6 +2510,22 @@
           </td>
         </tr>
       `).join("");
+
+      if (infoEl) {
+        infoEl.textContent = `Menampilkan ${startIndex + 1} - ${endIndex} dari ${totalItems} pegawai`;
+      }
+      if (controlsEl) {
+        controlsEl.innerHTML = generatePaginationHTML(currentPage, totalPages, "goToMasterPegawaiPage");
+      }
+    }
+
+    function goToMasterPegawaiPage(page) {
+      renderMasterPegawaiRows(null, page);
+    }
+
+    function changeMasterPegawaiPageSize(size) {
+      appState.masterPegawaiPagination.pageSize = parseInt(size, 10) || 10;
+      renderMasterPegawaiRows(null, 1);
     }
 
     function filterMasterPegawaiTable(query) {
@@ -2321,7 +2537,7 @@
         (p.jabatan && p.jabatan.toLowerCase().includes(q)) ||
         (p.unit_kerja && p.unit_kerja.toLowerCase().includes(q))
       );
-      renderMasterPegawaiRows(filtered);
+      renderMasterPegawaiRows(filtered, 1);
     }
 
     function openAddPegawaiModal() {
