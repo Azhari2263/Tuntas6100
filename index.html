@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tuntas - Tata Kelola dan Administrasi Surat Tugas BPS Provinsi Kalimantan Barat</title>
+  
+  <!-- Favicon: Logo Tuntas BPS -->
+  <link rel="icon" type="image/png" href="img/logo_tuntas.png">
+  <link rel="apple-touch-icon" href="img/logo_tuntas.png">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter & Merriweather (Document) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bps: {
+              blue: '#005b9f',       // Official BPS Primary Blue
+              darkblue: '#003e6d',   // Deep Official Navy
+              hoverblue: '#004c85',  // Hover Blue
+              lightblue: '#f0f7fc',  // Soft background
+              accentblue: '#e1effa', // Subtle border/pill
+              orange: '#f37023',     // Official BPS Vibrant Orange
+              green: '#8bc53f',      // Official BPS Accent Green
+              dark: '#0f172a'        // Deep Slate
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            document: ['Bookman Old Style', 'Merriweather', 'serif']
+          },
+          boxShadow: {
+            'card': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
+            'card-hover': '0 10px 20px -5px rgba(0, 91, 159, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+            'modal': '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Styling scrollbar */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Styling Pratinjau Dokumen F4 Kedinasan */
+    .doc-page {
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 45px 55px;
+      font-family: 'Bookman Old Style', 'Merriweather', serif;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #111;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+    }
+    .doc-page.landscape {
+      max-width: 960px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50/70 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- TOP HEADER / NAVBAR RESMI BPS -->
+  <header class="bg-gradient-to-r from-bps-darkblue via-[#004a82] to-bps-blue text-white shadow-md border-b-4 border-bps-orange sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      
+      <!-- Logo & Nama Aplikasi Tuntas -->
+      <div class="flex items-center space-x-3.5">
+        <div class="bg-white p-1.5 rounded-xl shadow-md flex items-center justify-center h-11 w-11 flex-shrink-0 ring-2 ring-white/20">
+          <img src="img/logo_tuntas.png" alt="Logo Tuntas BPS" class="h-8 w-auto object-contain">
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-xl leading-none tracking-tight text-white">Tuntas</h1>
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-bps-orange text-white px-2 py-0.5 rounded-full shadow-xs">
+              BPS Kalbar
+            </span>
+          </div>
+          <p class="text-xs text-blue-100/90 font-normal mt-0.5 tracking-wide">
+            Tata Kelola dan Administrasi Surat Tugas &bull; BPS Provinsi Kalimantan Barat
+          </p>
+        </div>
+      </div>
+
+      <div class="text-xs text-blue-100 hidden sm:flex items-center space-x-2 font-medium">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>Terkoneksi</span>
+      </div>
+    </div>
+
+    <!-- SUB-NAV / TABS (Responsive Scrollable on Mobile) -->
+    <div class="bg-[#00345b] border-t border-white/10 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-7xl mx-auto flex space-x-2 sm:space-x-3 text-sm overflow-x-auto py-1">
+        <button onclick="switchTab('create')" id="tab-create" 
+                class="px-4 py-2.5 border-b-2 border-bps-orange text-white font-semibold flex items-center space-x-2 rounded-t-lg bg-white/10 transition-all whitespace-nowrap">
+          <i class="fa-solid fa-file-circle-plus text-bps-orange"></i>
+          <span>Buat Surat Tugas</span>
+        </button>
+        <button onclick="switchTab('archive')" id="tab-archive" 
+                class="px-4 py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap">
+          <i class="fa-solid fa-folder-open text-blue-300"></i>
+          <span>Riwayat & Arsip</span>
+        </button>
+        <button onclick="switchTab('pegawai')" id="tab-pegawai" 
+                class="px-4 py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap">
+          <i class="fa-solid fa-users text-blue-300"></i>
+          <span>Master Pegawai</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+    <!-- TAB 1: FORM BUAT SURAT TUGAS -->
+    <div id="section-create" class="space-y-6">
+
+      <!-- BANNER MODE DETECTOR (Tunggal vs Kolektif vs Kosong) -->
+      <div id="modeBanner" class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-card transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+        <div class="flex items-center space-x-3.5">
+          <div id="modeIcon" class="w-11 h-11 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <div>
+            <h3 id="modeTitle" class="font-bold text-slate-800 text-sm sm:text-base">Mode: Belum Ada Pegawai Dipilih</h3>
+            <p id="modeDesc" class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+              Silakan cari dan pilih minimal 1 orang pegawai pada bagian "Pegawai yang Ditugaskan" di bawah.
+            </p>
+          </div>
+        </div>
+        <div class="self-start sm:self-auto">
+          <span id="badgePersonCount" class="bg-slate-100 text-slate-600 font-bold px-3.5 py-1.5 rounded-full text-xs border border-slate-200 shadow-xs inline-block">
+            0 Pegawai Ditugaskan
+          </span>
+        </div>
+      </div>
+
+      <!-- FORMULIR INPUT SURAT TUGAS -->
+      <form id="formSurtug" onsubmit="event.preventDefault(); submitSuratTugas();">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+          <!-- KOLOM KIRI (8 Kolom): Input Form Utama -->
+          <div class="lg:col-span-8 space-y-6">
+
+            <!-- KARTU 1: SURAT RUJUKAN (KONSIDERANS MENIMBANG) -->
+            <div class="bg-white rounded-2xl shadow-card hover:shadow-card-hover border border-slate-200/80 p-5 sm:p-6 transition-all">
+              <div class="flex items-center space-x-3 mb-5 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-orange-50 text-bps-orange flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                  <i class="fa-solid fa-envelope-open-text"></i>
+                </div>
+                <div>
+                  <h2 class="font-bold text-slate-800 text-base">1. Konsiderans Menimbang</h2>
+                  <p class="text-xs text-slate-400">Dasar penerbitan surat tugas dari surat rujukan/undangan kedinasan</p>
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Pejabat Pengirim Surat Rujukan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="rujukanPejabat" required placeholder="Contoh: Plt. Kepala Pusdiklat BPS" 
+                           class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                      Nomor Surat Rujukan <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="rujukanNomor" required placeholder="Contoh: B-555/02600/DL.210/2026" 
+                           class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400 font-mono" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+                    Hal / Perihal Surat Rujukan <span class="text-red-500">*</span>
+                  </label>
+                  <textarea id="rujukanPerihal" required rows="2" placeholder="Contoh: Pemanggilan Peserta Pelatihan Dasar CPNS Golongan II dan III BPS Tahun 2026" 
+                            class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400 leading-relaxed"></textarea>
+                </div>
+
+                <div class="pt-1">
+                  <label class="flex items-start space-x-3 p-3 bg-slate-50/80 hover:bg-slate-100/70 rounded-xl border border-slate-200/60 cursor-pointer transition-colors">
+                    <input type="checkbox" id="includeMenimbangB" checked class="w-4 h-4 mt-0.5 text-bps-blue rounded border-slate-300 focus:ring-bps-blue/20">
+                    <span class="text-xs text-slate-600 select-none leading-relaxed">
+                      Sertakan Butir b: <i>"bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;"</i>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- KARTU 2: PEGAWAI YANG DITUGASKAN -->
+            <div class="bg-white rounded-2xl shadow-card hover:shadow-card-hover border border-slate-200/80 p-5 sm:p-6 transition-all">
+              <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 rounded-xl bg-blue-50 text-bps-blue flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                    <i class="fa-solid fa-users"></i>
+                  </div>
+                  <div>
+                    <h2 class="font-bold text-slate-800 text-base">2. Pegawai yang Ditugaskan</h2>
+                    <p class="text-xs text-slate-400">Pilih dari Master Pegawai atau tambahkan pegawai baru</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Input Pencarian Pegawai -->
+              <div class="bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80 mb-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Cari Pegawai (NIP / Nama Lengkap):</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <div class="relative flex-grow">
+                    <input type="text" id="pegawaiSearch" placeholder="Ketik NIP atau Nama pegawai untuk memilih..." 
+                           class="w-full text-sm bg-white border border-slate-300/90 rounded-xl py-2.5 pl-10 pr-3 focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all"
+                           oninput="filterPegawaiDropdown(this.value)" onfocus="showPegawaiDropdown()" />
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    
+                    <!-- Dropdown Hasil Pencarian Auto-complete -->
+                    <div id="pegawaiDropdown" class="hidden absolute z-30 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto divide-y divide-slate-100">
+                    </div>
+                  </div>
+                  <button type="button" onclick="openAddPegawaiModal()" title="Tambah Pegawai Baru ke Database" 
+                          class="bg-white hover:bg-bps-lightblue border border-slate-300 hover:border-bps-blue text-bps-blue px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-95 whitespace-nowrap">
+                    <i class="fa-solid fa-user-plus text-bps-orange"></i>
+                    <span>Pegawai Baru</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tabel Personil Terpilih -->
+              <div class="overflow-x-auto border border-slate-200/90 rounded-xl shadow-xs">
+                <table class="w-full text-left text-xs text-slate-700 min-w-[550px]">
+                  <thead class="bg-slate-100/90 text-slate-600 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200">
+                    <tr>
+                      <th class="p-3 w-10 text-center">No</th>
+                      <th class="p-3">Nama & NIP</th>
+                      <th class="p-3">Pangkat/Gol & Jabatan</th>
+                      <th class="p-3 w-48">Peran</th>
+                      <th class="p-3 w-20 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="selectedPegawaiBody" class="divide-y divide-slate-100">
+                    <!-- Dynamic Rows dimuat via JavaScript -->
+                  </tbody>
+                </table>
+                <datalist id="peranDatalist">
+                  <option value="Peserta">
+                  <option value="Ketua Tim">
+                  <option value="Anggota Tim">
+                  <option value="Narasumber">
+                  <option value="Panitia">
+                  <option value="Mentor">
+                  <option value="Pengajar">
+                  <option value="Pendamping">
+                  <option value="Pengawas">
+                  <option value="Instruktur">
+                  <option value="Petugas">
+                </datalist>
+              </div>
+            </div>
+
+            <!-- KARTU 3: URAIAN TUGAS ("UNTUK") -->
+            <div class="bg-white rounded-2xl shadow-card hover:shadow-card-hover border border-slate-200/80 p-5 sm:p-6 transition-all">
+              <div class="flex items-center space-x-3 mb-4 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-bps-green flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                  <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                  <h2 class="font-bold text-slate-800 text-base">3. Uraian Tugas & Kegiatan</h2>
+                  <p class="text-xs text-slate-400">Rincian kegiatan, tanggal pelaksanaan, tempat, dan metode penugasan</p>
+                </div>
+              </div>
+
+              <!-- Preset Narasi Cepat -->
+              <div class="mb-3.5">
+                <span class="text-xs font-semibold text-slate-600 block mb-2">Preset Narasi Cepat:</span>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" onclick="applyPreset('latsar')" 
+                          class="text-xs bg-slate-100/90 hover:bg-bps-blue hover:text-white px-3 py-1.5 rounded-full text-slate-700 transition-all border border-slate-200/80 shadow-xs font-medium active:scale-95">
+                    🎓 Pelatihan Dasar (Latsar) CPNS
+                  </button>
+                  <button type="button" onclick="applyPreset('rakor')" 
+                          class="text-xs bg-slate-100/90 hover:bg-bps-blue hover:text-white px-3 py-1.5 rounded-full text-slate-700 transition-all border border-slate-200/80 shadow-xs font-medium active:scale-95">
+                    👥 Rapat Evaluasi / Koordinasi
+                  </button>
+                  <button type="button" onclick="applyPreset('lapangan')" 
+                          class="text-xs bg-slate-100/90 hover:bg-bps-blue hover:text-white px-3 py-1.5 rounded-full text-slate-700 transition-all border border-slate-200/80 shadow-xs font-medium active:scale-95">
+                    🗺️ Supervisi / Pendataan Lapangan
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <textarea id="tujuanTugas" required rows="4" placeholder="Uraikan secara jelas tujuan, tanggal, moda pelaksanaan (MOOC / Klasikal / Daring), dan lokasi kegiatan..." 
+                          class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl p-3.5 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400 font-sans leading-relaxed"></textarea>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- KOLOM KANAN (4 Kolom): Pengaturan Surat, Pejabat & Aksi -->
+          <div class="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+
+            <!-- KARTU 4: NOMOR & PENETAPAN -->
+            <div class="bg-white rounded-2xl shadow-card hover:shadow-card-hover border border-slate-200/80 p-5 transition-all">
+              <div class="flex items-center space-x-2.5 mb-4 border-b border-slate-100 pb-2.5">
+                <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold">
+                  <i class="fa-solid fa-stamp"></i>
+                </div>
+                <h2 class="font-bold text-slate-800 text-sm">Penomoran & Penetapan</h2>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Tempat Penetapan</label>
+                  <input type="text" id="tempatPenetapan" value="Pontianak" required 
+                         class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Penetapan</label>
+                  <input type="date" id="tanggalPenetapanInput" required onchange="updateFormattedDate()"
+                         class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+                  <div class="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-bps-blue bg-blue-50/70 border border-blue-100 px-2.5 py-1 rounded-lg">
+                    <i class="fa-regular fa-calendar-check text-[11px]"></i>
+                    <span id="tanggalFormattedPreview"></span>
+                  </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-xs font-semibold text-slate-700">Nomor Naskah Resmi</label>
+                    <button type="button" onclick="toggleCustomNomor()" class="text-xs text-bps-blue hover:text-bps-hoverblue font-medium hover:underline">
+                      <span id="labelCustomNomor">Kustomisasi</span>
+                    </button>
+                  </div>
+                  <div id="previewNomorWrapper" class="bg-gradient-to-br from-blue-50/90 to-indigo-50/50 border border-blue-200/80 p-3 rounded-xl text-center shadow-xs">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Estimasi Nomor Agenda:</p>
+                    <p id="previewNomorSurat" class="font-mono font-bold text-sm text-bps-blue mt-0.5 tracking-tight">Memuat nomor...</p>
+                  </div>
+                  <div id="customNomorInputWrapper" class="hidden mt-2.5">
+                    <input type="text" id="customNomorSurat" placeholder="B-xxx/61513/KP.650/2026" 
+                           class="w-full text-sm border border-amber-300 rounded-xl p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-amber-50/80 text-slate-800 font-mono" />
+                    <span class="text-[10px] text-amber-700 mt-1 block leading-tight">*Gunakan hanya bila nomor agenda telah dialokasikan sebelumnya.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- KARTU 5: PEJABAT PENANDATANGAN DENGAN CRUD -->
+            <div class="bg-white rounded-2xl shadow-card hover:shadow-card-hover border border-slate-200/80 p-5 transition-all">
+              <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2.5">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold">
+                    <i class="fa-solid fa-signature"></i>
+                  </div>
+                  <h2 class="font-bold text-slate-800 text-sm">Pejabat Penandatangan</h2>
+                </div>
+                <!-- Tombol Aksi CRUD Pejabat -->
+                <div class="flex items-center space-x-1">
+                  <button type="button" onclick="openAddPejabatModal()" title="Tambah Pejabat Baru" 
+                          class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-bold flex items-center space-x-1 transition-colors">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Tambah</span>
+                  </button>
+                  <button type="button" onclick="openEditPejabatModal()" title="Edit Pejabat Terpilih" 
+                          class="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-xs transition-colors">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" onclick="deleteCurrentPejabat()" title="Hapus Pejabat Terpilih" 
+                          class="p-1.5 hover:bg-red-50 text-red-500 rounded-lg text-xs transition-colors">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Pejabat</label>
+                  <select id="selectPejabat" onchange="onPejabatSelected()" 
+                          class="w-full text-xs font-medium bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl p-2.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all">
+                    <!-- Dynamic Pejabat -->
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-500 mb-1">Nama Pejabat di Naskah</label>
+                  <input type="text" id="pejabatNama" readonly class="w-full text-xs bg-slate-100/80 border border-slate-200 rounded-lg p-2 text-slate-700 font-semibold" />
+                </div>
+
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-500 mb-1">Jabatan di Naskah</label>
+                  <textarea id="pejabatJabatan" rows="2" readonly class="w-full text-xs bg-slate-100/80 border border-slate-200 rounded-lg p-2 text-slate-700 leading-snug"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- KARTU 6: DASAR HUKUM (MENGINGAT) DENGAN CRUD -->
+            <div class="bg-white rounded-2xl shadow-card hover:shadow-card-hover border border-slate-200/80 p-5 transition-all">
+              <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+                <div class="flex items-center space-x-2">
+                  <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                  </div>
+                  <h2 class="font-bold text-slate-800 text-sm">Dasar Hukum (Mengingat)</h2>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <span id="hukumCount" class="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">5 Poin</span>
+                  <button type="button" onclick="openAddDasarHukumModal()" title="Tambah Dasar Hukum Baru" 
+                          class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span class="text-[10px]">Tambah</span>
+                  </button>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500 mb-3">Payung hukum kedinasan BPS Kalbar yang tersimpan di sistem.</p>
+              
+              <div id="dasarHukumList" class="space-y-1.5 max-h-56 overflow-y-auto text-xs text-slate-700 pr-1">
+                <!-- Checkboxes dasar hukum diisi JS -->
+              </div>
+            </div>
+
+            <!-- TOMBOL AKSI UTAMA -->
+            <div class="space-y-3 pt-1">
+              <button type="button" onclick="openLivePreviewModal()" 
+                      class="w-full bg-white hover:bg-bps-lightblue text-bps-blue font-bold border-2 border-bps-blue py-3 rounded-xl text-sm transition-all shadow-xs hover:shadow active:scale-[0.99] flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-eye"></i>
+                <span>Tinjau Dokumen (Preview)</span>
+              </button>
+
+              <button type="submit" id="btnSubmitSurat"
+                      class="w-full bg-gradient-to-r from-bps-blue via-[#004e8a] to-bps-darkblue hover:from-bps-darkblue hover:to-[#002b4d] text-white font-extrabold py-3.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg hover:shadow-bps-blue/25 active:scale-[0.99] flex items-center justify-center space-x-2.5">
+                <i class="fa-solid fa-paper-plane text-bps-orange"></i>
+                <span>Terbitkan Surat Tugas Resmi</span>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      </form>
+    </div>
+
+    <!-- TAB 2: RIWAYAT & ARSIP SURAT TUGAS DENGAN CRUD -->
+    <div id="section-archive" class="hidden space-y-4">
+      <div class="bg-white p-5 rounded-2xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="font-bold text-slate-800 text-lg flex items-center space-x-2.5 text-bps-blue">
+            <i class="fa-solid fa-box-archive text-bps-orange"></i>
+            <span>Riwayat & Arsip Dokumen Surat Tugas</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">Daftar naskah surat tugas yang telah berhasil diterbitkan dan tersimpan di database.</p>
+        </div>
+
+        <div class="flex items-center space-x-2 w-full sm:w-auto">
+          <div class="relative flex-grow sm:flex-grow-0 sm:w-64">
+            <input type="text" id="searchArchiveInput" oninput="filterArchiveTable(this.value)" placeholder="Cari nomor, perihal, atau tujuan..." 
+                   class="w-full text-xs border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none" />
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+          </div>
+          <button onclick="loadArchiveData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 transition-colors flex-shrink-0" title="Muat Ulang Data">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+          <button onclick="openAddArsipModal()" class="bg-bps-blue hover:bg-bps-darkblue text-white px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-all active:scale-95 whitespace-nowrap flex-shrink-0">
+            <i class="fa-solid fa-plus text-bps-orange"></i>
+            <span>Tambah Arsip</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-card border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-700 min-w-[760px]">
+            <thead class="bg-slate-100/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="p-3.5 w-16 text-center">Agenda</th>
+                <th class="p-3.5 w-52">Nomor Surat</th>
+                <th class="p-3.5 w-32">Tanggal</th>
+                <th class="p-3.5 w-28 text-center">Tipe</th>
+                <th class="p-3.5">Uraian Tugas / Rujukan</th>
+                <th class="p-3.5 w-20 text-center">Personil</th>
+                <th class="p-3.5 w-44 text-center">Aksi & Berkas</th>
+              </tr>
+            </thead>
+            <tbody id="archiveTableBody" class="divide-y divide-slate-100">
+              <tr>
+                <td colspan="7" class="p-8 text-center text-slate-400">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat data arsip...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: MASTER PEGAWAI DENGAN CRUD -->
+    <div id="section-pegawai" class="hidden space-y-4">
+      <div class="bg-white p-5 rounded-2xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="font-bold text-slate-800 text-lg flex items-center space-x-2.5 text-bps-blue">
+            <i class="fa-solid fa-address-book text-bps-orange"></i>
+            <span>Daftar Master Pegawai BPS</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">Kelola seluruh data pegawai dan personil yang dapat ditugaskan.</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+          <div class="relative w-full sm:w-64">
+            <input type="text" id="searchMasterPegawaiInput" oninput="filterMasterPegawaiTable(this.value)" placeholder="Cari NIP, nama, atau satker..." 
+                   class="w-full text-xs border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none" />
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+          </div>
+          <button onclick="openAddPegawaiModal()" class="w-full sm:w-auto bg-bps-blue hover:bg-bps-darkblue text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-95 whitespace-nowrap">
+            <i class="fa-solid fa-plus text-bps-orange"></i>
+            <span>Tambah Pegawai</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-card border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-700 min-w-[760px]">
+            <thead class="bg-slate-100/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
+              <tr>
+                <th class="p-3.5 w-12 text-center">No</th>
+                <th class="p-3.5 w-48">NIP</th>
+                <th class="p-3.5">Nama Lengkap</th>
+                <th class="p-3.5 w-36">Pangkat / Golongan</th>
+                <th class="p-3.5">Jabatan</th>
+                <th class="p-3.5">Unit Kerja</th>
+                <th class="p-3.5 w-24 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="masterPegawaiTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamic rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: LIVE PREVIEW DOKUMEN -->
+  <div id="modalPreview" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-100 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+      
+      <!-- Preview Header -->
+      <div class="p-4 bg-white border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-orange-50 text-bps-orange flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-file-lines"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm sm:text-base">Tinjauan Pratinjau Format Surat Tugas</h3>
+            <p class="text-[11px] text-slate-400">Simulasi tampilan tata letak cetak dokumen naskah dinas resmi</p>
+          </div>
+        </div>
+        <button onclick="closeLivePreviewModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Preview Body -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-6 flex-grow bg-slate-200/50">
+        <!-- SIMULASI HALAMAN 1 (PORTRAIT F4) -->
+        <div class="doc-page">
+          <!-- Kop BPS Resmi -->
+          <div class="text-center pb-3">
+            <div class="w-14 h-11 mx-auto mb-1 flex items-center justify-center">
+              <img src="img/logo BPS.png" alt="Logo BPS" class="h-10 w-auto object-contain">
+            </div>
+            <p class="font-sans font-bold italic text-[13px] tracking-wide text-slate-900 leading-tight">BADAN PUSAT STATISTIK</p>
+            <p class="font-sans font-bold italic text-[13px] tracking-wide text-slate-900 leading-tight">PROVINSI KALIMANTAN BARAT</p>
+          </div>
+
+          <!-- Judul -->
+          <div class="text-center my-4">
+            <p class="font-bold tracking-wider text-sm">SURAT TUGAS</p>
+            <p class="text-xs">NOMOR : <span id="prevNomorSurat">B-xxx/61513/KP.650/2026</span></p>
+          </div>
+
+          <!-- Menimbang & Mengingat -->
+          <div class="my-4 text-xs space-y-2.5">
+            <div class="flex">
+              <span class="w-24 flex-shrink-0">Menimbang</span>
+              <span class="w-4">:</span>
+              <div class="flex-grow space-y-1.5" id="prevMenimbang">
+              </div>
+            </div>
+            <div class="flex">
+              <span class="w-24 flex-shrink-0">Mengingat</span>
+              <span class="w-4">:</span>
+              <div class="flex-grow space-y-1" id="prevMengingat">
+              </div>
+            </div>
+          </div>
+
+          <!-- Diktum Memberi Tugas -->
+          <div class="text-center my-3 text-xs font-semibold">
+            Memberi Tugas:
+          </div>
+
+          <!-- Kepada -->
+          <div class="my-3 text-xs flex">
+            <span class="w-24 flex-shrink-0">Kepada</span>
+            <span class="w-4">:</span>
+            <div class="flex-grow" id="prevKepadaBlock">
+            </div>
+          </div>
+
+          <!-- Untuk -->
+          <div class="my-3 text-xs flex">
+            <span class="w-24 flex-shrink-0">Untuk</span>
+            <span class="w-4">:</span>
+            <div class="flex-grow text-justify leading-relaxed" id="prevUntuk">
+            </div>
+          </div>
+
+          <!-- Titi Mangsa & Tanda Tangan -->
+          <div class="mt-8 flex justify-end text-xs">
+            <div class="w-64 text-center space-y-1">
+              <p><span id="prevTempat">Pontianak</span>, <span id="prevTanggal">20 Mei 2026</span></p>
+              <p>Kepala Badan Pusat Statistik<br>Provinsi Kalimantan Barat,</p>
+              <div class="h-16 flex items-center justify-center text-slate-300 italic text-[10px]">
+                [Tanda Tangan & Cap Dinas Resmi]
+              </div>
+              <p id="prevPejabat" class="font-semibold">Muh Saichudin</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIMULASI HALAMAN LAMPIRAN (LANDSCAPE F4) JIKA KOLEKTIF -->
+        <div id="prevLampiranWrapper" class="hidden">
+          <div class="text-center text-xs text-slate-500 font-sans font-medium mb-1">- Halaman 2: Lembar Lampiran Kolektif (Landscape) -</div>
+          <div class="doc-page landscape">
+            <div class="flex justify-between items-start text-xs mb-3">
+              <div>
+                <p>Lampiran</p>
+                <p>Nomor&nbsp;&nbsp;&nbsp;: <span id="prevLampNomor"></span></p>
+                <p>Tanggal : <span id="prevLampTanggal"></span></p>
+              </div>
+              <div class="text-slate-400 font-sans text-[11px]">- 2 -</div>
+            </div>
+
+            <table class="w-full border-collapse border border-slate-900 text-[11px] my-3">
+              <thead>
+                <tr class="bg-slate-50">
+                  <th class="border border-slate-900 p-1.5 w-8 text-center">No</th>
+                  <th class="border border-slate-900 p-1.5">Nama</th>
+                  <th class="border border-slate-900 p-1.5 w-40 text-center">NIP</th>
+                  <th class="border border-slate-900 p-1.5 w-32 text-center">Pangkat/Gol</th>
+                  <th class="border border-slate-900 p-1.5">Jabatan</th>
+                  <th class="border border-slate-900 p-1.5 w-24 text-center">Peran</th>
+                </tr>
+              </thead>
+              <tbody id="prevLampiranTbody">
+              </tbody>
+            </table>
+
+            <div class="mt-6 flex justify-end text-xs">
+              <div class="w-64 text-center space-y-1">
+                <p><span id="prevLampTempat">Pontianak</span>, <span id="prevLampTanggal2"></span></p>
+                <p>Kepala Badan Pusat Statistik<br>Provinsi Kalimantan Barat,</p>
+                <div class="h-14 flex items-center justify-center text-slate-300 italic text-[10px]">
+                  [Tanda Tangan & Cap Dinas Resmi]
+                </div>
+                <p id="prevLampPejabat" class="font-semibold">Muh Saichudin</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Footer -->
+      <div class="p-4 bg-white border-t border-slate-200 flex justify-end space-x-3 rounded-b-2xl flex-shrink-0">
+        <button type="button" onclick="closeLivePreviewModal()" class="px-5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">Tutup</button>
+        <button type="button" onclick="closeLivePreviewModal(); document.getElementById('btnSubmitSurat').click();" 
+                class="px-5 py-2.5 bg-bps-blue text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-bps-darkblue flex items-center space-x-2 transition-all shadow-xs">
+          <i class="fa-solid fa-paper-plane text-bps-orange"></i>
+          <span>Lanjutkan & Terbitkan</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PROGRESS GENERATION -->
+  <div id="modalProgress" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl text-center space-y-4 border border-slate-100">
+      <div class="w-16 h-16 bg-blue-50 text-bps-blue rounded-2xl mx-auto flex items-center justify-center text-2xl animate-spin shadow-xs">
+        <i class="fa-solid fa-gear"></i>
+      </div>
+
+      <div>
+        <h3 class="font-bold text-slate-800 text-lg">Menerbitkan Surat Tugas Resmi</h3>
+        <p id="progressStatusText" class="text-xs text-slate-500 mt-1 leading-relaxed">Menghubungi server Google Apps Script...</p>
+      </div>
+
+      <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+        <div id="progressBar" class="bg-gradient-to-r from-bps-blue to-bps-orange h-2.5 rounded-full transition-all duration-500" style="width: 20%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SUKSES GENERATION -->
+  <div id="modalSuccess" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-5 text-center border border-slate-100">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-sm">
+        <i class="fa-solid fa-check"></i>
+      </div>
+
+      <div>
+        <h3 class="font-bold text-slate-900 text-xl">Surat Tugas Berhasil Diterbitkan!</h3>
+        <p class="text-xs text-slate-500 mt-1">Dokumen dinas resmi telah dibuat dan tersimpan rapi di Google Drive BPS Kalbar.</p>
+        <div class="mt-3.5 bg-slate-50 border border-slate-200 py-2.5 px-4 rounded-xl inline-block shadow-xs">
+          <span class="text-[10px] text-slate-500 block uppercase tracking-wider font-semibold">Nomor Naskah Resmi:</span>
+          <span id="successNomorSurat" class="font-mono font-bold text-base text-bps-blue">B-xxx/61513/KP.650/2026</span>
+        </div>
+      </div>
+
+      <div class="space-y-2.5 pt-2">
+        <a id="btnSuccessPdf" href="#" target="_blank" 
+           class="w-full bg-gradient-to-r from-bps-blue to-bps-darkblue hover:from-bps-darkblue hover:to-[#002f52] text-white font-bold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center space-x-2 transition shadow-md">
+          <i class="fa-solid fa-file-pdf text-red-300"></i>
+          <span>Buka / Unduh File PDF Resmi</span>
+        </a>
+
+        <a id="btnSuccessDoc" href="#" target="_blank" 
+           class="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-200 py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-xs">
+          <i class="fa-solid fa-file-word text-blue-500"></i>
+          <span>Buka Berkas Google Docs</span>
+        </a>
+
+        <a id="btnSuccessFolder" href="#" target="_blank" 
+           class="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-200 py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition shadow-xs">
+          <i class="fa-solid fa-folder text-amber-500"></i>
+          <span>Buka Folder Arsip di Google Drive</span>
+        </a>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100">
+        <button onclick="resetFormToNew()" class="text-xs text-bps-blue hover:text-bps-hoverblue font-bold flex items-center justify-center gap-1.5 mx-auto py-1">
+          <i class="fa-solid fa-plus text-bps-orange"></i>
+          <span>Buat Surat Tugas Lainnya</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT PEGAWAI (CRUD MASTER PEGAWAI) -->
+  <div id="modalAddPegawai" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-slate-800 text-base text-bps-blue flex items-center space-x-2">
+          <i class="fa-solid fa-user-plus text-bps-orange"></i>
+          <span id="modalPegawaiTitle">Tambah Pegawai ke Database</span>
+        </h3>
+        <button onclick="closeAddPegawaiModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formAddPegawai" onsubmit="event.preventDefault(); submitPegawaiForm();" class="space-y-3.5 text-xs">
+        <input type="hidden" id="editPegawaiId" value="">
+        
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">NIP (18 Digit) *</label>
+          <input type="text" id="newNip" required maxlength="18" placeholder="Contoh: 198008112005021004" 
+                 class="w-full text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap beserta Gelar *</label>
+          <input type="text" id="newNama" required placeholder="Contoh: Muhammad Adwin, S.Mn." 
+                 class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Pangkat / Golongan</label>
+            <input type="text" id="newPangkat" placeholder="Penata - III/c" 
+                   class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jabatan</label>
+            <input type="text" id="newJabatan" placeholder="Kepala Subbagian Umum" 
+                   class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Unit Kerja Satker</label>
+          <input type="text" id="newUnit" value="BPS Kabupaten Mempawah" 
+                 class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeAddPegawaiModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-bps-blue text-white rounded-xl text-xs font-bold hover:bg-bps-darkblue transition-colors shadow-xs">Simpan Pegawai</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT PEJABAT PENANDATANGAN (CRUD PEJABAT) -->
+  <div id="modalPejabat" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-slate-800 text-base text-bps-blue flex items-center space-x-2">
+          <i class="fa-solid fa-signature text-bps-orange"></i>
+          <span id="modalPejabatTitle">Tambah Pejabat Penandatangan</span>
+        </h3>
+        <button onclick="closePejabatModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formPejabat" onsubmit="event.preventDefault(); submitPejabatForm();" class="space-y-3.5 text-xs">
+        <input type="hidden" id="editPejabatId" value="">
+        
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nama Pejabat beserta Gelar *</label>
+          <input type="text" id="pejabatInputNama" required placeholder="Contoh: Muh Saichudin" 
+                 class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">NIP Pejabat (Opsional)</label>
+          <input type="text" id="pejabatInputNip" maxlength="18" placeholder="Contoh: 196805121992031002" 
+                 class="w-full text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Jabatan Resmi di Naskah *</label>
+          <textarea id="pejabatInputJabatan" required rows="2" placeholder="Contoh: Kepala Badan Pusat Statistik Provinsi Kalimantan Barat" 
+                    class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jenis Kewenangan</label>
+            <select id="pejabatInputJenis" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all">
+              <option value="DEFINITIF">Definitif</option>
+              <option value="Plt.">Plt.</option>
+              <option value="Plh.">Plh.</option>
+            </select>
+          </div>
+          <div class="flex items-center pt-5">
+            <label class="flex items-center space-x-2 cursor-pointer select-none">
+              <input type="checkbox" id="pejabatInputTampilkanNip" class="rounded border-slate-300 text-bps-blue focus:ring-bps-blue/20">
+              <span class="text-xs text-slate-700 font-medium">Tampilkan NIP di Naskah</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closePejabatModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-bps-blue text-white rounded-xl text-xs font-bold hover:bg-bps-darkblue transition-colors shadow-xs">Simpan Pejabat</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT DASAR HUKUM (CRUD DASAR HUKUM) -->
+  <div id="modalDasarHukum" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-slate-800 text-base text-bps-blue flex items-center space-x-2">
+          <i class="fa-solid fa-scale-balanced text-bps-orange"></i>
+          <span id="modalDasarHukumTitle">Tambah Dasar Hukum</span>
+        </h3>
+        <button onclick="closeDasarHukumModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formDasarHukum" onsubmit="event.preventDefault(); submitDasarHukumForm();" class="space-y-3.5 text-xs">
+        <input type="hidden" id="editDasarHukumId" value="">
+        
+        <div class="w-32">
+          <label class="block font-semibold text-slate-700 mb-1">Nomor Urut *</label>
+          <input type="number" id="dasarHukumUrut" required min="1" value="1" 
+                 class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Isi Peraturan / Dasar Hukum *</label>
+          <textarea id="dasarHukumIsi" required rows="4" placeholder="Contoh: Undang-Undang Nomor 16 Tahun 1997 tentang Statistik;" 
+                    class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all leading-relaxed"></textarea>
+        </div>
+
+        <div class="pt-1">
+          <label class="flex items-center space-x-2 cursor-pointer select-none">
+            <input type="checkbox" id="dasarHukumDefault" checked class="rounded border-slate-300 text-bps-blue focus:ring-bps-blue/20">
+            <span class="text-xs text-slate-700 font-medium">Jadikan Pilihan Standar Otomatis</span>
+          </label>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeDasarHukumModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-bps-blue text-white rounded-xl text-xs font-bold hover:bg-bps-darkblue transition-colors shadow-xs">Simpan Dasar Hukum</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT ARSIP (CRUD RIWAYAT & ARSIP) -->
+  <div id="modalArsip" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="font-bold text-slate-800 text-base text-bps-blue flex items-center space-x-2">
+          <i class="fa-solid fa-box-archive text-bps-orange"></i>
+          <span id="modalArsipTitle">Tambah Data Riwayat & Arsip</span>
+        </h3>
+        <button onclick="closeArsipModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formArsip" onsubmit="event.preventDefault(); submitArsipForm();" class="space-y-3.5 text-xs">
+        <input type="hidden" id="editArsipId" value="">
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nomor Surat Tugas *</label>
+            <input type="text" id="arsipNomorSurat" required placeholder="B-555/61513/KP.650/2026" 
+                   class="w-full text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nomor Agenda</label>
+            <input type="text" id="arsipNoAgenda" placeholder="555" 
+                   class="w-full text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tanggal Penetapan *</label>
+            <input type="text" id="arsipTanggal" required placeholder="Contoh: 20 Mei 2026" 
+                   class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tipe Penugasan</label>
+            <select id="arsipJenis" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all">
+              <option value="TUNGGAL">TUNGGAL (1 Orang)</option>
+              <option value="KOLEKTIF">KOLEKTIF (Banyak Orang)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Uraian Tugas / Rujukan *</label>
+          <textarea id="arsipTujuan" required rows="2" placeholder="Uraian kegiatan atau penugasan..." 
+                    class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all"></textarea>
+        </div>
+
+        <div class="w-36">
+          <label class="block font-semibold text-slate-700 mb-1">Jumlah Personil</label>
+          <input type="number" id="arsipTotalPersonil" min="1" value="1" 
+                 class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Link File PDF (Opsional)</label>
+            <input type="url" id="arsipPdfUrl" placeholder="https://drive.google.com/..." 
+                   class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Link Google Docs (Opsional)</label>
+            <input type="url" id="arsipDocUrl" placeholder="https://docs.google.com/..." 
+                   class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all" />
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeArsipModal()" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
+          <button type="submit" class="px-4 py-2 bg-bps-blue text-white rounded-xl text-xs font-bold hover:bg-bps-darkblue transition-colors shadow-xs">Simpan Arsip</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: KONFIRMASI UMUM (CLEAN, RAPI, RESPONSIVE) -->
+  <div id="modalConfirm" onclick="if(event.target === this) handleConfirmResult(false)" 
+       class="hidden fixed inset-0 z-[60] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 transform transition-all space-y-4">
+      
+      <!-- Icon & Header Text -->
+      <div class="flex items-start gap-3.5">
+        <div id="confirmIconBox" class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl flex-shrink-0 ring-4 ring-rose-50/70">
+          <i id="confirmIcon" class="fa-solid fa-trash-can"></i>
+        </div>
+        <div class="flex-grow pt-0.5">
+          <h3 id="confirmTitle" class="text-base font-bold text-slate-900 leading-snug">Konfirmasi Tindakan</h3>
+          <p id="confirmMessage" class="text-xs text-slate-500 mt-1 leading-relaxed">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+        </div>
+      </div>
+
+      <!-- Detail Box (Highlighting item name / NIP / nomor surat) -->
+      <div id="confirmDetailBox" class="hidden bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-medium break-words">
+        <span id="confirmDetailText"></span>
+      </div>
+
+      <!-- Action Buttons (Responsive: stack on narrow mobile, flex-row on desktop) -->
+      <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-2.5 pt-3 border-t border-slate-100">
+        <button type="button" id="btnConfirmCancel" onclick="handleConfirmResult(false)" 
+                class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition active:scale-95 cursor-pointer text-center">
+          Batal
+        </button>
+        <button type="button" id="btnConfirmOk" onclick="handleConfirmResult(true)" 
+                class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5">
+          <i id="confirmOkIcon" class="fa-solid fa-trash-can text-[11px]"></i>
+          <span id="confirmOkText">Ya, Hapus</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT UTAMA FRONTEND LOGIC -->
+  <script>
+    // =========================================================================
+    // MODAL KONFIRMASI & ALERT POPUP (CLEAN, RAPI, RESPONSIVE)
+    // =========================================================================
+    let confirmResolver = null;
+
+    function showConfirmModal({
+      title = "Konfirmasi Tindakan",
+      message = "Apakah Anda yakin ingin melanjutkan tindakan ini?",
+      detail = "",
+      confirmText = "Ya, Lanjutkan",
+      cancelText = "Batal",
+      confirmIcon = "fa-trash-can",
+      type = "danger",
+      isAlert = false
+    }) {
+      return new Promise((resolve) => {
+        confirmResolver = resolve;
+
+        const modal = document.getElementById("modalConfirm");
+        const titleEl = document.getElementById("confirmTitle");
+        const msgEl = document.getElementById("confirmMessage");
+        const detailBox = document.getElementById("confirmDetailBox");
+        const detailText = document.getElementById("confirmDetailText");
+        const btnCancel = document.getElementById("btnConfirmCancel");
+        const btnOk = document.getElementById("btnConfirmOk");
+        const okText = document.getElementById("confirmOkText");
+        const okIcon = document.getElementById("confirmOkIcon");
+        const iconBox = document.getElementById("confirmIconBox");
+        const headerIcon = document.getElementById("confirmIcon");
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+
+        if (detail && String(detail).trim()) {
+          detailText.textContent = String(detail).trim();
+          detailBox.classList.remove("hidden");
+        } else {
+          detailBox.classList.add("hidden");
+        }
+
+        okText.textContent = confirmText;
+        btnCancel.textContent = cancelText;
+
+        if (confirmIcon) {
+          okIcon.className = `fa-solid ${confirmIcon} text-[11px]`;
+          okIcon.classList.remove("hidden");
+        } else {
+          okIcon.classList.add("hidden");
+        }
+
+        if (type === "danger") {
+          iconBox.className = "w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl flex-shrink-0 ring-4 ring-rose-50/70";
+          headerIcon.className = "fa-solid fa-trash-can";
+          btnOk.className = "w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5";
+        } else if (type === "warning") {
+          iconBox.className = "w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl flex-shrink-0 ring-4 ring-amber-50/70";
+          headerIcon.className = "fa-solid fa-triangle-exclamation";
+          btnOk.className = "w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5";
+        } else {
+          iconBox.className = "w-12 h-12 rounded-2xl bg-blue-50 text-bps-blue flex items-center justify-center text-xl flex-shrink-0 ring-4 ring-blue-50/70";
+          headerIcon.className = "fa-solid fa-circle-info";
+          btnOk.className = "w-full sm:w-auto px-4 py-2.5 rounded-xl bg-bps-blue hover:bg-bps-hoverblue text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5";
+        }
+
+        if (isAlert) {
+          btnCancel.classList.add("hidden");
+        } else {
+          btnCancel.classList.remove("hidden");
+        }
+
+        modal.classList.remove("hidden");
+      });
+    }
+
+    function handleConfirmResult(result) {
+      const modal = document.getElementById("modalConfirm");
+      modal.classList.add("hidden");
+      if (confirmResolver) {
+        const res = confirmResolver;
+        confirmResolver = null;
+        res(result);
+      }
+    }
+
+    function showAlertModal(message, title = "Perhatian", type = "warning") {
+      return showConfirmModal({
+        title: title,
+        message: message,
+        confirmText: "Mengerti",
+        confirmIcon: "fa-check",
+        type: type,
+        isAlert: true
+      });
+    }
+
+    // Ganti alert bawaan browser dengan modal pop yang rapi, clean, dan responsive
+    window.alert = function(message) {
+      showAlertModal(message);
+    };
+
+    // Keyboard Escape listener untuk menutup modal konfirmasi
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const modal = document.getElementById("modalConfirm");
+        if (modal && !modal.classList.contains("hidden")) {
+          handleConfirmResult(false);
+        }
+      }
+    });
+
+    // =========================================================================
+    // STATE GLOBAL APLIKASI
+    // =========================================================================
+    let appState = {
+      // Backend URL terhubung secara permanen ke Google Apps Script
+      scriptUrl: "https://script.google.com/macros/s/AKfycbw6zQ2lJn-CUoE7w0wutaxiaurU-oS3E7rlnWb_Zlnf8ZouW6MMln92miEY1j6iMD7m/exec",
+      templateId: "12qHb-k8beWSpNmnOD5fjQBLS5g-BjI1yNaHmHFWNSNw",
+      folderId: "1-73PTEFaw7I6H3mC1IRQC69yYukQ4WSW",
+      satker: null,
+      pejabatList: [],
+      dasarHukumList: [],
+      masterPegawai: [],
+      selectedPegawai: [], // Default kosong, tidak menampilkan pegawai secara otomatis
+      archiveList: [],
+      nextAgenda: 555,
+      previewNomor: "B-555/61513/KP.650/2026",
+      isCustomNomor: false
+    };
+
+    // Data Default Fallback (disinkronkan dengan Google Sheets & LocalStorage)
+    const DEFAULT_MASTER_PEGAWAI = [
+      { id: 1, nip: "198008112005021004", nama: "Muhammad Adwin, S.Mn.", pangkat_gol: "Penata - III/c", jabatan: "Kepala Subbagian Umum Kabupaten Mempawah", unit_kerja: "BPS Kabupaten Mempawah" },
+      { id: 2, nip: "200409262026032001", nama: "Putri Rehulina Damanik, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Bengkayang", unit_kerja: "BPS Kabupaten Bengkayang" },
+      { id: 3, nip: "200302162026032001", nama: "Hany Febrianty, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Landak", unit_kerja: "BPS Kabupaten Landak" },
+      { id: 4, nip: "200409072026032001", nama: "Clara Diva Verianinta Lagum, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Mempawah", unit_kerja: "BPS Kabupaten Mempawah" },
+      { id: 5, nip: "200211172026031001", nama: "Muhammad Raihan, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Sintang", unit_kerja: "BPS Kabupaten Sintang" },
+      { id: 6, nip: "200207032026031001", nama: "Dafa Riyandika Mahendra, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Sintang", unit_kerja: "BPS Kabupaten Sintang" },
+      { id: 7, nip: "200401182026032001", nama: "Zahra Safira Haryono, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Landak", unit_kerja: "BPS Kabupaten Landak" },
+      { id: 8, nip: "200104042026032001", nama: "Akma Batrisyia Jazima, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Mempawah", unit_kerja: "BPS Kabupaten Mempawah" },
+      { id: 9, nip: "200208142026031001", nama: "Agus Riyanto, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Kapuas Hulu", unit_kerja: "BPS Kabupaten Kapuas Hulu" },
+      { id: 10, nip: "200401222026032001", nama: "Dyah Widyastuti, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Melawi", unit_kerja: "BPS Kabupaten Melawi" },
+      { id: 11, nip: "200111222026031001", nama: "Azhari, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Provinsi Kalimantan Barat", unit_kerja: "BPS Provinsi Kalimantan Barat" }
+    ];
+
+    const DEFAULT_PEJABAT = [
+      { id: 1, nip: "", nama: "Muh Saichudin", jabatan: "Kepala Badan Pusat Statistik Provinsi Kalimantan Barat", jenis: "DEFINITIF", tampilkan_nip: false }
+    ];
+
+    const DEFAULT_DASAR_HUKUM = [
+      { id: 1, no_urut: 1, isi: "Undang-Undang Nomor 16 Tahun 1997 tentang Statistik;", checked: true, is_default: true },
+      { id: 2, no_urut: 2, isi: "Peraturan Pemerintah Nomor 51 Tahun 1999 tentang Penyelenggaraan Statistik;", checked: true, is_default: true },
+      { id: 3, no_urut: 3, isi: "Peraturan Pemerintah Nomor 45 Tahun 2013 tentang Tata Cara Pelaksanaan Anggaran Pendapatan dan Belanja Negara sebagaimana telah diubah dengan Peraturan Pemerintah 50 Tahun 2018;", checked: true, is_default: true },
+      { id: 4, no_urut: 4, isi: "Peraturan Presiden Republik Indonesia Nomor 86 Tahun 2007 tentang Badan Pusat Statistik (Lembaran Negara Republik Indonesia Tahun 2007 Nomor 139), sebagaimana telah diubah dengan Peraturan Presiden Nomor 1 Tahun 2025 (Lembaran Negara Republik Indonesia Tahun 2025 Nomor 4);", checked: true, is_default: true },
+      { id: 5, no_urut: 5, isi: "Peraturan Badan Pusat Statistik Nomor 3 Tahun 2026 tentang Organisasi dan Tata Kerja Badan Pusat Statistik Provinsi dan Badan Pusat Statistik Kabupaten/Kota (Berita Negara Republik Indonesia Tahun 2026 Nomor 331);", checked: true, is_default: true }
+    ];
+
+    // =========================================================================
+    // INISIALISASI HALAMAN
+    // =========================================================================
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Set Tanggal Hari Ini
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      document.getElementById("tanggalPenetapanInput").value = `${yyyy}-${mm}-${dd}`;
+      updateFormattedDate();
+
+      // 2. Muat Cache Data dari LocalStorage jika ada (Persistence saat reload)
+      const cachedPegawai = localStorage.getItem("SURTUG_MASTER_PEGAWAI");
+      const cachedPejabat = localStorage.getItem("SURTUG_PEJABAT_LIST");
+      const cachedHukum = localStorage.getItem("SURTUG_DASAR_HUKUM");
+      const cachedArchive = localStorage.getItem("SURTUG_ARCHIVE_LIST");
+
+      appState.masterPegawai = cachedPegawai ? JSON.parse(cachedPegawai) : [...DEFAULT_MASTER_PEGAWAI];
+      appState.pejabatList = cachedPejabat ? JSON.parse(cachedPejabat) : [...DEFAULT_PEJABAT];
+      appState.dasarHukumList = cachedHukum ? JSON.parse(cachedHukum) : [...DEFAULT_DASAR_HUKUM];
+      if (cachedArchive) appState.archiveList = JSON.parse(cachedArchive);
+
+      // 3. Render Awal Antarmuka
+      populatePejabatDropdown(appState.pejabatList);
+      renderDasarHukumChecklist();
+      renderMasterPegawaiTable();
+
+      // Form Pegawai sengaja KOSONG (tidak otomatis menampilkan 1 orang)
+      appState.selectedPegawai = [];
+      renderSelectedPegawai();
+      updateModeVisuals();
+
+      // 4. Sinkronisasi Data Terbaru dari Backend Google Apps Script di Latar Belakang
+      initDataFromAppsScript();
+    });
+
+    // =========================================================================
+    // INTERAKSI BACKEND APPS SCRIPT
+    // =========================================================================
+    async function initDataFromAppsScript() {
+      try {
+        const response = await fetch(`${appState.scriptUrl}?action=getInitialData`);
+        const res = await response.json();
+
+        if (res.status === "success" && res.data) {
+          if (res.data.pegawaiList && res.data.pegawaiList.length > 0) {
+            appState.masterPegawai = res.data.pegawaiList;
+            localStorage.setItem("SURTUG_MASTER_PEGAWAI", JSON.stringify(appState.masterPegawai));
+            renderMasterPegawaiTable();
+          }
+          if (res.data.pejabatList && res.data.pejabatList.length > 0) {
+            appState.pejabatList = res.data.pejabatList;
+            localStorage.setItem("SURTUG_PEJABAT_LIST", JSON.stringify(appState.pejabatList));
+            populatePejabatDropdown(res.data.pejabatList);
+          }
+          if (res.data.dasarHukumList && res.data.dasarHukumList.length > 0) {
+            appState.dasarHukumList = res.data.dasarHukumList.map(h => ({
+              ...h,
+              checked: h.is_default !== undefined ? h.is_default : true
+            }));
+            localStorage.setItem("SURTUG_DASAR_HUKUM", JSON.stringify(appState.dasarHukumList));
+            renderDasarHukumChecklist();
+          }
+          if (res.data.previewNomorSurat) {
+            appState.previewNomor = res.data.previewNomorSurat;
+            document.getElementById("previewNomorSurat").textContent = res.data.previewNomorSurat;
+          }
+        }
+      } catch (err) {
+        console.warn("Backend offline atau sinkronisasi ditunda, menggunakan data lokal:", err);
+      }
+    }
+
+    async function sendBackendPost(payload) {
+      if (!appState.scriptUrl) return null;
+      try {
+        const res = await fetch(appState.scriptUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        return await res.json();
+      } catch (e) {
+        console.warn("Gagal sinkronisasi POST ke backend:", e);
+        return null;
+      }
+    }
+
+    // =========================================================================
+    // LOGIKA TAB & NAVIGASI
+    // =========================================================================
+    function switchTab(tabId) {
+      ['create', 'archive', 'pegawai'].forEach(t => {
+        document.getElementById(`section-${t}`).classList.add("hidden");
+        document.getElementById(`tab-${t}`).className = "px-4 py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap";
+      });
+
+      document.getElementById(`section-${tabId}`).classList.remove("hidden");
+      document.getElementById(`tab-${tabId}`).className = "px-4 py-2.5 border-b-2 border-bps-orange text-white font-semibold flex items-center space-x-2 rounded-t-lg bg-white/10 transition-all whitespace-nowrap";
+
+      if (tabId === 'archive') {
+        loadArchiveData();
+      }
+    }
+
+    // =========================================================================
+    // PEGAWAI SELECTION ENGINE (TUNGGAL VS KOLEKTIF)
+    // =========================================================================
+    function addPegawaiToSelection(pegawai) {
+      if (appState.selectedPegawai.some(p => p.nip === pegawai.nip)) {
+        return; // Sudah dipilih
+      }
+
+      appState.selectedPegawai.push({
+        ...pegawai,
+        peran: "Peserta"
+      });
+
+      renderSelectedPegawai();
+      updateModeVisuals();
+    }
+
+    function removePegawaiFromSelection(index) {
+      appState.selectedPegawai.splice(index, 1);
+      renderSelectedPegawai();
+      updateModeVisuals();
+    }
+
+    function updatePegawaiPeran(index, peran) {
+      if (appState.selectedPegawai[index]) {
+        appState.selectedPegawai[index].peran = peran;
+      }
+    }
+
+    function onPeranSelectChange(idx, val) {
+      if (val === '__MANUAL__') {
+        appState.selectedPegawai[idx].isManualPeran = true;
+        renderSelectedPegawai();
+        setTimeout(() => {
+          const input = document.getElementById(`peranInput_${idx}`);
+          if (input) input.focus();
+        }, 50);
+      } else {
+        appState.selectedPegawai[idx].peran = val;
+        appState.selectedPegawai[idx].isManualPeran = false;
+      }
+    }
+
+    function setPeranMode(idx, isManual) {
+      appState.selectedPegawai[idx].isManualPeran = isManual;
+      if (!isManual && (!appState.selectedPegawai[idx].peran || appState.selectedPegawai[idx].peran.trim() === "")) {
+        appState.selectedPegawai[idx].peran = "Peserta";
+      }
+      renderSelectedPegawai();
+      if (isManual) {
+        setTimeout(() => {
+          const input = document.getElementById(`peranInput_${idx}`);
+          if (input) input.focus();
+        }, 50);
+      }
+    }
+
+    function movePegawai(index, direction) {
+      const target = index + direction;
+      if (target < 0 || target >= appState.selectedPegawai.length) return;
+      const temp = appState.selectedPegawai[index];
+      appState.selectedPegawai[index] = appState.selectedPegawai[target];
+      appState.selectedPegawai[target] = temp;
+      renderSelectedPegawai();
+    }
+
+    function renderSelectedPegawai() {
+      const tbody = document.getElementById("selectedPegawaiBody");
+      tbody.innerHTML = "";
+
+      if (appState.selectedPegawai.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="p-8 text-center text-slate-400">
+              <div class="flex flex-col items-center justify-center space-y-1.5">
+                <i class="fa-solid fa-users text-2xl text-slate-300"></i>
+                <p class="font-medium text-slate-600 text-xs">Belum ada pegawai yang dipilih</p>
+                <p class="text-[11px] text-slate-400">Gunakan kolom pencarian di atas untuk memilih pegawai atau klik tombol Pegawai Baru.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const standardPeran = ["Peserta", "Ketua Tim", "Anggota Tim", "Narasumber", "Panitia", "Mentor", "Pengajar", "Pendamping", "Pengawas", "Instruktur", "Petugas"];
+
+      appState.selectedPegawai.forEach((p, idx) => {
+        if (p.peran && !standardPeran.includes(p.peran) && p.isManualPeran === undefined) {
+          p.isManualPeran = true;
+        }
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50/80 transition-colors";
+        tr.innerHTML = `
+          <td class="p-3 text-center font-semibold text-slate-400">${idx + 1}</td>
+          <td class="p-3">
+            <p class="font-bold text-slate-900 leading-snug">${p.nama}</p>
+            <p class="text-[11px] font-mono text-slate-500 mt-0.5">${p.nip}</p>
+          </td>
+          <td class="p-3">
+            <p class="font-medium text-slate-800">${p.pangkat_gol || '-'}</p>
+            <p class="text-[11px] text-slate-500 leading-snug">${p.jabatan || '-'}</p>
+          </td>
+          <td class="p-3">
+            ${p.isManualPeran ? `
+              <div class="flex items-center space-x-1.5">
+                <input id="peranInput_${idx}" type="text" list="peranDatalist" value="${p.peran || ''}" 
+                       oninput="updatePegawaiPeran(${idx}, this.value)" 
+                       placeholder="Ketik peran..." 
+                       class="w-full text-xs border border-bps-blue rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-bps-blue/20 bg-white font-medium">
+                <button type="button" onclick="setPeranMode(${idx}, false)" title="Pilih dari opsi dropdown" 
+                        class="p-2 text-xs text-slate-500 hover:text-bps-blue border border-slate-200 rounded-lg bg-slate-50 hover:bg-white transition-colors">
+                  <i class="fa-solid fa-list text-[11px]"></i>
+                </button>
+              </div>
+            ` : `
+              <div class="flex items-center space-x-1.5">
+                <select onchange="onPeranSelectChange(${idx}, this.value)" 
+                        class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue bg-white font-medium">
+                  <option value="Peserta" ${p.peran === 'Peserta' ? 'selected' : ''}>Peserta</option>
+                  <option value="Ketua Tim" ${p.peran === 'Ketua Tim' ? 'selected' : ''}>Ketua Tim</option>
+                  <option value="Anggota Tim" ${p.peran === 'Anggota Tim' ? 'selected' : ''}>Anggota Tim</option>
+                  <option value="Narasumber" ${p.peran === 'Narasumber' ? 'selected' : ''}>Narasumber</option>
+                  <option value="Panitia" ${p.peran === 'Panitia' ? 'selected' : ''}>Panitia</option>
+                  <option value="Mentor" ${p.peran === 'Mentor' ? 'selected' : ''}>Mentor</option>
+                  <option value="Pengajar" ${p.peran === 'Pengajar' ? 'selected' : ''}>Pengajar</option>
+                  <option value="Pendamping" ${p.peran === 'Pendamping' ? 'selected' : ''}>Pendamping</option>
+                  <option value="Pengawas" ${p.peran === 'Pengawas' ? 'selected' : ''}>Pengawas</option>
+                  <option value="Instruktur" ${p.peran === 'Instruktur' ? 'selected' : ''}>Instruktur</option>
+                  <option value="Petugas" ${p.peran === 'Petugas' ? 'selected' : ''}>Petugas</option>
+                  <option value="__MANUAL__">✏️ Ketik Manual...</option>
+                </select>
+                <button type="button" onclick="setPeranMode(${idx}, true)" title="Ketik peran manual" 
+                        class="p-2 text-xs text-slate-500 hover:text-bps-orange border border-slate-200 rounded-lg bg-slate-50 hover:bg-white transition-colors">
+                  <i class="fa-solid fa-pen text-[11px]"></i>
+                </button>
+              </div>
+            `}
+          </td>
+          <td class="p-3 text-center">
+            <div class="inline-flex items-center space-x-1">
+              <button type="button" onclick="movePegawai(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : ''} title="Geser urutan ke atas" 
+                      class="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-arrow-up text-[10px]"></i>
+              </button>
+              <button type="button" onclick="movePegawai(${idx}, 1)" ${idx === appState.selectedPegawai.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : ''} title="Geser urutan ke bawah" 
+                      class="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-arrow-down text-[10px]"></i>
+              </button>
+              <button type="button" onclick="removePegawaiFromSelection(${idx})" title="Hapus dari daftar tugas" 
+                      class="w-7 h-7 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-trash-can text-[11px]"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function updateModeVisuals() {
+      const count = appState.selectedPegawai.length;
+      const badge = document.getElementById("badgePersonCount");
+      const modeTitle = document.getElementById("modeTitle");
+      const modeDesc = document.getElementById("modeDesc");
+      const modeIcon = document.getElementById("modeIcon");
+
+      if (count === 0) {
+        badge.textContent = "0 Pegawai Ditugaskan";
+        badge.className = "bg-slate-100 text-slate-600 font-bold px-3.5 py-1.5 rounded-full text-xs border border-slate-200 shadow-xs inline-block";
+        modeTitle.textContent = "Mode: Belum Ada Pegawai Dipilih";
+        modeDesc.textContent = "Silakan cari dan pilih minimal 1 orang pegawai yang akan diberikan surat penugasan.";
+        modeIcon.innerHTML = `<i class="fa-solid fa-user-plus text-slate-400"></i>`;
+        modeIcon.className = "w-11 h-11 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
+      } else if (count === 1) {
+        badge.textContent = "1 Pegawai Ditugaskan";
+        badge.className = "bg-blue-50 text-bps-blue font-bold px-3.5 py-1.5 rounded-full text-xs border border-blue-200 shadow-xs inline-block";
+        modeTitle.textContent = "Mode: Surat Tugas Tunggal (1 Orang)";
+        modeDesc.textContent = "Identitas dicetak langsung di badan surat (1 Halaman F4 Portrait). Tidak ada lembar lampiran.";
+        modeIcon.innerHTML = `<i class="fa-solid fa-user"></i>`;
+        modeIcon.className = "w-11 h-11 rounded-2xl bg-blue-50 text-bps-blue flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
+      } else {
+        badge.textContent = `${count} Pegawai Ditugaskan`;
+        badge.className = "bg-amber-50 text-bps-orange font-bold px-3.5 py-1.5 rounded-full text-xs border border-amber-200 shadow-xs inline-block";
+        modeTitle.textContent = `Mode: Surat Tugas Kolektif (${count} Orang)`;
+        modeDesc.textContent = "Badan surat mencantumkan klausul '(terlampir)'. Otomatis menyusun lembar lampiran berorientasi Landscape.";
+        modeIcon.innerHTML = `<i class="fa-solid fa-users"></i>`;
+        modeIcon.className = "w-11 h-11 rounded-2xl bg-amber-50 text-bps-orange flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
+      }
+    }
+
+    // =========================================================================
+    // AUTOCOMPLETE SEARCH PEGAWAI
+    // =========================================================================
+    function showPegawaiDropdown() {
+      filterPegawaiDropdown(document.getElementById("pegawaiSearch").value);
+    }
+
+    function filterPegawaiDropdown(query) {
+      const dropdown = document.getElementById("pegawaiDropdown");
+      const q = query.toLowerCase().trim();
+
+      const filtered = appState.masterPegawai.filter(p => 
+        p.nama.toLowerCase().includes(q) || p.nip.includes(q) || (p.unit_kerja && p.unit_kerja.toLowerCase().includes(q))
+      );
+
+      if (filtered.length === 0) {
+        dropdown.innerHTML = `<div class="p-3.5 text-xs text-slate-400 text-center">Pegawai tidak ditemukan.</div>`;
+      } else {
+        dropdown.innerHTML = filtered.slice(0, 15).map(p => `
+          <div onclick="selectPegawaiFromDropdown('${p.nip}')" class="p-3 hover:bg-blue-50/70 cursor-pointer border-b border-slate-100 last:border-b-0 flex items-center justify-between transition-colors">
+            <div>
+              <p class="font-bold text-xs text-slate-900">${p.nama}</p>
+              <p class="text-[11px] text-slate-500 font-mono mt-0.5">${p.nip} &bull; ${p.pangkat_gol || '-'}</p>
+            </div>
+            <span class="text-[10px] bg-slate-100 text-slate-600 font-semibold px-2.5 py-1 rounded-full border border-slate-200">${p.unit_kerja || 'BPS'}</span>
+          </div>
+        `).join("");
+      }
+
+      dropdown.classList.remove("hidden");
+    }
+
+    function selectPegawaiFromDropdown(nip) {
+      const peg = appState.masterPegawai.find(p => p.nip === nip);
+      if (peg) {
+        addPegawaiToSelection(peg);
+        document.getElementById("pegawaiSearch").value = "";
+        document.getElementById("pegawaiDropdown").classList.add("hidden");
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      const searchBox = document.getElementById("pegawaiSearch");
+      const dropdown = document.getElementById("pegawaiDropdown");
+      if (searchBox && dropdown && !searchBox.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add("hidden");
+      }
+    });
+
+    // =========================================================================
+    // PRESET NARASI CEPAT
+    // =========================================================================
+    function applyPreset(type) {
+      const field = document.getElementById("tujuanTugas");
+      if (type === 'latsar') {
+        field.value = "Mengikuti Kegiatan Pelatihan Dasar CPNS Golongan II BPS Angkatan ke-6 Tahun 2026 Gelombang I melalui Pembelajaran Mandiri metode MOOC tanggal 1 s.d 12 Juni 2026, Distance Learning tanggal 22 Juni s.d. 16 Juli 2026, Aktualisasi tanggal 20 Juli s.d. 28 Agustus 2026 di Satuan Kerja masing-masing, dan Pembelajaran Klasikal tanggal 31 Agustus s.d. 5 September 2026 di Pusdiklat BPS Jakarta.";
+      } else if (type === 'rakor') {
+        field.value = "Mengikuti Rapat Koordinasi dan Evaluasi Kinerja Penyelenggaraan Kegiatan Sensus dan Survei BPS se-Provinsi Kalimantan Barat Tahun 2026 yang dilaksanakan di Hotel Mercure Pontianak pada tanggal 24 s.d. 26 November 2026.";
+      } else if (type === 'lapangan') {
+        field.value = "Melaksanakan kegiatan Pendataan Lapangan dan Pengawasan Kualitas Survei Sosial Ekonomi Nasional (Susenas) Tahun 2026 di wilayah sampel terpilih Provinsi Kalimantan Barat.";
+      }
+    }
+
+    // =========================================================================
+    // PEJABAT PENANDATANGAN CRUD
+    // =========================================================================
+    function populatePejabatDropdown(list) {
+      const select = document.getElementById("selectPejabat");
+      if (!list || list.length === 0) {
+        select.innerHTML = `<option value="">(Belum ada pejabat penandatangan)</option>`;
+        document.getElementById("pejabatNama").value = "";
+        document.getElementById("pejabatJabatan").value = "";
+        return;
+      }
+      select.innerHTML = list.map(p => `
+        <option value="${p.id}">${p.nama} - ${p.jabatan}</option>
+      `).join("");
+
+      onPejabatSelected();
+    }
+
+    function onPejabatSelected() {
+      const select = document.getElementById("selectPejabat");
+      const id = select.value;
+      const found = appState.pejabatList.find(p => String(p.id) === String(id)) || appState.pejabatList[0];
+
+      if (found) {
+        document.getElementById("pejabatNama").value = found.nama;
+        document.getElementById("pejabatJabatan").value = found.jabatan;
+        appState.currentPejabatNip = found.nip || "";
+      } else {
+        document.getElementById("pejabatNama").value = "";
+        document.getElementById("pejabatJabatan").value = "";
+        appState.currentPejabatNip = "";
+      }
+    }
+
+    function openAddPejabatModal() {
+      document.getElementById("modalPejabatTitle").textContent = "Tambah Pejabat Penandatangan";
+      document.getElementById("editPejabatId").value = "";
+      document.getElementById("pejabatInputNama").value = "";
+      document.getElementById("pejabatInputNip").value = "";
+      document.getElementById("pejabatInputJabatan").value = "";
+      document.getElementById("pejabatInputJenis").value = "DEFINITIF";
+      document.getElementById("pejabatInputTampilkanNip").checked = false;
+      document.getElementById("modalPejabat").classList.remove("hidden");
+    }
+
+    function openEditPejabatModal() {
+      const select = document.getElementById("selectPejabat");
+      const id = select.value;
+      const found = appState.pejabatList.find(p => String(p.id) === String(id));
+      if (!found) {
+        alert("Pilih pejabat yang akan diedit terlebih dahulu.");
+        return;
+      }
+
+      document.getElementById("modalPejabatTitle").textContent = "Edit Pejabat Penandatangan";
+      document.getElementById("editPejabatId").value = found.id;
+      document.getElementById("pejabatInputNama").value = found.nama;
+      document.getElementById("pejabatInputNip").value = found.nip || "";
+      document.getElementById("pejabatInputJabatan").value = found.jabatan;
+      document.getElementById("pejabatInputJenis").value = found.jenis || "DEFINITIF";
+      document.getElementById("pejabatInputTampilkanNip").checked = found.tampilkan_nip || false;
+      document.getElementById("modalPejabat").classList.remove("hidden");
+    }
+
+    function closePejabatModal() {
+      document.getElementById("modalPejabat").classList.add("hidden");
+    }
+
+    async function submitPejabatForm() {
+      const editId = document.getElementById("editPejabatId").value;
+      const nama = document.getElementById("pejabatInputNama").value.trim();
+      const nip = document.getElementById("pejabatInputNip").value.trim();
+      const jabatan = document.getElementById("pejabatInputJabatan").value.trim();
+      const jenis = document.getElementById("pejabatInputJenis").value;
+      const tampilkanNip = document.getElementById("pejabatInputTampilkanNip").checked;
+
+      if (!nama || !jabatan) {
+        alert("Nama dan Jabatan pejabat wajib diisi.");
+        return;
+      }
+
+      if (editId) {
+        // Mode Update
+        const idx = appState.pejabatList.findIndex(p => String(p.id) === String(editId));
+        if (idx !== -1) {
+          appState.pejabatList[idx] = {
+            ...appState.pejabatList[idx],
+            nama, nip, jabatan, jenis, tampilkan_nip: tampilkanNip
+          };
+        }
+        sendBackendPost({
+          action: "updatePejabat",
+          id: editId,
+          nama, nip, jabatan, jenis, tampilkan_nip: tampilkanNip
+        });
+      } else {
+        // Mode Tambah
+        const newId = appState.pejabatList.length > 0 ? Math.max(...appState.pejabatList.map(p => parseInt(p.id, 10) || 0)) + 1 : 1;
+        const newPejabat = {
+          id: newId,
+          nama, nip, jabatan, jenis, tampilkan_nip: tampilkanNip
+        };
+        appState.pejabatList.push(newPejabat);
+        sendBackendPost({
+          action: "addPejabat",
+          id: newId,
+          nama, nip, jabatan, jenis, tampilkan_nip: tampilkanNip
+        });
+      }
+
+      localStorage.setItem("SURTUG_PEJABAT_LIST", JSON.stringify(appState.pejabatList));
+      populatePejabatDropdown(appState.pejabatList);
+      if (editId) {
+        document.getElementById("selectPejabat").value = editId;
+        onPejabatSelected();
+      }
+      closePejabatModal();
+    }
+
+    async function deleteCurrentPejabat() {
+      const select = document.getElementById("selectPejabat");
+      const id = select.value;
+      const found = appState.pejabatList.find(p => String(p.id) === String(id));
+      if (!found) return;
+
+      if (appState.pejabatList.length <= 1) {
+        showAlertModal("Minimal harus ada 1 pejabat penandatangan di sistem.", "Peringatan", "warning");
+        return;
+      }
+
+      const ok = await showConfirmModal({
+        title: "Hapus Pejabat Penandatangan",
+        message: "Apakah Anda yakin ingin menghapus pejabat penandatangan ini?",
+        detail: `${found.nama} - ${found.jabatan}`,
+        confirmText: "Ya, Hapus Pejabat",
+        cancelText: "Batal",
+        confirmIcon: "fa-trash-can",
+        type: "danger"
+      });
+      if (!ok) return;
+
+      appState.pejabatList = appState.pejabatList.filter(p => String(p.id) !== String(id));
+      localStorage.setItem("SURTUG_PEJABAT_LIST", JSON.stringify(appState.pejabatList));
+      populatePejabatDropdown(appState.pejabatList);
+      sendBackendPost({ action: "deletePejabat", id: id });
+    }
+
+    // =========================================================================
+    // DASAR HUKUM (MENGINGAT) CRUD
+    // =========================================================================
+    function renderDasarHukumChecklist() {
+      const container = document.getElementById("dasarHukumList");
+      const countEl = document.getElementById("hukumCount");
+      const checkedCount = appState.dasarHukumList.filter(h => h.checked).length;
+      countEl.textContent = `${checkedCount} Poin`;
+
+      if (appState.dasarHukumList.length === 0) {
+        container.innerHTML = `<div class="p-3 text-center text-slate-400 text-xs">Belum ada dasar hukum. Klik tombol Tambah di atas.</div>`;
+        return;
+      }
+
+      container.innerHTML = appState.dasarHukumList.map((h, i) => `
+        <div class="group flex items-start justify-between p-1.5 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-200/60">
+          <label class="flex items-start space-x-2.5 cursor-pointer select-none flex-grow pr-2">
+            <input type="checkbox" id="hukum_${i}" ${h.checked ? 'checked' : ''} onchange="toggleHukumCheck(${i}, this.checked)" class="mt-0.5 rounded border-slate-300 text-bps-blue focus:ring-bps-blue/20">
+            <span class="leading-relaxed text-slate-700 text-xs">${h.no_urut || (i+1)}. ${h.isi}</span>
+          </label>
+          <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 pt-0.5">
+            <button type="button" onclick="openEditDasarHukumModal(${h.id})" title="Edit Dasar Hukum" class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-bps-blue hover:bg-blue-50 transition-colors">
+              <i class="fa-solid fa-pen text-[10px]"></i>
+            </button>
+            <button type="button" onclick="deleteDasarHukum(${h.id})" title="Hapus Dasar Hukum" class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+              <i class="fa-solid fa-trash-can text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function toggleHukumCheck(idx, isChecked) {
+      if (appState.dasarHukumList[idx]) {
+        appState.dasarHukumList[idx].checked = isChecked;
+        const countEl = document.getElementById("hukumCount");
+        const checkedCount = appState.dasarHukumList.filter(h => h.checked).length;
+        countEl.textContent = `${checkedCount} Poin`;
+      }
+    }
+
+    function openAddDasarHukumModal() {
+      document.getElementById("modalDasarHukumTitle").textContent = "Tambah Dasar Hukum";
+      document.getElementById("editDasarHukumId").value = "";
+      document.getElementById("dasarHukumUrut").value = appState.dasarHukumList.length + 1;
+      document.getElementById("dasarHukumIsi").value = "";
+      document.getElementById("dasarHukumDefault").checked = true;
+      document.getElementById("modalDasarHukum").classList.remove("hidden");
+    }
+
+    function openEditDasarHukumModal(id) {
+      const found = appState.dasarHukumList.find(h => String(h.id) === String(id));
+      if (!found) return;
+
+      document.getElementById("modalDasarHukumTitle").textContent = "Edit Dasar Hukum";
+      document.getElementById("editDasarHukumId").value = found.id;
+      document.getElementById("dasarHukumUrut").value = found.no_urut || 1;
+      document.getElementById("dasarHukumIsi").value = found.isi;
+      document.getElementById("dasarHukumDefault").checked = found.is_default !== undefined ? found.is_default : true;
+      document.getElementById("modalDasarHukum").classList.remove("hidden");
+    }
+
+    function closeDasarHukumModal() {
+      document.getElementById("modalDasarHukum").classList.add("hidden");
+    }
+
+    async function submitDasarHukumForm() {
+      const editId = document.getElementById("editDasarHukumId").value;
+      const noUrut = parseInt(document.getElementById("dasarHukumUrut").value, 10) || 1;
+      const isi = document.getElementById("dasarHukumIsi").value.trim();
+      const isDefault = document.getElementById("dasarHukumDefault").checked;
+
+      if (!isi) {
+        alert("Isi peraturan dasar hukum wajib diisi.");
+        return;
+      }
+
+      if (editId) {
+        // Update
+        const idx = appState.dasarHukumList.findIndex(h => String(h.id) === String(editId));
+        if (idx !== -1) {
+          appState.dasarHukumList[idx] = {
+            ...appState.dasarHukumList[idx],
+            no_urut: noUrut,
+            isi: isi,
+            is_default: isDefault
+          };
+        }
+        sendBackendPost({
+          action: "updateDasarHukum",
+          id: editId,
+          no_urut: noUrut,
+          isi: isi,
+          is_default: isDefault
+        });
+      } else {
+        // Tambah
+        const newId = appState.dasarHukumList.length > 0 ? Math.max(...appState.dasarHukumList.map(h => parseInt(h.id, 10) || 0)) + 1 : 1;
+        appState.dasarHukumList.push({
+          id: newId,
+          no_urut: noUrut,
+          isi: isi,
+          checked: isDefault,
+          is_default: isDefault
+        });
+        sendBackendPost({
+          action: "addDasarHukum",
+          id: newId,
+          no_urut: noUrut,
+          isi: isi,
+          is_default: isDefault
+        });
+      }
+
+      localStorage.setItem("SURTUG_DASAR_HUKUM", JSON.stringify(appState.dasarHukumList));
+      renderDasarHukumChecklist();
+      closeDasarHukumModal();
+    }
+
+    async function deleteDasarHukum(id) {
+      const found = appState.dasarHukumList.find(h => String(h.id) === String(id));
+      const previewText = found ? found.isi : "";
+
+      const ok = await showConfirmModal({
+        title: "Hapus Dasar Hukum",
+        message: "Apakah Anda yakin ingin menghapus butir dasar hukum (Mengingat) ini?",
+        detail: previewText,
+        confirmText: "Ya, Hapus Dasar Hukum",
+        cancelText: "Batal",
+        confirmIcon: "fa-trash-can",
+        type: "danger"
+      });
+      if (!ok) return;
+
+      appState.dasarHukumList = appState.dasarHukumList.filter(h => String(h.id) !== String(id));
+      localStorage.setItem("SURTUG_DASAR_HUKUM", JSON.stringify(appState.dasarHukumList));
+      renderDasarHukumChecklist();
+      sendBackendPost({ action: "deleteDasarHukum", id: id });
+    }
+
+    // =========================================================================
+    // PENOMORAN & TANGGAL
+    // =========================================================================
+    function updateFormattedDate() {
+      const val = document.getElementById("tanggalPenetapanInput").value;
+      if (!val) return;
+      const parts = val.split("-");
+      const date = new Date(parts[0], parts[1]-1, parts[2]);
+      const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+      const formatted = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+      document.getElementById("tanggalFormattedPreview").textContent = formatted;
+    }
+
+    function toggleCustomNomor() {
+      appState.isCustomNomor = !appState.isCustomNomor;
+      const wrapper = document.getElementById("customNomorInputWrapper");
+      const label = document.getElementById("labelCustomNomor");
+      if (appState.isCustomNomor) {
+        wrapper.classList.remove("hidden");
+        label.textContent = "Batal Kustom";
+      } else {
+        wrapper.classList.add("hidden");
+        label.textContent = "Kustomisasi";
+      }
+    }
+
+    // =========================================================================
+    // LIVE PREVIEW MODAL
+    // =========================================================================
+    function openLivePreviewModal() {
+      if (appState.selectedPegawai.length === 0) {
+        alert("Silakan pilih minimal 1 orang pegawai yang ditugaskan terlebih dahulu.");
+        return;
+      }
+
+      // 1. Ambil Nilai Form
+      const nomor = appState.isCustomNomor && document.getElementById("customNomorSurat").value ? 
+                    document.getElementById("customNomorSurat").value : appState.previewNomor;
+      const tempat = document.getElementById("tempatPenetapan").value || "Pontianak";
+      const tanggal = document.getElementById("tanggalFormattedPreview").textContent || "20 Mei 2026";
+      const rujukanPejabat = document.getElementById("rujukanPejabat").value || "Pejabat Rujukan";
+      const rujukanNomor = document.getElementById("rujukanNomor").value || "B-xxx/02600/DL.210/2026";
+      const rujukanHal = document.getElementById("rujukanPerihal").value || "Hal Rujukan";
+      const includeB = document.getElementById("includeMenimbangB").checked;
+      const tujuan = document.getElementById("tujuanTugas").value || "(Uraian tugas belum diisi)";
+      const pejabatNama = document.getElementById("pejabatNama").value || "Muh Saichudin";
+
+      // 2. Set Nilai di Pratinjau
+      document.getElementById("prevNomorSurat").textContent = nomor;
+      document.getElementById("prevTempat").textContent = tempat;
+      document.getElementById("prevTanggal").textContent = tanggal;
+      document.getElementById("prevPejabat").textContent = pejabatNama;
+
+      // Menimbang
+      let menimbangHtml = `<p>a. bahwa merujuk surat dari ${rujukanPejabat} nomor ${rujukanNomor} hal ${rujukanHal}, maka dipandang perlu menyesuaikan dengan jadwal kegiatan tersebut;</p>`;
+      if (includeB) {
+        menimbangHtml += `<p>b. bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;</p>`;
+      }
+      document.getElementById("prevMenimbang").innerHTML = menimbangHtml;
+
+      // Mengingat (Hanya yang dicentang)
+      const checkedHukum = appState.dasarHukumList.filter(h => h.checked);
+      document.getElementById("prevMengingat").innerHTML = checkedHukum.map((h, i) => `
+        <p>${i+1}. ${h.isi}</p>
+      `).join("");
+
+      // Kepada Block (Tunggal vs Kolektif)
+      const isSingle = appState.selectedPegawai.length === 1;
+      const kepadaDiv = document.getElementById("prevKepadaBlock");
+
+      if (isSingle) {
+        const p = appState.selectedPegawai[0];
+        kepadaDiv.innerHTML = `
+          <div class="grid grid-cols-4 gap-y-1">
+            <span class="w-20">Nama</span><span>: ${p.nama}</span><span></span><span></span>
+            <span class="w-20">NIP</span><span>: ${p.nip}</span><span></span><span></span>
+            <span class="w-20">Pangkat/Gol</span><span>: ${p.pangkat_gol || '-'}</span><span></span><span></span>
+            <span class="w-20">Jabatan</span><span class="col-span-3">: ${p.jabatan || '-'}</span>
+          </div>
+        `;
+        document.getElementById("prevLampiranWrapper").classList.add("hidden");
+      } else {
+        kepadaDiv.innerHTML = `
+          <div class="grid grid-cols-2 gap-y-1">
+            <span>Nama</span><span>: (terlampir)</span>
+            <span>NIP</span><span>: (terlampir)</span>
+            <span>Pangkat/Gol</span><span>: (terlampir)</span>
+            <span>Jabatan</span><span>: (terlampir)</span>
+          </div>
+        `;
+
+        // Tampilkan Pratinjau Lampiran
+        document.getElementById("prevLampiranWrapper").classList.remove("hidden");
+        document.getElementById("prevLampNomor").textContent = nomor;
+        document.getElementById("prevLampTanggal").textContent = tanggal;
+        document.getElementById("prevLampTanggal2").textContent = tanggal;
+        document.getElementById("prevLampTempat").textContent = tempat;
+        document.getElementById("prevLampPejabat").textContent = pejabatNama;
+
+        const lampBody = document.getElementById("prevLampiranTbody");
+        lampBody.innerHTML = appState.selectedPegawai.map((p, i) => `
+          <tr>
+            <td class="border border-slate-900 p-1 text-center">${i + 1}</td>
+            <td class="border border-slate-900 p-1 font-semibold">${p.nama}</td>
+            <td class="border border-slate-900 p-1 text-center font-mono">${p.nip}</td>
+            <td class="border border-slate-900 p-1 text-center">${p.pangkat_gol || '-'}</td>
+            <td class="border border-slate-900 p-1">${p.jabatan || '-'}</td>
+            <td class="border border-slate-900 p-1 text-center">${p.peran || 'Peserta'}</td>
+          </tr>
+        `).join("");
+      }
+
+      // Untuk
+      document.getElementById("prevUntuk").textContent = tujuan;
+
+      // Buka Modal
+      document.getElementById("modalPreview").classList.remove("hidden");
+    }
+
+    function closeLivePreviewModal() {
+      document.getElementById("modalPreview").classList.add("hidden");
+    }
+
+    // =========================================================================
+    // SUBMIT SURAT TUGAS KE APPS SCRIPT
+    // =========================================================================
+    async function submitSuratTugas() {
+      if (appState.selectedPegawai.length === 0) {
+        alert("Silakan pilih minimal 1 orang pegawai yang ditugaskan terlebih dahulu.");
+        return;
+      }
+
+      // Buka modal progress
+      const modalProgress = document.getElementById("modalProgress");
+      const progressText = document.getElementById("progressStatusText");
+      const progressBar = document.getElementById("progressBar");
+      modalProgress.classList.remove("hidden");
+
+      progressText.textContent = "Menghubungi server Apps Script...";
+      progressBar.style.width = "25%";
+
+      const payload = {
+        action: "createSuratTugas",
+        templateDocId: appState.templateId || "",
+        driveRootFolderId: appState.folderId || "",
+        tempatPenetapan: document.getElementById("tempatPenetapan").value,
+        tanggalPenetapan: document.getElementById("tanggalFormattedPreview").textContent,
+        rujukanPejabat: document.getElementById("rujukanPejabat").value,
+        rujukanNomor: document.getElementById("rujukanNomor").value,
+        rujukanPerihal: document.getElementById("rujukanPerihal").value,
+        includeMenimbangB: document.getElementById("includeMenimbangB").checked,
+        tujuanTugas: document.getElementById("tujuanTugas").value,
+        pejabatNama: document.getElementById("pejabatNama").value,
+        pejabatJabatan: document.getElementById("pejabatJabatan").value,
+        pejabatNip: appState.currentPejabatNip || "",
+        customNomorSurat: appState.isCustomNomor ? document.getElementById("customNomorSurat").value : "",
+        pegawaiList: appState.selectedPegawai
+      };
+
+      // Kirim ke Apps Script
+      try {
+        progressText.textContent = "Mengalokasikan nomor agenda & menyusun template...";
+        progressBar.style.width = "50%";
+
+        const response = await fetch(appState.scriptUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        progressBar.style.width = "85%";
+        progressText.textContent = "Mengonversi ke format PDF dan menyimpan ke Google Drive...";
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+          progressBar.style.width = "100%";
+          setTimeout(() => {
+            modalProgress.classList.add("hidden");
+            showSuccessModal(result.data);
+            // Tambahkan ke arsip lokal
+            if (result.data) {
+              const newArsip = {
+                id: result.data.idSurtug || Utilities_uuid(),
+                nomorSurat: result.data.nomorSurat,
+                noAgenda: result.data.noAgenda,
+                tanggal: payload.tanggalPenetapan,
+                jenis: result.data.jenisPenugasan || (payload.pegawaiList.length > 1 ? "KOLEKTIF" : "TUNGGAL"),
+                tujuan: payload.tujuanTugas,
+                totalPersonil: payload.pegawaiList.length,
+                pdfUrl: result.data.pdfUrl,
+                docUrl: result.data.docUrl,
+                folderUrl: result.data.folderUrl
+              };
+              appState.archiveList.unshift(newArsip);
+              localStorage.setItem("SURTUG_ARCHIVE_LIST", JSON.stringify(appState.archiveList));
+            }
+          }, 600);
+        } else {
+          modalProgress.classList.add("hidden");
+          alert("Gagal menerbitkan surat: " + result.message);
+        }
+      } catch (err) {
+        modalProgress.classList.add("hidden");
+        alert("Terjadi kesalahan koneksi ke Google Apps Script: " + err.message);
+      }
+    }
+
+    function Utilities_uuid() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function showSuccessModal(data) {
+      document.getElementById("successNomorSurat").textContent = data.nomorSurat;
+      document.getElementById("btnSuccessPdf").href = data.pdfUrl || "#";
+      document.getElementById("btnSuccessDoc").href = data.docUrl || "#";
+      document.getElementById("btnSuccessFolder").href = data.folderUrl || "#";
+      document.getElementById("modalSuccess").classList.remove("hidden");
+    }
+
+    function resetFormToNew() {
+      document.getElementById("modalSuccess").classList.add("hidden");
+      document.getElementById("formSurtug").reset();
+      document.getElementById("tanggalPenetapanInput").value = new Date().toISOString().split('T')[0];
+      updateFormattedDate();
+      appState.selectedPegawai = [];
+      renderSelectedPegawai();
+      updateModeVisuals();
+      initDataFromAppsScript();
+    }
+
+    // =========================================================================
+    // RIWAYAT & ARSIP TABLE (CRUD LENGKAP)
+    // =========================================================================
+    async function loadArchiveData() {
+      const tbody = document.getElementById("archiveTableBody");
+      tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat riwayat arsip dari database...</td></tr>`;
+
+      try {
+        const response = await fetch(`${appState.scriptUrl}?action=listSurat`);
+        const res = await response.json();
+        if (res.status === "success" && res.data && res.data.length > 0) {
+          appState.archiveList = res.data;
+          localStorage.setItem("SURTUG_ARCHIVE_LIST", JSON.stringify(appState.archiveList));
+          renderArchiveRows(appState.archiveList);
+        } else if (appState.archiveList && appState.archiveList.length > 0) {
+          renderArchiveRows(appState.archiveList);
+        } else {
+          appState.archiveList = [];
+          tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada riwayat surat tugas.</td></tr>`;
+        }
+      } catch (err) {
+        if (appState.archiveList && appState.archiveList.length > 0) {
+          renderArchiveRows(appState.archiveList);
+        } else {
+          tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada riwayat surat tugas atau server offline.</td></tr>`;
+        }
+      }
+    }
+
+    function renderArchiveRows(list) {
+      const tbody = document.getElementById("archiveTableBody");
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Tidak ada arsip yang sesuai pencarian.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(item => `
+        <tr class="hover:bg-slate-50/80 transition-colors">
+          <td class="p-3.5 text-center font-bold text-bps-blue font-mono">${item.noAgenda || '-'}</td>
+          <td class="p-3.5 font-bold font-mono text-slate-900">${item.nomorSurat}</td>
+          <td class="p-3.5 text-slate-600">${item.tanggal || '-'}</td>
+          <td class="p-3.5 text-center">
+            <span class="${item.jenis === 'TUNGGAL' || item.jenis === 'INDIVIDUAL' ? 'bg-blue-50 text-bps-blue border border-blue-200' : 'bg-amber-50 text-bps-orange border border-amber-200'} px-2.5 py-0.5 rounded-full font-bold text-[10px]">
+              ${item.jenis}
+            </span>
+          </td>
+          <td class="p-3.5 max-w-xs truncate text-slate-700" title="${item.tujuan || ''}">${item.tujuan || '-'}</td>
+          <td class="p-3.5 text-center font-bold text-slate-800">${item.totalPersonil || 1} Org</td>
+          <td class="p-3.5 text-center">
+            <div class="inline-flex items-center space-x-1.5">
+              ${item.pdfUrl && item.pdfUrl !== '#' ? `<a href="${item.pdfUrl}" target="_blank" class="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors shadow-xs" title="Unduh PDF Resmi"><i class="fa-solid fa-file-pdf text-xs"></i></a>` : ''}
+              ${item.docUrl && item.docUrl !== '#' ? `<a href="${item.docUrl}" target="_blank" class="w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-100 text-bps-blue flex items-center justify-center transition-colors shadow-xs" title="Buka Dokumen Docs"><i class="fa-solid fa-file-word text-xs"></i></a>` : ''}
+              ${item.folderUrl && item.folderUrl !== '#' ? `<a href="${item.folderUrl}" target="_blank" class="w-7 h-7 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 flex items-center justify-center transition-colors shadow-xs" title="Buka Folder Drive"><i class="fa-solid fa-folder text-xs"></i></a>` : ''}
+              
+              <!-- Tombol Edit & Hapus Arsip -->
+              <button type="button" onclick="openEditArsipModal('${item.id || item.nomorSurat}')" title="Edit Data Arsip" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-bps-blue flex items-center justify-center transition-colors shadow-xs">
+                <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+              </button>
+              <button type="button" onclick="deleteArsip('${item.id || item.nomorSurat}')" title="Hapus Arsip" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 flex items-center justify-center transition-colors shadow-xs">
+                <i class="fa-solid fa-trash-can text-[11px]"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function filterArchiveTable(query) {
+      if (!appState.archiveList) return;
+      const q = query.toLowerCase().trim();
+      const filtered = appState.archiveList.filter(item => {
+        return (item.nomorSurat && item.nomorSurat.toLowerCase().includes(q)) ||
+               (item.tujuan && item.tujuan.toLowerCase().includes(q)) ||
+               (item.tanggal && item.tanggal.toLowerCase().includes(q)) ||
+               (item.noAgenda && String(item.noAgenda).includes(q));
+      });
+      renderArchiveRows(filtered);
+    }
+
+    function openAddArsipModal() {
+      document.getElementById("modalArsipTitle").textContent = "Tambah Data Riwayat & Arsip";
+      document.getElementById("editArsipId").value = "";
+      document.getElementById("arsipNomorSurat").value = "";
+      document.getElementById("arsipNoAgenda").value = "";
+      document.getElementById("arsipTanggal").value = document.getElementById("tanggalFormattedPreview").textContent || "20 Mei 2026";
+      document.getElementById("arsipJenis").value = "TUNGGAL";
+      document.getElementById("arsipTujuan").value = "";
+      document.getElementById("arsipTotalPersonil").value = 1;
+      document.getElementById("arsipPdfUrl").value = "";
+      document.getElementById("arsipDocUrl").value = "";
+      document.getElementById("modalArsip").classList.remove("hidden");
+    }
+
+    function openEditArsipModal(identifier) {
+      const found = appState.archiveList.find(a => String(a.id) === String(identifier) || String(a.nomorSurat) === String(identifier));
+      if (!found) return;
+
+      document.getElementById("modalArsipTitle").textContent = "Edit Data Riwayat & Arsip";
+      document.getElementById("editArsipId").value = found.id || found.nomorSurat;
+      document.getElementById("arsipNomorSurat").value = found.nomorSurat || "";
+      document.getElementById("arsipNoAgenda").value = found.noAgenda || "";
+      document.getElementById("arsipTanggal").value = found.tanggal || "";
+      document.getElementById("arsipJenis").value = found.jenis || "TUNGGAL";
+      document.getElementById("arsipTujuan").value = found.tujuan || "";
+      document.getElementById("arsipTotalPersonil").value = found.totalPersonil || 1;
+      document.getElementById("arsipPdfUrl").value = found.pdfUrl && found.pdfUrl !== '#' ? found.pdfUrl : "";
+      document.getElementById("arsipDocUrl").value = found.docUrl && found.docUrl !== '#' ? found.docUrl : "";
+      document.getElementById("modalArsip").classList.remove("hidden");
+    }
+
+    function closeArsipModal() {
+      document.getElementById("modalArsip").classList.add("hidden");
+    }
+
+    async function submitArsipForm() {
+      const editId = document.getElementById("editArsipId").value;
+      const nomorSurat = document.getElementById("arsipNomorSurat").value.trim();
+      const noAgenda = document.getElementById("arsipNoAgenda").value.trim();
+      const tanggal = document.getElementById("arsipTanggal").value.trim();
+      const jenis = document.getElementById("arsipJenis").value;
+      const tujuan = document.getElementById("arsipTujuan").value.trim();
+      const totalPersonil = parseInt(document.getElementById("arsipTotalPersonil").value, 10) || 1;
+      const pdfUrl = document.getElementById("arsipPdfUrl").value.trim();
+      const docUrl = document.getElementById("arsipDocUrl").value.trim();
+
+      if (!nomorSurat || !tujuan) {
+        alert("Nomor surat dan uraian tugas wajib diisi.");
+        return;
+      }
+
+      if (editId) {
+        // Mode Update
+        const idx = appState.archiveList.findIndex(a => String(a.id) === String(editId) || String(a.nomorSurat) === String(editId));
+        if (idx !== -1) {
+          appState.archiveList[idx] = {
+            ...appState.archiveList[idx],
+            nomorSurat, noAgenda, tanggal, jenis, tujuan, totalPersonil,
+            pdfUrl: pdfUrl || appState.archiveList[idx].pdfUrl,
+            docUrl: docUrl || appState.archiveList[idx].docUrl
+          };
+        }
+        sendBackendPost({
+          action: "updateArsip",
+          id: editId,
+          nomorSurat, noAgenda, tanggal, jenis, tujuan, totalPersonil, pdfUrl, docUrl
+        });
+      } else {
+        // Mode Tambah
+        const newArsip = {
+          id: Utilities_uuid(),
+          nomorSurat, noAgenda, tanggal, jenis, tujuan, totalPersonil, pdfUrl, docUrl
+        };
+        appState.archiveList.unshift(newArsip);
+        sendBackendPost({
+          action: "addArsip",
+          ...newArsip
+        });
+      }
+
+      localStorage.setItem("SURTUG_ARCHIVE_LIST", JSON.stringify(appState.archiveList));
+      renderArchiveRows(appState.archiveList);
+      closeArsipModal();
+    }
+
+    async function deleteArsip(identifier) {
+      const found = appState.archiveList.find(a => String(a.id) === String(identifier) || String(a.nomorSurat) === String(identifier));
+      const detail = found ? `${found.nomorSurat || "-"} (${found.tujuan || "Surat Tugas"})` : "";
+
+      const ok = await showConfirmModal({
+        title: "Hapus Arsip Surat Tugas",
+        message: "Apakah Anda yakin ingin menghapus data arsip surat tugas ini? Riwayat akan dihapus dari sistem.",
+        detail: detail,
+        confirmText: "Ya, Hapus Arsip",
+        cancelText: "Batal",
+        confirmIcon: "fa-trash-can",
+        type: "danger"
+      });
+      if (!ok) return;
+
+      appState.archiveList = appState.archiveList.filter(a => String(a.id) !== String(identifier) && String(a.nomorSurat) !== String(identifier));
+      localStorage.setItem("SURTUG_ARCHIVE_LIST", JSON.stringify(appState.archiveList));
+      renderArchiveRows(appState.archiveList);
+      sendBackendPost({ action: "deleteArsip", id: identifier, nomorSurat: identifier });
+    }
+
+    // =========================================================================
+    // MASTER PEGAWAI CRUD
+    // =========================================================================
+    function renderMasterPegawaiTable() {
+      renderMasterPegawaiRows(appState.masterPegawai);
+    }
+
+    function renderMasterPegawaiRows(list) {
+      const tbody = document.getElementById("masterPegawaiTableBody");
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Tidak ada data pegawai yang sesuai pencarian.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map((p, idx) => `
+        <tr class="hover:bg-slate-50/80 transition-colors">
+          <td class="p-3.5 text-center text-slate-400 font-semibold">${idx + 1}</td>
+          <td class="p-3.5 font-mono font-bold text-slate-800">${p.nip}</td>
+          <td class="p-3.5 font-bold text-slate-900">${p.nama}</td>
+          <td class="p-3.5 text-slate-700">${p.pangkat_gol || '-'}</td>
+          <td class="p-3.5 text-slate-700">${p.jabatan || '-'}</td>
+          <td class="p-3.5">
+            <span class="bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded-full text-[11px] border border-slate-200">
+              ${p.unit_kerja || 'BPS'}
+            </span>
+          </td>
+          <td class="p-3.5 text-center">
+            <div class="inline-flex items-center space-x-1.5">
+              <button type="button" onclick="openEditPegawaiModal(${p.id})" title="Edit Pegawai" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-bps-blue flex items-center justify-center transition-colors shadow-xs">
+                <i class="fa-solid fa-pen-to-square text-[11px]"></i>
+              </button>
+              <button type="button" onclick="deletePegawai(${p.id}, '${p.nip}')" title="Hapus Pegawai" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 flex items-center justify-center transition-colors shadow-xs">
+                <i class="fa-solid fa-trash-can text-[11px]"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function filterMasterPegawaiTable(query) {
+      if (!appState.masterPegawai) return;
+      const q = query.toLowerCase().trim();
+      const filtered = appState.masterPegawai.filter(p => 
+        (p.nama && p.nama.toLowerCase().includes(q)) ||
+        (p.nip && p.nip.includes(q)) ||
+        (p.jabatan && p.jabatan.toLowerCase().includes(q)) ||
+        (p.unit_kerja && p.unit_kerja.toLowerCase().includes(q))
+      );
+      renderMasterPegawaiRows(filtered);
+    }
+
+    function openAddPegawaiModal() {
+      document.getElementById("modalPegawaiTitle").textContent = "Tambah Pegawai ke Database";
+      document.getElementById("editPegawaiId").value = "";
+      document.getElementById("newNip").value = "";
+      document.getElementById("newNama").value = "";
+      document.getElementById("newPangkat").value = "";
+      document.getElementById("newJabatan").value = "";
+      document.getElementById("newUnit").value = "BPS Provinsi Kalimantan Barat";
+      document.getElementById("modalAddPegawai").classList.remove("hidden");
+    }
+
+    function openEditPegawaiModal(id) {
+      const found = appState.masterPegawai.find(p => String(p.id) === String(id));
+      if (!found) return;
+
+      document.getElementById("modalPegawaiTitle").textContent = "Edit Data Pegawai";
+      document.getElementById("editPegawaiId").value = found.id;
+      document.getElementById("newNip").value = found.nip;
+      document.getElementById("newNama").value = found.nama;
+      document.getElementById("newPangkat").value = found.pangkat_gol || "";
+      document.getElementById("newJabatan").value = found.jabatan || "";
+      document.getElementById("newUnit").value = found.unit_kerja || "BPS Provinsi Kalimantan Barat";
+      document.getElementById("modalAddPegawai").classList.remove("hidden");
+    }
+
+    function closeAddPegawaiModal() {
+      document.getElementById("modalAddPegawai").classList.add("hidden");
+    }
+
+    async function submitPegawaiForm() {
+      const editId = document.getElementById("editPegawaiId").value;
+      const nip = document.getElementById("newNip").value.trim();
+      const nama = document.getElementById("newNama").value.trim();
+      const pangkat_gol = document.getElementById("newPangkat").value.trim();
+      const jabatan = document.getElementById("newJabatan").value.trim();
+      const unit_kerja = document.getElementById("newUnit").value.trim();
+
+      if (!nip || !nama) {
+        alert("NIP dan Nama pegawai wajib diisi.");
+        return;
+      }
+
+      if (editId) {
+        // Mode Update
+        const idx = appState.masterPegawai.findIndex(p => String(p.id) === String(editId));
+        if (idx !== -1) {
+          appState.masterPegawai[idx] = {
+            ...appState.masterPegawai[idx],
+            nip, nama, pangkat_gol, jabatan, unit_kerja
+          };
+        }
+        // Juga update di selectedPegawai jika sedang terpilih
+        const sIdx = appState.selectedPegawai.findIndex(p => String(p.id) === String(editId) || p.nip === nip);
+        if (sIdx !== -1) {
+          appState.selectedPegawai[sIdx] = {
+            ...appState.selectedPegawai[sIdx],
+            nip, nama, pangkat_gol, jabatan, unit_kerja
+          };
+          renderSelectedPegawai();
+        }
+        sendBackendPost({
+          action: "updatePegawai",
+          id: editId,
+          nip, nama, pangkat_gol, jabatan, unit_kerja
+        });
+      } else {
+        // Mode Tambah
+        const newId = appState.masterPegawai.length > 0 ? Math.max(...appState.masterPegawai.map(p => parseInt(p.id, 10) || 0)) + 1 : 1;
+        const newPeg = { id: newId, nip, nama, pangkat_gol, jabatan, unit_kerja };
+        appState.masterPegawai.push(newPeg);
+        addPegawaiToSelection(newPeg);
+        sendBackendPost({
+          action: "addPegawai",
+          ...newPeg
+        });
+      }
+
+      localStorage.setItem("SURTUG_MASTER_PEGAWAI", JSON.stringify(appState.masterPegawai));
+      renderMasterPegawaiTable();
+      closeAddPegawaiModal();
+    }
+
+    async function deletePegawai(id, nip) {
+      const found = appState.masterPegawai.find(p => String(p.id) === String(id) || p.nip === nip);
+      const name = found ? found.nama : "pegawai ini";
+      const detail = found ? `${found.nama} (NIP: ${found.nip || "-"} / ${found.jabatan || "-"})` : "";
+
+      const ok = await showConfirmModal({
+        title: "Hapus Data Pegawai",
+        message: `Apakah Anda yakin ingin menghapus ${name} dari daftar master pegawai?`,
+        detail: detail,
+        confirmText: "Ya, Hapus Pegawai",
+        cancelText: "Batal",
+        confirmIcon: "fa-trash-can",
+        type: "danger"
+      });
+      if (!ok) return;
+
+      appState.masterPegawai = appState.masterPegawai.filter(p => String(p.id) !== String(id) && p.nip !== nip);
+      // Hapus juga dari selectedPegawai jika sedang ada di daftar tugas
+      appState.selectedPegawai = appState.selectedPegawai.filter(p => String(p.id) !== String(id) && p.nip !== nip);
+      
+      localStorage.setItem("SURTUG_MASTER_PEGAWAI", JSON.stringify(appState.masterPegawai));
+      renderMasterPegawaiTable();
+      renderSelectedPegawai();
+      updateModeVisuals();
+      sendBackendPost({ action: "deletePegawai", id: id, nip: nip });
+    }
+  </script>
+</body>
+</html>
