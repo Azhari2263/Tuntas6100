@@ -16,8 +16,27 @@ const BPS_LOGO_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAAfQAAAGbCAMAAAAFqpI3AAADAFBMVEX
  * Fungsi utama untuk menghasilkan dokumen Surat Tugas (Google Docs & PDF)
  */
 function generateSuratTugasDocument(payload, nomorData) {
-  // 1. Dapatkan Template ID dan Root Folder ID
-  let templateId = payload.templateDocId || CONFIG.TEMPLATE_DOC_ID || getSystemProperty("TEMPLATE_DOC_ID", "");
+  // Deteksi Mode: Tunggal (1 Orang) vs Kolektif (> 1 Orang)
+  const isSingle = payload.pegawaiList.length === 1;
+
+  // 1. Dapatkan Template ID yang sesuai (Individu vs Kolektif)
+  let templateId = "";
+  if (isSingle) {
+    templateId = payload.templateIndividuId || 
+                 getSystemProperty("TEMPLATE_INDIVIDU_DOC_ID", "") || 
+                 CONFIG.TEMPLATE_INDIVIDU_DOC_ID || 
+                 payload.templateDocId || 
+                 CONFIG.TEMPLATE_DOC_ID || 
+                 getSystemProperty("TEMPLATE_DOC_ID", "");
+  } else {
+    templateId = payload.templateKolektifId || 
+                 getSystemProperty("TEMPLATE_KOLEKTIF_DOC_ID", "") || 
+                 CONFIG.TEMPLATE_KOLEKTIF_DOC_ID || 
+                 payload.templateDocId || 
+                 CONFIG.TEMPLATE_DOC_ID || 
+                 getSystemProperty("TEMPLATE_DOC_ID", "");
+  }
+
   let rootFolderId = payload.driveRootFolderId || CONFIG.DRIVE_ROOT_FOLDER_ID || getSystemProperty("DRIVE_ROOT_FOLDER_ID", "");
 
   // 2. Siapkan Folder Tujuan Terstruktur di Google Drive
@@ -52,9 +71,6 @@ function generateSuratTugasDocument(payload, nomorData) {
 
   // Bersihkan pemformatan tebal (bold) yang tidak perlu pada naskah
   cleanUpStrayBold(body);
-
-  // Deteksi Mode: Tunggal (1 Orang) vs Kolektif (> 1 Orang)
-  const isSingle = payload.pegawaiList.length === 1;
 
   if (isSingle) {
     applySinglePersonLayout(body, payload.pegawaiList[0]);
@@ -198,14 +214,21 @@ function getOrCreateSubFolder(parentFolder, subFolderName) {
  * Melakukan penggantian teks / placeholder dalam dokumen
  */
 function populateDocumentVariables(body, payload, nomorData) {
-  // Nomor Surat
-  body.replaceText("\\[NO_SURAT_TUGAS\\]", nomorData.nomorSurat);
-  body.replaceText("\\[NOMOR_SURAT\\]", nomorData.nomorSurat);
-  body.replaceText("\\{\\{NOMOR_SURAT\\}\\}", nomorData.nomorSurat);
+  // Nomor Surat Tugas
+  const noSurat = nomorData.nomorSurat || "";
+  body.replaceText("<<No\\s*Surtug>>", noSurat);
+  body.replaceText("<<no\\s*surtug>>", noSurat);
+  body.replaceText("\\[NO_SURAT_TUGAS\\]", noSurat);
+  body.replaceText("\\[NOMOR_SURAT\\]", noSurat);
+  body.replaceText("\\{\\{NOMOR_SURAT\\}\\}", noSurat);
 
-  // Titi Mangsa
+  // Titi Mangsa (Tempat & Tanggal Penetapan)
   const tempat = payload.tempatPenetapan || "Pontianak";
   const tanggal = payload.tanggalPenetapan || formatTanggalIndonesia(new Date());
+  body.replaceText("<<Tempat\\s*Pengesahan>>", tempat);
+  body.replaceText("<<tempat\\s*pengesahan>>", tempat);
+  body.replaceText("<<Tgl\\s*pengesahan>>", tanggal);
+  body.replaceText("<<tgl\\s*pengesahan>>", tanggal);
   body.replaceText("\\[TEMPAT_PENETAPAN\\]", tempat);
   body.replaceText("\\[TANGGAL_PENETAPAN\\]", tanggal);
   body.replaceText("\\{\\{TEMPAT_PENETAPAN\\}\\}", tempat);
@@ -215,6 +238,9 @@ function populateDocumentVariables(body, payload, nomorData) {
   const ttdRujukan = payload.rujukanPejabat || "";
   const noRujukan = payload.rujukanNomor || "";
   const halRujukan = payload.rujukanPerihal || "";
+  body.replaceText("<<ttdsuratrujukan>>", ttdRujukan);
+  body.replaceText("<<nosuratrujukan>>", noRujukan);
+  body.replaceText("<<halsrtrujukan>>", halRujukan);
   body.replaceText("\\[TTD_SURAT_RUJUKAN\\]", ttdRujukan);
   body.replaceText("\\[NO_SURAT_RUJUKAN\\]", noRujukan);
   body.replaceText("\\[HAL_SURAT_RUJUKAN\\]", halRujukan);
@@ -225,28 +251,63 @@ function populateDocumentVariables(body, payload, nomorData) {
   // Rapikan spasi berlebih setelah kata "nomor" pada template
   body.replaceText("nomor\\s{2,}", "nomor ");
 
-  // Uraian Kegiatan "Untuk"
-  const tujuan = payload.tujuanTugas || "";
-  body.replaceText("\\[Tujuan\\]", tujuan);
-  body.replaceText("\\[TUJUAN\\]", tujuan);
-  body.replaceText("\\{\\{TUJUAN\\}\\}", tujuan);
+  // Uraian Kegiatan "Untuk" & Tanggal Kegiatan
+  let rawTujuan = payload.tujuanTugas ? payload.tujuanTugas.trim() : "";
+  let cleanTujuan = rawTujuan.replace(/^Mengikuti\s+(Kegiatan\s+)?/i, "").trim();
+  if (!cleanTujuan) cleanTujuan = rawTujuan;
+
+  const tglKeg = payload.tglKeg || payload.tanggalKegiatan || "";
+
+  body.replaceText("<<Untuk>>", cleanTujuan);
+  body.replaceText("<<untuk>>", cleanTujuan);
+  body.replaceText("\\[Tujuan\\]", rawTujuan);
+  body.replaceText("\\[TUJUAN\\]", rawTujuan);
+  body.replaceText("\\{\\{TUJUAN\\}\\}", rawTujuan);
+
+  if (tglKeg && tglKeg.trim() !== "") {
+    body.replaceText("<<tglkeg>>", tglKeg.trim());
+    body.replaceText("<<tgl_keg>>", tglKeg.trim());
+  } else {
+    // Fallback: gunakan tanggal penetapan agar tidak meninggalkan placeholder literal
+    body.replaceText("<<tglkeg>>", tanggal);
+    body.replaceText("<<tgl_keg>>", tanggal);
+  }
 }
 
 /**
  * Menangani Layout Surat Tugas Tunggal (1 Orang)
  */
 function applySinglePersonLayout(body, person) {
-  body.replaceText("\\[NAMA_DITUGASKAN\\]", person.nama || "");
-  body.replaceText("\\[NIP_DITUGASKAN\\]", person.nip || "");
-  body.replaceText("\\[PANG/GOL_DITUGASKAN\\]", person.pangkat_gol || "");
-  body.replaceText("\\[JABATAN_DITUGASKAN\\]", person.jabatan || "");
+  const nama = person.nama || "";
+  const nip = person.nip || "";
+  const pangkatGol = person.pangkat_gol || "";
+  const jabatan = person.jabatan || "";
+  const peran = person.peran || "Peserta";
 
-  body.replaceText("\\{\\{NAMA_DITUGASKAN\\}\\}", person.nama || "");
-  body.replaceText("\\{\\{NIP_DITUGASKAN\\}\\}", person.nip || "");
-  body.replaceText("\\{\\{PANG/GOL_DITUGASKAN\\}\\}", person.pangkat_gol || "");
-  body.replaceText("\\{\\{JABATAN_DITUGASKAN\\}\\}", person.jabatan || "");
+  // Template Baru <<...>>
+  body.replaceText("<<Nama\\s*Penerima>>", nama);
+  body.replaceText("<<nama\\s*penerima>>", nama);
+  body.replaceText("<<NIP>>", nip);
+  body.replaceText("<<nip>>", nip);
+  body.replaceText("<<Pangkatgol>>", pangkatGol);
+  body.replaceText("<<pangkatgol>>", pangkatGol);
+  body.replaceText("<<Jabatan>>", jabatan);
+  body.replaceText("<<jabatan>>", jabatan);
+  body.replaceText("<<Peran>>", peran);
+  body.replaceText("<<peran>>", peran);
 
-  // Hapus lembar lampiran bawaan template
+  // Template Lama [...] dan {{...}}
+  body.replaceText("\\[NAMA_DITUGASKAN\\]", nama);
+  body.replaceText("\\[NIP_DITUGASKAN\\]", nip);
+  body.replaceText("\\[PANG/GOL_DITUGASKAN\\]", pangkatGol);
+  body.replaceText("\\[JABATAN_DITUGASKAN\\]", jabatan);
+
+  body.replaceText("\\{\\{NAMA_DITUGASKAN\\}\\}", nama);
+  body.replaceText("\\{\\{NIP_DITUGASKAN\\}\\}", nip);
+  body.replaceText("\\{\\{PANG/GOL_DITUGASKAN\\}\\}", pangkatGol);
+  body.replaceText("\\{\\{JABATAN_DITUGASKAN\\}\\}", jabatan);
+
+  // Hapus lembar lampiran bawaan template jika ada
   removeLampiranSection(body);
 }
 
@@ -255,6 +316,19 @@ function applySinglePersonLayout(body, person) {
  * Mendukung template dengan tabel terpisah maupun tabel gabungan (Template Surtug.docx bawaan)
  */
 function applyCollectivePersonLayout(body, pegawaiList, payload) {
+  // Template Baru <<...>>
+  body.replaceText("<<Nama\\s*Penerima>>", "(terlampir)");
+  body.replaceText("<<nama\\s*penerima>>", "(terlampir)");
+  body.replaceText("<<NIP>>", "(terlampir)");
+  body.replaceText("<<nip>>", "(terlampir)");
+  body.replaceText("<<Pangkatgol>>", "(terlampir)");
+  body.replaceText("<<pangkatgol>>", "(terlampir)");
+  body.replaceText("<<Jabatan>>", "(terlampir)");
+  body.replaceText("<<jabatan>>", "(terlampir)");
+  body.replaceText("<<Peran>>", "");
+  body.replaceText("<<peran>>", "");
+
+  // Template Lama
   body.replaceText("\\[NAMA_DITUGASKAN\\]", "(terlampir)");
   body.replaceText("\\[NIP_DITUGASKAN\\]", "(terlampir)");
   body.replaceText("\\[PANG/GOL_DITUGASKAN\\]", "(terlampir)");
@@ -596,9 +670,32 @@ function getTableText(table) {
  * Menangani konsiderans Menimbang butir b
  */
 function handleMenimbangClauseB(body, includeMenimbangB) {
-  const clauseText = "bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;";
   if (!includeMenimbangB) {
+    const clauseText = "bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;";
     body.replaceText(clauseText, "");
+
+    // Bersihkan baris/paragraf kosong di tabel konsiderans
+    try {
+      const tables = body.getTables();
+      for (let i = 0; i < tables.length; i++) {
+        const t = tables[i];
+        for (let r = 0; r < t.getNumRows(); r++) {
+          const row = t.getRow(r);
+          for (let c = 0; c < row.getNumCells(); c++) {
+            const cell = row.getCell(c);
+            for (let pIdx = cell.getNumChildren() - 1; pIdx >= 0; pIdx--) {
+              const child = cell.getChild(pIdx);
+              if (child.getType() === DocumentApp.ElementType.PARAGRAPH) {
+                const p = child.asParagraph();
+                if (p.getText().trim() === "" && cell.getNumChildren() > 1) {
+                  try { cell.removeChild(child); } catch (e) {}
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (errCleanB) {}
   }
 }
 
@@ -610,6 +707,16 @@ function handleSignatoryBlock(body, payload) {
   const jabatan = payload.pejabatJabatan && payload.pejabatJabatan.trim() !== "" ? payload.pejabatJabatan.trim() : "Kepala Badan Pusat Statistik Provinsi Kalimantan Barat";
   const nip = payload.pejabatNip ? payload.pejabatNip.trim() : "";
 
+  // Template Baru <<Jabttd>> dan <<ttd>>
+  body.replaceText("<<Jabttd>>,", jabatan + ",");
+  body.replaceText("<<Jabttd>>", jabatan);
+  body.replaceText("<<jabttd>>", jabatan);
+
+  // Tangani placeholder ttd nama pejabat (termasuk handle typo Word <<ttd>)
+  body.replaceText("<<ttd>>", nama);
+  body.replaceText("<<ttd>", nama);
+
+  // Fallback nama & jabatan literal jika masih ada di template
   body.replaceText("Muh Saichudin", nama);
   body.replaceText("\\[NAMA_PEJABAT\\]", nama);
   body.replaceText("\\{\\{NAMA_PEJABAT\\}\\}", nama);

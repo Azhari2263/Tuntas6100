@@ -110,9 +110,16 @@
         </div>
       </div>
 
-      <div class="text-xs text-blue-100 hidden sm:flex items-center space-x-2 font-medium">
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <span>Terkoneksi</span>
+      <div class="flex items-center space-x-3">
+        <button type="button" onclick="openSettingsModal()" 
+                class="text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-1.5 rounded-xl border border-white/20 transition-all flex items-center space-x-1.5 shadow-xs">
+          <i class="fa-solid fa-sliders text-bps-orange"></i>
+          <span>Pengaturan Template</span>
+        </button>
+        <div class="text-xs text-blue-100 hidden sm:flex items-center space-x-2 font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>Terkoneksi</span>
+        </div>
       </div>
     </div>
 
@@ -157,9 +164,13 @@
             </p>
           </div>
         </div>
-        <div class="self-start sm:self-auto">
+        <div class="flex flex-col sm:items-end gap-1.5 self-start sm:self-auto">
           <span id="badgePersonCount" class="bg-slate-100 text-slate-600 font-bold px-3.5 py-1.5 rounded-full text-xs border border-slate-200 shadow-xs inline-block">
             0 Pegawai Ditugaskan
+          </span>
+          <span id="badgeTemplateInfo" class="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+            <i class="fa-solid fa-file-lines text-slate-400"></i>
+            <span>Pilih pegawai untuk menentukan template</span>
           </span>
         </div>
       </div>
@@ -319,9 +330,23 @@
                 </div>
               </div>
 
-              <div>
-                <textarea id="tujuanTugas" required rows="4" placeholder="Uraikan secara jelas tujuan, tanggal, moda pelaksanaan (MOOC / Klasikal / Daring), dan lokasi kegiatan..." 
-                          class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl p-3.5 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400 font-sans leading-relaxed"></textarea>
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                <div class="md:col-span-8">
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    Nama / Uraian Kegiatan (Diktum "Untuk") <span class="text-red-500">*</span>
+                  </label>
+                  <textarea id="tujuanTugas" required rows="3" placeholder="Contoh: Rapat Koordinasi dan Evaluasi Kinerja Penyelenggaraan Kegiatan Sensus dan Survei BPS se-Provinsi Kalimantan Barat Tahun 2026 yang dilaksanakan di Hotel Mercure Pontianak" 
+                            class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl p-3 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400 font-sans leading-relaxed"></textarea>
+                  <p class="text-[11px] text-slate-400 mt-1">Mengisi placeholder <code class="bg-slate-100 px-1 py-0.5 rounded text-bps-blue font-mono font-semibold">&lt;&lt;Untuk&gt;&gt;</code> pada naskah surat tugas.</p>
+                </div>
+                <div class="md:col-span-4">
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    Tanggal Pelaksanaan Kegiatan <span class="text-red-500">*</span>
+                  </label>
+                  <input type="text" id="tglKeg" placeholder="Contoh: 24 s.d. 26 November 2026" 
+                         class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400 font-sans" />
+                  <p class="text-[11px] text-slate-400 mt-1">Mengisi placeholder <code class="bg-slate-100 px-1 py-0.5 rounded text-bps-blue font-mono font-semibold">&lt;&lt;tglkeg&gt;&gt;</code> pada naskah surat tugas.</p>
+                </div>
               </div>
             </div>
 
@@ -607,6 +632,73 @@
 
   </main>
 
+  <!-- MODAL: PENGATURAN TEMPLATE & SISTEM -->
+  <div id="modalSettings" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-bps-blue flex items-center justify-center text-sm font-bold">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-base">Pengaturan Template Master</h3>
+            <p class="text-[11px] text-slate-400">Konfigurasi Google Docs Master Template & Folder Arsip</p>
+          </div>
+        </div>
+        <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">Template Surat Tugas Individu (1 Orang)</label>
+            <a id="linkTemplateIndividu" href="https://docs.google.com/document/d/1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc/edit?tab=t.0" target="_blank" 
+               class="text-[11px] text-bps-blue hover:underline flex items-center gap-1 font-medium">
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Buka Dokumen
+            </a>
+          </div>
+          <input type="text" id="cfgTemplateIndividu" value="1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc" 
+                 class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">ID Google Docs template untuk penugasan 1 orang pegawai.</p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">Template Surat Tugas Kolektif (&gt; 1 Orang)</label>
+            <a id="linkTemplateKolektif" href="https://docs.google.com/document/d/1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4/edit?tab=t.0" target="_blank" 
+               class="text-[11px] text-bps-blue hover:underline flex items-center gap-1 font-medium">
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Buka Dokumen
+            </a>
+          </div>
+          <input type="text" id="cfgTemplateKolektif" value="1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4" 
+                 class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">ID Google Docs template untuk penugasan rombongan (memuat tabel lampiran).</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Folder Induk Google Drive (Arsip PDF & Docs)</label>
+          <input type="text" id="cfgFolderId" value="1-73PTEFaw7I6H3mC1IRQC69yYukQ4WSW" 
+                 class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none" />
+          <p class="text-[10px] text-slate-400 mt-1">ID folder penyimpanan Google Drive arsip surat tugas otomatis.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+        <button type="button" onclick="closeSettingsModal()" 
+                class="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold">
+          Batal
+        </button>
+        <button type="button" onclick="saveSettingsConfig()" 
+                class="px-4 py-2 bg-bps-blue hover:bg-bps-darkblue text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm">
+          <i class="fa-solid fa-floppy-disk text-bps-orange"></i>
+          <span>Simpan Konfigurasi</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: LIVE PREVIEW DOKUMEN -->
   <div id="modalPreview" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
     <div class="bg-slate-100 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
@@ -618,7 +710,10 @@
             <i class="fa-solid fa-file-lines"></i>
           </div>
           <div>
-            <h3 class="font-bold text-slate-800 text-sm sm:text-base">Tinjauan Pratinjau Format Surat Tugas</h3>
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base">Tinjauan Pratinjau Format Surat Tugas</h3>
+              <span id="prevTemplateBadge" class="text-[11px] bg-blue-50 text-bps-blue px-2 py-0.5 rounded-full border border-blue-200 font-semibold"></span>
+            </div>
             <p class="text-[11px] text-slate-400">Simulasi tampilan tata letak cetak dokumen naskah dinas resmi</p>
           </div>
         </div>
@@ -1202,7 +1297,9 @@
     let appState = {
       // Backend URL terhubung secara permanen ke Google Apps Script
       scriptUrl: "https://script.google.com/macros/s/AKfycbw6zQ2lJn-CUoE7w0wutaxiaurU-oS3E7rlnWb_Zlnf8ZouW6MMln92miEY1j6iMD7m/exec",
-      templateId: "12qHb-k8beWSpNmnOD5fjQBLS5g-BjI1yNaHmHFWNSNw",
+      templateIndividuId: "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc",
+      templateKolektifId: "1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4",
+      templateId: "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc",
       folderId: "1-73PTEFaw7I6H3mC1IRQC69yYukQ4WSW",
       satker: null,
       pejabatList: [],
@@ -1320,6 +1417,10 @@
             appState.previewNomor = res.data.previewNomorSurat;
             document.getElementById("previewNomorSurat").textContent = res.data.previewNomorSurat;
           }
+          if (res.data.templateIndividuId) appState.templateIndividuId = res.data.templateIndividuId;
+          if (res.data.templateKolektifId) appState.templateKolektifId = res.data.templateKolektifId;
+          if (res.data.templateDocId) appState.templateId = res.data.templateDocId;
+          if (res.data.driveRootFolderId) appState.folderId = res.data.driveRootFolderId;
         }
       } catch (err) {
         console.warn("Backend offline atau sinkronisasi ditunda, menggunakan data lokal:", err);
@@ -1528,6 +1629,7 @@
       const modeDesc = document.getElementById("modeDesc");
       const modeIcon = document.getElementById("modeIcon");
 
+      const badgeTpl = document.getElementById("badgeTemplateInfo");
       if (count === 0) {
         badge.textContent = "0 Pegawai Ditugaskan";
         badge.className = "bg-slate-100 text-slate-600 font-bold px-3.5 py-1.5 rounded-full text-xs border border-slate-200 shadow-xs inline-block";
@@ -1535,20 +1637,27 @@
         modeDesc.textContent = "Silakan cari dan pilih minimal 1 orang pegawai yang akan diberikan surat penugasan.";
         modeIcon.innerHTML = `<i class="fa-solid fa-user-plus text-slate-400"></i>`;
         modeIcon.className = "w-11 h-11 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
+        if (badgeTpl) badgeTpl.innerHTML = `<i class="fa-solid fa-file-lines text-slate-400"></i><span>Pilih pegawai untuk menentukan template</span>`;
       } else if (count === 1) {
         badge.textContent = "1 Pegawai Ditugaskan";
         badge.className = "bg-blue-50 text-bps-blue font-bold px-3.5 py-1.5 rounded-full text-xs border border-blue-200 shadow-xs inline-block";
         modeTitle.textContent = "Mode: Surat Tugas Tunggal (1 Orang)";
-        modeDesc.textContent = "Identitas dicetak langsung di badan surat (1 Halaman F4 Portrait). Tidak ada lembar lampiran.";
+        modeDesc.textContent = "Menggunakan Template Surat Tugas Individu. Identitas dicetak langsung di badan surat (1 Halaman F4).";
         modeIcon.innerHTML = `<i class="fa-solid fa-user"></i>`;
         modeIcon.className = "w-11 h-11 rounded-2xl bg-blue-50 text-bps-blue flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
+        if (badgeTpl) {
+          badgeTpl.innerHTML = `<a href="https://docs.google.com/document/d/${appState.templateIndividuId}/edit?tab=t.0" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-semibold"><i class="fa-solid fa-file-word text-blue-500"></i><span>Template Individu Aktif</span><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
+        }
       } else {
         badge.textContent = `${count} Pegawai Ditugaskan`;
         badge.className = "bg-amber-50 text-bps-orange font-bold px-3.5 py-1.5 rounded-full text-xs border border-amber-200 shadow-xs inline-block";
         modeTitle.textContent = `Mode: Surat Tugas Kolektif (${count} Orang)`;
-        modeDesc.textContent = "Badan surat mencantumkan klausul '(terlampir)'. Otomatis menyusun lembar lampiran berorientasi Landscape.";
+        modeDesc.textContent = "Menggunakan Template Surat Tugas Kolektif. Klausul '(terlampir)' dengan tabel lampiran personil.";
         modeIcon.innerHTML = `<i class="fa-solid fa-users"></i>`;
         modeIcon.className = "w-11 h-11 rounded-2xl bg-amber-50 text-bps-orange flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
+        if (badgeTpl) {
+          badgeTpl.innerHTML = `<a href="https://docs.google.com/document/d/${appState.templateKolektifId}/edit?tab=t.0" target="_blank" class="text-amber-700 hover:text-amber-900 hover:underline flex items-center gap-1 font-semibold"><i class="fa-solid fa-file-word text-amber-500"></i><span>Template Kolektif Aktif</span><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
+        }
       }
     }
 
@@ -1606,12 +1715,16 @@
     // =========================================================================
     function applyPreset(type) {
       const field = document.getElementById("tujuanTugas");
+      const tglField = document.getElementById("tglKeg");
       if (type === 'latsar') {
-        field.value = "Mengikuti Kegiatan Pelatihan Dasar CPNS Golongan II BPS Angkatan ke-6 Tahun 2026 Gelombang I melalui Pembelajaran Mandiri metode MOOC tanggal 1 s.d 12 Juni 2026, Distance Learning tanggal 22 Juni s.d. 16 Juli 2026, Aktualisasi tanggal 20 Juli s.d. 28 Agustus 2026 di Satuan Kerja masing-masing, dan Pembelajaran Klasikal tanggal 31 Agustus s.d. 5 September 2026 di Pusdiklat BPS Jakarta.";
+        field.value = "Pelatihan Dasar CPNS Golongan II BPS Angkatan ke-6 Tahun 2026 melalui Pembelajaran Mandiri metode MOOC, Distance Learning, Aktualisasi di Satuan Kerja masing-masing, dan Pembelajaran Klasikal di Pusdiklat BPS Jakarta";
+        if (tglField) tglField.value = "1 Juni s.d. 5 September 2026";
       } else if (type === 'rakor') {
-        field.value = "Mengikuti Rapat Koordinasi dan Evaluasi Kinerja Penyelenggaraan Kegiatan Sensus dan Survei BPS se-Provinsi Kalimantan Barat Tahun 2026 yang dilaksanakan di Hotel Mercure Pontianak pada tanggal 24 s.d. 26 November 2026.";
+        field.value = "Rapat Koordinasi dan Evaluasi Kinerja Penyelenggaraan Kegiatan Sensus dan Survei BPS se-Provinsi Kalimantan Barat Tahun 2026 yang dilaksanakan di Hotel Mercure Pontianak";
+        if (tglField) tglField.value = "24 s.d. 26 November 2026";
       } else if (type === 'lapangan') {
-        field.value = "Melaksanakan kegiatan Pendataan Lapangan dan Pengawasan Kualitas Survei Sosial Ekonomi Nasional (Susenas) Tahun 2026 di wilayah sampel terpilih Provinsi Kalimantan Barat.";
+        field.value = "Supervisi dan Pendataan Lapangan Kegiatan Survei Sosial Ekonomi Nasional (Susenas) Tahun 2026 di Kabupaten Mempawah";
+        if (tglField) tglField.value = "1 s.d. 15 Maret 2026";
       }
     }
 
@@ -1968,30 +2081,40 @@
         <p>${i+1}. ${h.isi}</p>
       `).join("");
 
-      // Kepada Block (Tunggal vs Kolektif)
+      // Kepada Block & Diktum Untuk (Tunggal vs Kolektif)
       const isSingle = appState.selectedPegawai.length === 1;
       const kepadaDiv = document.getElementById("prevKepadaBlock");
+      const badgeTplPreview = document.getElementById("prevTemplateBadge");
+      const tglKegVal = document.getElementById("tglKeg") && document.getElementById("tglKeg").value.trim() ? 
+                        document.getElementById("tglKeg").value.trim() : tanggal;
+      const cleanTujuan = tujuan.replace(/^Mengikuti\s+(Kegiatan\s+)?/i, "").trim();
 
       if (isSingle) {
         const p = appState.selectedPegawai[0];
+        const peran = p.peran || "Peserta";
         kepadaDiv.innerHTML = `
-          <div class="grid grid-cols-4 gap-y-1">
-            <span class="w-20">Nama</span><span>: ${p.nama}</span><span></span><span></span>
-            <span class="w-20">NIP</span><span>: ${p.nip}</span><span></span><span></span>
-            <span class="w-20">Pangkat/Gol</span><span>: ${p.pangkat_gol || '-'}</span><span></span><span></span>
-            <span class="w-20">Jabatan</span><span class="col-span-3">: ${p.jabatan || '-'}</span>
+          <div class="space-y-1">
+            <div class="flex"><span class="w-24 flex-shrink-0">Nama</span><span class="w-4">:</span><span class="font-semibold">${p.nama}</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">NIP</span><span class="w-4">:</span><span>${p.nip}</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Pangkat/Gol</span><span class="w-4">:</span><span>${p.pangkat_gol || '-'}</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Jabatan</span><span class="w-4">:</span><span>${p.jabatan || '-'}</span></div>
           </div>
         `;
+        document.getElementById("prevUntuk").textContent = `Mengikuti Kegiatan ${cleanTujuan} pada tanggal ${tglKegVal} sebagai ${peran}.`;
         document.getElementById("prevLampiranWrapper").classList.add("hidden");
+        if (badgeTplPreview) {
+          badgeTplPreview.innerHTML = `<i class="fa-solid fa-file-word text-blue-500 mr-1"></i>Template Individu`;
+        }
       } else {
         kepadaDiv.innerHTML = `
-          <div class="grid grid-cols-2 gap-y-1">
-            <span>Nama</span><span>: (terlampir)</span>
-            <span>NIP</span><span>: (terlampir)</span>
-            <span>Pangkat/Gol</span><span>: (terlampir)</span>
-            <span>Jabatan</span><span>: (terlampir)</span>
+          <div class="space-y-1">
+            <div class="flex"><span class="w-24 flex-shrink-0">Nama</span><span class="w-4">:</span><span>(terlampir)</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">NIP</span><span class="w-4">:</span><span>(terlampir)</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Pangkat/Gol</span><span class="w-4">:</span><span>(terlampir)</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Jabatan</span><span class="w-4">:</span><span>(terlampir)</span></div>
           </div>
         `;
+        document.getElementById("prevUntuk").textContent = `Mengikuti Kegiatan ${cleanTujuan} pada tanggal ${tglKegVal}`;
 
         // Tampilkan Pratinjau Lampiran
         document.getElementById("prevLampiranWrapper").classList.remove("hidden");
@@ -2000,6 +2123,10 @@
         document.getElementById("prevLampTanggal2").textContent = tanggal;
         document.getElementById("prevLampTempat").textContent = tempat;
         document.getElementById("prevLampPejabat").textContent = pejabatNama;
+
+        if (badgeTplPreview) {
+          badgeTplPreview.innerHTML = `<i class="fa-solid fa-file-word text-amber-500 mr-1"></i>Template Kolektif`;
+        }
 
         const lampBody = document.getElementById("prevLampiranTbody");
         lampBody.innerHTML = appState.selectedPegawai.map((p, i) => `
@@ -2013,9 +2140,6 @@
           </tr>
         `).join("");
       }
-
-      // Untuk
-      document.getElementById("prevUntuk").textContent = tujuan;
 
       // Buka Modal
       document.getElementById("modalPreview").classList.remove("hidden");
@@ -2043,9 +2167,16 @@
       progressText.textContent = "Menghubungi server Apps Script...";
       progressBar.style.width = "25%";
 
+      const isSingleMode = appState.selectedPegawai.length === 1;
+      const targetTemplateDocId = isSingleMode ? 
+        (appState.templateIndividuId || "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc") : 
+        (appState.templateKolektifId || "1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4");
+
       const payload = {
         action: "createSuratTugas",
-        templateDocId: appState.templateId || "",
+        templateDocId: targetTemplateDocId,
+        templateIndividuId: appState.templateIndividuId || "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc",
+        templateKolektifId: appState.templateKolektifId || "1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4",
         driveRootFolderId: appState.folderId || "",
         tempatPenetapan: document.getElementById("tempatPenetapan").value,
         tanggalPenetapan: document.getElementById("tanggalFormattedPreview").textContent,
@@ -2054,6 +2185,7 @@
         rujukanPerihal: document.getElementById("rujukanPerihal").value,
         includeMenimbangB: document.getElementById("includeMenimbangB").checked,
         tujuanTugas: document.getElementById("tujuanTugas").value,
+        tglKeg: document.getElementById("tglKeg") ? document.getElementById("tglKeg").value.trim() : "",
         pejabatNama: document.getElementById("pejabatNama").value,
         pejabatJabatan: document.getElementById("pejabatJabatan").value,
         pejabatNip: appState.currentPejabatNip || "",
@@ -2648,6 +2780,47 @@
       updateModeVisuals();
       sendBackendPost({ action: "deletePegawai", id: id, nip: nip });
     }
-  </script>
+  
+    // =========================================================================
+    // MODAL PENGATURAN TEMPLATE
+    // =========================================================================
+    function openSettingsModal() {
+      document.getElementById("cfgTemplateIndividu").value = appState.templateIndividuId || "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc";
+      document.getElementById("cfgTemplateKolektif").value = appState.templateKolektifId || "1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4";
+      document.getElementById("cfgFolderId").value = appState.folderId || "1-73PTEFaw7I6H3mC1IRQC69yYukQ4WSW";
+      document.getElementById("linkTemplateIndividu").href = `https://docs.google.com/document/d/${appState.templateIndividuId}/edit?tab=t.0`;
+      document.getElementById("linkTemplateKolektif").href = `https://docs.google.com/document/d/${appState.templateKolektifId}/edit?tab=t.0`;
+      document.getElementById("modalSettings").classList.remove("hidden");
+    }
+
+    function closeSettingsModal() {
+      document.getElementById("modalSettings").classList.add("hidden");
+    }
+
+    async function saveSettingsConfig() {
+      const indId = document.getElementById("cfgTemplateIndividu").value.trim();
+      const kolId = document.getElementById("cfgTemplateKolektif").value.trim();
+      const fldId = document.getElementById("cfgFolderId").value.trim();
+
+      if (indId) appState.templateIndividuId = indId;
+      if (kolId) appState.templateKolektifId = kolId;
+      if (fldId) appState.folderId = fldId;
+
+      localStorage.setItem("SURTUG_TEMPLATE_INDIVIDU_ID", indId);
+      localStorage.setItem("SURTUG_TEMPLATE_KOLEKTIF_ID", kolId);
+      localStorage.setItem("SURTUG_FOLDER_ID", fldId);
+
+      sendBackendPost({
+        action: "saveConfig",
+        templateIndividuId: indId,
+        templateKolektifId: kolId,
+        driveRootFolderId: fldId
+      });
+
+      closeSettingsModal();
+      updateModeVisuals();
+      alert("Pengaturan template berhasil disimpan.");
+    }
+</script>
 </body>
 </html>

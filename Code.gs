@@ -13,7 +13,9 @@
 // =============================================================================
 const CONFIG = {
   SPREADSHEET_ID: "", // Biarkan kosong jika container-bound, atau isi ID Spreadsheet Anda
-  TEMPLATE_DOC_ID: "12qHb-k8beWSpNmnOD5fjQBLS5g-BjI1yNaHmHFWNSNw", // ID Google Docs Master Template
+  TEMPLATE_DOC_ID: "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc", // ID Google Docs Master Template Fallback
+  TEMPLATE_INDIVIDU_DOC_ID: "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc", // ID Google Docs Master Template Individu
+  TEMPLATE_KOLEKTIF_DOC_ID: "1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4", // ID Google Docs Master Template Kolektif
   DRIVE_ROOT_FOLDER_ID: "1-73PTEFaw7I6H3mC1IRQC69yYukQ4WSW", // ID Folder Induk arsip di Google Drive
   DEFAULT_KODE_SATKER: "61513",
   DEFAULT_KLASIFIKASI: "KP.650",
@@ -225,7 +227,9 @@ function handleGetInitialData() {
   const curYear = new Date().getFullYear();
   const nextNumber = getNextNumberPreview(curYear, satker.kode_satker, CONFIG.DEFAULT_KLASIFIKASI);
 
-  // 6. Konfigurasi Tersimpan (Template Doc ID & Drive Folder ID)
+  // 6. Konfigurasi Tersimpan (Template Doc IDs & Drive Folder ID)
+  const savedTemplateIndividuId = getSystemProperty("TEMPLATE_INDIVIDU_DOC_ID", CONFIG.TEMPLATE_INDIVIDU_DOC_ID || "");
+  const savedTemplateKolektifId = getSystemProperty("TEMPLATE_KOLEKTIF_DOC_ID", CONFIG.TEMPLATE_KOLEKTIF_DOC_ID || "");
   const savedTemplateId = getSystemProperty("TEMPLATE_DOC_ID", CONFIG.TEMPLATE_DOC_ID || "");
   const savedFolderId = getSystemProperty("DRIVE_ROOT_FOLDER_ID", CONFIG.DRIVE_ROOT_FOLDER_ID || "");
 
@@ -241,6 +245,8 @@ function handleGetInitialData() {
       currentYear: curYear,
       todayFormatted: formatTanggalIndonesia(new Date()),
       templateDocId: savedTemplateId,
+      templateIndividuId: savedTemplateIndividuId,
+      templateKolektifId: savedTemplateKolektifId,
       driveRootFolderId: savedFolderId
     }
   };
@@ -355,6 +361,12 @@ function handleCreateSuratTugas(payload) {
   }
 
   // 2. Resolve Template ID & Folder ID (prioritas: payload > Script Properties > CONFIG)
+  if (payload.templateIndividuId && payload.templateIndividuId.trim() !== "") {
+    setSystemProperty("TEMPLATE_INDIVIDU_DOC_ID", payload.templateIndividuId.trim());
+  }
+  if (payload.templateKolektifId && payload.templateKolektifId.trim() !== "") {
+    setSystemProperty("TEMPLATE_KOLEKTIF_DOC_ID", payload.templateKolektifId.trim());
+  }
   if (payload.templateDocId && payload.templateDocId.trim() !== "") {
     setSystemProperty("TEMPLATE_DOC_ID", payload.templateDocId.trim());
   }
@@ -1150,6 +1162,8 @@ function handleDeleteDasarHukum(payload) {
  * Menyimpan konfigurasi ke Script Properties
  */
 function handleSaveConfig(payload) {
+  if (payload.templateIndividuId) setSystemProperty("TEMPLATE_INDIVIDU_DOC_ID", payload.templateIndividuId.trim());
+  if (payload.templateKolektifId) setSystemProperty("TEMPLATE_KOLEKTIF_DOC_ID", payload.templateKolektifId.trim());
   if (payload.templateDocId) setSystemProperty("TEMPLATE_DOC_ID", payload.templateDocId.trim());
   if (payload.driveRootFolderId) setSystemProperty("DRIVE_ROOT_FOLDER_ID", payload.driveRootFolderId.trim());
   if (payload.spreadsheetId) setSystemProperty("SPREADSHEET_ID", payload.spreadsheetId.trim());
