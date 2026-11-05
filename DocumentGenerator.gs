@@ -390,11 +390,17 @@ function applyCollectivePersonLayout(body, pegawaiList, payload) {
     }
 
     const headerRow = lampiranTable.getRow(headerRowIndex);
+    const colWidths = [];
     if (headerRow) {
       try {
         headerRow.setMinimumHeight(24);
         for (let c = 0; c < headerRow.getNumCells(); c++) {
           headerRow.getCell(c).setVerticalAlignment(DocumentApp.VerticalAlignment.CENTER);
+          try {
+            colWidths[c] = headerRow.getCell(c).getWidth();
+          } catch (eCw) {
+            colWidths[c] = null;
+          }
         }
       } catch (eH) {}
     }
@@ -434,7 +440,7 @@ function applyCollectivePersonLayout(body, pegawaiList, payload) {
         row.appendTableCell("");
       }
 
-      fillLampiranRow(row, idx, p, headerRow);
+      fillLampiranRow(row, idx, p, headerRow, colWidths);
     });
 
     // 4. Jika ada sisa baris placeholder berlebih, hapus
@@ -459,7 +465,8 @@ function applyCollectivePersonLayout(body, pegawaiList, payload) {
         if (p.getText().trim() === "") {
           aboveEmptyCount++;
           if (aboveEmptyCount > 1) {
-            p.setText("").setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+            try { p.clear(); } catch (e) {}
+            p.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
           } else {
             p.setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
           }
@@ -481,7 +488,8 @@ function applyCollectivePersonLayout(body, pegawaiList, payload) {
         if (p.getText().trim() === "") {
           belowEmptyCount++;
           if (belowEmptyCount > 1) {
-            p.setText("").setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+            try { p.clear(); } catch (e) {}
+            p.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
           } else {
             p.setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
           }
@@ -496,9 +504,9 @@ function applyCollectivePersonLayout(body, pegawaiList, payload) {
 }
 
 /**
- * Mengisi nilai sel dan memformat tampilan baris data lampiran pegawai
+ * Mengisi nilai sel dan memformat tampilan baris data lampiran pegawai secara efisien
  */
-function fillLampiranRow(row, idx, p, headerRow) {
+function fillLampiranRow(row, idx, p, headerRow, colWidths) {
   const numCells = row.getNumCells();
   const peranColIdx = numCells - 1; // Kolom terakhir selalu 'Peran'
   const jabColIdx = 4;              // Kolom ke-4 selalu 'Jabatan'
@@ -543,13 +551,16 @@ function fillLampiranRow(row, idx, p, headerRow) {
     cell.setVerticalAlignment(DocumentApp.VerticalAlignment.CENTER);
 
     try {
-      if (headerRow && headerRow.getNumCells() > c) {
+      if (colWidths && colWidths[c] && colWidths[c] > 0) {
+        cell.setWidth(colWidths[c]);
+      } else if (headerRow && headerRow.getNumCells() > c) {
         const hw = headerRow.getCell(c).getWidth();
         if (hw && hw > 0) cell.setWidth(hw);
       }
     } catch (eW) {}
 
-    for (let pIdx = 0; pIdx < cell.getNumChildren(); pIdx++) {
+    const numChildren = cell.getNumChildren();
+    for (let pIdx = 0; pIdx < numChildren; pIdx++) {
       const child = cell.getChild(pIdx);
       if (child.getType() === DocumentApp.ElementType.PARAGRAPH) {
         const pElem = child.asParagraph();
@@ -616,79 +627,72 @@ function removeLampiranSection(body) {
 }
 
 /**
- * Membersihkan seluruh elemen kosong dan PageBreak di akhir body agar tidak memunculkan halaman kosong
+ * Membersihkan elemen kosong dan PageBreak yang berada DI AKHIR DOKUMEN (setelah seluruh konten selesai).
+ * PENTING: Fungsi ini TIDAK BOLEH menghapus paragraf kosong di dalam konten (seperti spasi tanda tangan pejabat di atas nama).
  */
 function cleanTrailingEmptyParagraphs(body) {
   if (!body) return;
 
-  // 1. Hapus paragraf kosong dari indeks (getNumChildren() - 2) mundur ke belakang.
-  // Google Docs mengizinkan penghapusan elemen-elemen ini selama elemen terakhir (n - 1) masih ada.
-  while (body.getNumChildren() > 1) {
-    const numChildren = body.getNumChildren();
-    const candidateIdx = numChildren - 2;
-    const candidate = body.getChild(candidateIdx);
+  const numChildren = body.getNumChildren();
+  let lastContentIdx = -1;
 
-    if (candidate.getType() === DocumentApp.ElementType.PAGE_BREAK) {
-      try {
-        body.removeChild(candidate);
-        continue;
-      } catch (ePB) {
+  // 1. Cari indeks elemen terakhir yang memuat konten nyata (tabel atau paragraf dengan teks/gambar)
+  for (let i = numChildren - 1; i >= 0; i--) {
+    const child = body.getChild(i);
+    const cType = child.getType();
+    if (cType === DocumentApp.ElementType.TABLE) {
+      lastContentIdx = i;
+      break;
+    } else if (cType === DocumentApp.ElementType.PARAGRAPH) {
+      const p = child.asParagraph();
+      if (p.getText().trim() !== "") {
+        lastContentIdx = i;
         break;
       }
-    }
-
-    if (candidate.getType() === DocumentApp.ElementType.PARAGRAPH) {
-      const p = candidate.asParagraph();
-      // Bersihkan PageBreak jika ada di dalam paragraf
-      for (let c = p.getNumChildren() - 1; c >= 0; c--) {
-        if (p.getChild(c).getType() === DocumentApp.ElementType.PAGE_BREAK) {
-          try { p.removeChild(p.getChild(c)); } catch (e) {}
-        }
-      }
-
-      if (p.getText().trim() === "") {
-        try {
-          body.removeChild(candidate);
-          continue;
-        } catch (eRem) {
-          p.setText("").setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+      let hasRealContent = false;
+      for (let c = 0; c < p.getNumChildren(); c++) {
+        const ct = p.getChild(c).getType();
+        if (ct === DocumentApp.ElementType.INLINE_IMAGE || ct === DocumentApp.ElementType.EQUATION) {
+          hasRealContent = true;
           break;
         }
-      } else {
-        // Elemen sebelum elemen terakhir memiliki teks (misal nama penandatangan), hentikan loop
+      }
+      if (hasRealContent) {
+        lastContentIdx = i;
         break;
       }
     } else {
+      lastContentIdx = i;
       break;
     }
   }
 
-  // 2. Sekarang tangani elemen terakhir mutlak pada body
-  try {
-    const lastChild = body.getChild(body.getNumChildren() - 1);
-    if (lastChild.getType() === DocumentApp.ElementType.PARAGRAPH) {
-      const p = lastChild.asParagraph();
-      for (let c = p.getNumChildren() - 1; c >= 0; c--) {
-        if (p.getChild(c).getType() === DocumentApp.ElementType.PAGE_BREAK) {
-          try { p.removeChild(p.getChild(c)); } catch (e) {}
-        }
-      }
-      if (p.getText().trim() === "") {
-        p.setText("");
-        p.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
-        // Coba hapus elemen terakhir jika diizinkan oleh Google Docs
-        try {
-          body.removeChild(lastChild);
-        } catch (eLast) {
-          // Normal jika Google Docs mempertahankan paragraf kosong 1 pt terakhir ini
-        }
-      }
-    } else if (lastChild.getType() === DocumentApp.ElementType.PAGE_BREAK) {
-      try {
-        body.removeChild(lastChild);
-      } catch (eLastPB) {}
+  // Jika tidak ditemukan konten atau elemen konten berada di akhir dokumen,
+  // maka tidak ada trailing empty paragraph yang perlu dihapus. Spasi tanda tangan tetap 100% aman.
+  if (lastContentIdx === -1 || lastContentIdx >= body.getNumChildren() - 1) {
+    return;
+  }
+
+  // 2. Hapus elemen kosong yang HANYA berada SETELAH lastContentIdx (dari belakang ke depan)
+  while (body.getNumChildren() > lastContentIdx + 2) {
+    const candidateIdx = body.getNumChildren() - 2;
+    if (candidateIdx <= lastContentIdx) break;
+    try {
+      body.removeChild(body.getChild(candidateIdx));
+    } catch (eRem) {
+      break;
     }
-  } catch (eFinal) {}
+  }
+
+  // 3. Elemen struktural terakhir (yang berada setelah lastContentIdx) diatur ke 1pt agar tidak memicu halaman baru
+  if (body.getNumChildren() > lastContentIdx + 1) {
+    const lastEl = body.getChild(body.getNumChildren() - 1);
+    if (lastEl.getType() === DocumentApp.ElementType.PARAGRAPH) {
+      const pLast = lastEl.asParagraph();
+      try { pLast.clear(); } catch (e) {}
+      pLast.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+    }
+  }
 }
 
 function getElementText(elem) {
@@ -888,8 +892,10 @@ function handleSignatoryBlock(body, payload) {
         }
       }
 
-      // Telusuri paragraf setelah jabatan untuk merapikan spasi kosong & nama penandatangan
+      // Telusuri paragraf setelah jabatan untuk menemukan ruang tanda tangan & nama penandatangan
       let scanIdx = pJab2 ? childIdx + 2 : childIdx + 1;
+      let pNama = null;
+      const emptyParagraphs = [];
       const totalChildren = parent.getNumChildren();
 
       while (scanIdx < totalChildren) {
@@ -901,59 +907,92 @@ function handleSignatoryBlock(body, payload) {
         const nextP = nextChild.asParagraph();
         const nextText = nextP.getText().trim();
 
-        // Paragraf spasi kosong antara jabatan dan nama pejabat
         if (nextText === "") {
-          nextP.setFontFamily("Bookman Old Style").setFontSize(10);
-          nextP.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
-          nextP.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          if (indStart !== null && indStart !== undefined) nextP.setIndentStart(indStart);
-          if (indFirst !== null && indFirst !== undefined) nextP.setIndentFirstLine(indFirst);
+          emptyParagraphs.push(nextP);
           scanIdx++;
           continue;
         }
 
-        // Paragraf nama penandatangan
         if (nextText.indexOf("<<ttd") !== -1 || 
             nextText.indexOf("Muh Saichudin") !== -1 || 
             nextText.indexOf("[NAMA_PEJABAT]") !== -1 || 
             nextText.indexOf("{{NAMA_PEJABAT}}") !== -1 ||
             (nama && nextText.indexOf(nama) !== -1)) {
-          nextP.setText(nama);
-          nextP.setFontFamily("Bookman Old Style").setFontSize(12);
-          nextP.setBold(false).setItalic(false);
-          nextP.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          if (indStart !== null && indStart !== undefined) nextP.setIndentStart(indStart);
-          if (indFirst !== null && indFirst !== undefined) nextP.setIndentFirstLine(indFirst);
-          if (indEnd !== null && indEnd !== undefined) nextP.setIndentEnd(indEnd);
-          nextP.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
-          scanIdx++;
+          pNama = nextP;
+          break;
+        } else {
+          break;
+        }
+      }
 
-          // Cek paragraf NIP jika ada
-          if (scanIdx < totalChildren) {
-            const nipChild = parent.getChild(scanIdx);
-            if (nipChild.getType() === DocumentApp.ElementType.PARAGRAPH) {
-              const nipP = nipChild.asParagraph();
-              const nipText = nipP.getText().trim();
-              if (nipText.indexOf("NIP") !== -1 || nipText.indexOf("[NIP_PEJABAT]") !== -1 || nipText.indexOf("{{NIP_PEJABAT}}") !== -1) {
-                if (nip) {
-                  nipP.setText("NIP. " + nip);
-                  nipP.setFontFamily("Bookman Old Style").setFontSize(12);
-                  nipP.setBold(false).setItalic(false);
-                  nipP.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-                  if (indStart !== null && indStart !== undefined) nipP.setIndentStart(indStart);
-                  if (indFirst !== null && indFirst !== undefined) nipP.setIndentFirstLine(indFirst);
-                  if (indEnd !== null && indEnd !== undefined) nipP.setIndentEnd(indEnd);
-                  nipP.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
-                } else {
-                  nipP.setText("");
-                  nipP.setSpacingBefore(0).setSpacingAfter(0).setFontSize(1);
+      // Pastikan ada ruang tanda tangan standar (minimal 2 paragraf kosong berukuran 12pt Bookman Old Style)
+      // persis seperti pada template surat tugas resmi BPS Kalbar
+      while (emptyParagraphs.length < 2 && pNama) {
+        const namaIdx = parent.getChildIndex(pNama);
+        let newEmpty = null;
+        if (parent.getType() === DocumentApp.ElementType.BODY_SECTION) {
+          newEmpty = parent.asBody().insertParagraph(namaIdx, " ");
+        } else if (parent.getType() === DocumentApp.ElementType.TABLE_CELL) {
+          newEmpty = parent.asTableCell().insertParagraph(namaIdx, " ");
+        }
+        if (newEmpty) {
+          try { newEmpty.clear(); } catch (e) {}
+          emptyParagraphs.push(newEmpty);
+        } else {
+          break;
+        }
+      }
+
+      // Format setiap baris ruang tanda tangan dengan Bookman Old Style 12pt line spacing 1.15
+      emptyParagraphs.forEach(ep => {
+        try { ep.clear(); } catch (e) {}
+        ep.setFontFamily("Bookman Old Style").setFontSize(12);
+        ep.setBold(false).setItalic(false);
+        ep.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        if (indStart !== null && indStart !== undefined) ep.setIndentStart(indStart);
+        if (indFirst !== null && indFirst !== undefined) ep.setIndentFirstLine(indFirst);
+        if (indEnd !== null && indEnd !== undefined) ep.setIndentEnd(indEnd);
+        ep.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+      });
+
+      // Format nama penandatangan
+      if (pNama) {
+        pNama.setText(nama);
+        pNama.setFontFamily("Bookman Old Style").setFontSize(12);
+        pNama.setBold(false).setItalic(false);
+        pNama.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        if (indStart !== null && indStart !== undefined) pNama.setIndentStart(indStart);
+        if (indFirst !== null && indFirst !== undefined) pNama.setIndentFirstLine(indFirst);
+        if (indEnd !== null && indEnd !== undefined) pNama.setIndentEnd(indEnd);
+        pNama.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+
+        // Cek paragraf NIP jika ada tepat di bawah nama
+        const pNamaIdx = parent.getChildIndex(pNama);
+        if (pNamaIdx + 1 < parent.getNumChildren()) {
+          const nipChild = parent.getChild(pNamaIdx + 1);
+          if (nipChild.getType() === DocumentApp.ElementType.PARAGRAPH) {
+            const nipP = nipChild.asParagraph();
+            const nipText = nipP.getText().trim();
+            if (nipText.indexOf("NIP") !== -1 || nipText.indexOf("[NIP_PEJABAT]") !== -1 || nipText.indexOf("{{NIP_PEJABAT}}") !== -1) {
+              if (nip) {
+                nipP.setText("NIP. " + nip);
+                nipP.setFontFamily("Bookman Old Style").setFontSize(12);
+                nipP.setBold(false).setItalic(false);
+                nipP.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+                if (indStart !== null && indStart !== undefined) nipP.setIndentStart(indStart);
+                if (indFirst !== null && indFirst !== undefined) nipP.setIndentFirstLine(indFirst);
+                if (indEnd !== null && indEnd !== undefined) nipP.setIndentEnd(indEnd);
+                nipP.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+              } else {
+                try {
+                  parent.removeChild(nipChild);
+                } catch (eRemNip) {
+                  try { nipP.clear(); } catch (eCl) {}
+                  nipP.setSpacingBefore(0).setSpacingAfter(0).setFontSize(1).setLineSpacing(1.0);
                 }
               }
             }
           }
-          break;
-        } else {
-          break;
         }
       }
     } catch (errP) {
@@ -1043,7 +1082,8 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
   // 1. KOP SURAT
   try {
     const logoBlob = Utilities.newBlob(Utilities.base64Decode(BPS_LOGO_BASE64), "image/png", "logo_bps.png");
-    const pLogo = body.appendParagraph("");
+    const pLogo = body.appendParagraph(" ");
+    try { pLogo.clear(); } catch (e) {}
     pLogo.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
     pLogo.setSpacingAfter(2);
     pLogo.appendInlineImage(logoBlob).setWidth(68).setHeight(53);
@@ -1204,7 +1244,8 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
       }
     }
 
-    body.appendParagraph("");
+    const pSp = body.appendParagraph(" ");
+    try { pSp.clear(); } catch (e) {}
     const ttdLampData = [
       ["", (payload.tempatPenetapan || "Pontianak") + ", " + (payload.tanggalPenetapan || formatTanggalIndonesia(new Date()))],
       ["", ttdJabatan],

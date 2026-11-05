@@ -137,6 +137,8 @@ function doPost(e) {
         return jsonResponse(handleUpdatePegawai(payload));
       case "deletePegawai":
         return jsonResponse(handleDeletePegawai(payload));
+      case "importMasterPegawai":
+        return jsonResponse(handleImportMasterPegawai(payload));
 
       // Pejabat CRUD
       case "addPejabat":
@@ -429,8 +431,9 @@ function handleCreateSuratTugas(payload) {
     ]);
   }
 
-  payload.pegawaiList.forEach((p, index) => {
-    personilSheet.appendRow([
+  // Simpan personil secara batch (jauh lebih cepat untuk jumlah pegawai besar)
+  if (payload.pegawaiList && payload.pegawaiList.length > 0) {
+    const personilRows = payload.pegawaiList.map((p, index) => [
       Utilities.getUuid(),
       idSurtug,
       p.id || 0,
@@ -441,7 +444,9 @@ function handleCreateSuratTugas(payload) {
       p.peran || "Peserta",
       index + 1
     ]);
-  });
+    const startRow = personilSheet.getLastRow() + 1;
+    personilSheet.getRange(startRow, 1, personilRows.length, 9).setValues(personilRows);
+  }
 
   return {
     status: "success",
@@ -823,6 +828,110 @@ function handleDeletePegawai(payload) {
     status: "success",
     message: "Data pegawai berhasil dihapus."
   };
+}
+
+/**
+ * Impor massal data pegawai ke sheet m_pegawai secara permanen
+ * Mencegah duplikasi NIP dan mengembalikan rekapitulasi hasil impor
+ */
+function handleImportMasterPegawai(payload) {
+  if (!payload.pegawaiList || !Array.isArray(payload.pegawaiList) || payload.pegawaiList.length === 0) {
+    throw new Error("Daftar data pegawai untuk diimpor tidak boleh kosong.");
+  }
+
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    throw new Error("Sistem sedang sibuk. Silakan coba beberapa saat lagi.");
+  }
+
+  try {
+    const db = getDb();
+    let sheet = db.getSheetByName("m_pegawai");
+    if (!sheet) {
+      sheet = db.insertSheet("m_pegawai");
+      sheet.appendRow(["id_pegawai", "nip", "nama_lengkap", "pangkat_gol", "jabatan", "unit_kerja", "is_active"]);
+    }
+
+    // Ambil semua NIP yang sudah ada di database untuk mencegah duplikasi
+    const existingNips = new Set();
+    let maxId = 0;
+
+    if (sheet.getLastRow() > 1) {
+      const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+      data.forEach(r => {
+        const idVal = parseInt(r[0], 10);
+        if (!isNaN(idVal) && idVal > maxId) maxId = idVal;
+        const nipVal = String(r[1] || "").trim();
+        if (nipVal) existingNips.add(nipVal);
+      });
+    }
+
+    const rowsToAppend = [];
+    const addedList = [];
+    let duplicateCount = 0;
+    let invalidCount = 0;
+    let nextId = maxId + 1;
+
+    // Track NIPs in the current batch to prevent duplicates within the uploaded file itself
+    const batchNips = new Set();
+
+    payload.pegawaiList.forEach(p => {
+      const nip = String(p.nip || "").trim();
+      const nama = String(p.nama || "").trim();
+
+      if (!nip || !nama) {
+        invalidCount++;
+        return;
+      }
+
+      if (existingNips.has(nip) || batchNips.has(nip)) {
+        duplicateCount++;
+        return;
+      }
+
+      batchNips.add(nip);
+      const row = [
+        nextId,
+        nip,
+        nama,
+        String(p.pangkat_gol || "").trim(),
+        String(p.jabatan || "").trim(),
+        String(p.unit_kerja || "BPS Provinsi Kalimantan Barat").trim(),
+        true
+      ];
+      rowsToAppend.push(row);
+      addedList.push({
+        id: nextId,
+        nip: nip,
+        nama: nama,
+        pangkat_gol: String(p.pangkat_gol || "").trim(),
+        jabatan: String(p.jabatan || "").trim(),
+        unit_kerja: String(p.unit_kerja || "BPS Provinsi Kalimantan Barat").trim(),
+        is_active: true
+      });
+      nextId++;
+    });
+
+    if (rowsToAppend.length > 0) {
+      const startRow = sheet.getLastRow() + 1;
+      sheet.getRange(startRow, 1, rowsToAppend.length, 7).setValues(rowsToAppend);
+    }
+
+    return {
+      status: "success",
+      message: `Impor berhasil: ${rowsToAppend.length} pegawai ditambahkan, ${duplicateCount} duplikat dilewati.`,
+      data: {
+        addedCount: rowsToAppend.length,
+        duplicateCount: duplicateCount,
+        invalidCount: invalidCount,
+        addedList: addedList
+      }
+    };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // =============================================================================

@@ -13,6 +13,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS (Excel & CSV Parsing & Export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Google Fonts: Inter & Merriweather (Document) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -281,6 +283,11 @@
                     <div id="pegawaiDropdown" class="hidden absolute z-30 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto divide-y divide-slate-100">
                     </div>
                   </div>
+                  <button type="button" onclick="openImportSelectedPegawaiModal()" title="Impor Massal Pegawai yang Ditugaskan (Sementara)" 
+                          class="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 hover:border-emerald-500 text-emerald-800 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-95 whitespace-nowrap">
+                    <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                    <span>Impor Massal</span>
+                  </button>
                   <button type="button" onclick="openAddPegawaiModal()" title="Tambah Pegawai Baru ke Database" 
                           class="w-full sm:w-auto bg-white hover:bg-bps-lightblue border border-slate-300 hover:border-bps-blue text-bps-blue px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-95 whitespace-nowrap">
                     <i class="fa-solid fa-user-plus text-bps-orange"></i>
@@ -298,7 +305,7 @@
                       <th class="p-3 w-[30%]">Nama & NIP</th>
                       <th class="p-3 w-[30%]">Pangkat/Gol & Jabatan</th>
                       <th class="p-3 w-48 sm:w-56">Peran</th>
-                      <th class="p-3 w-20 text-center">Aksi</th>
+                      <th class="p-3 w-28 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody id="selectedPegawaiBody" class="divide-y divide-slate-100">
@@ -605,6 +612,10 @@
                    class="w-full text-xs border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none" />
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
           </div>
+          <button onclick="openImportMasterPegawaiModal()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-95 whitespace-nowrap">
+            <i class="fa-solid fa-file-excel"></i>
+            <span>Impor Excel/CSV</span>
+          </button>
           <button onclick="openAddPegawaiModal()" class="w-full sm:w-auto bg-bps-blue hover:bg-bps-darkblue text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-95 whitespace-nowrap">
             <i class="fa-solid fa-plus text-bps-orange"></i>
             <span>Tambah Pegawai</span>
@@ -1001,6 +1012,258 @@
     </div>
   </div>
 
+  <!-- MODAL: IMPOR MASSAL PEGAWAI DITUGASKAN (SEMENTARA) -->
+  <div id="modalImportSelectedPegawai" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/70">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base">
+            <i class="fa-solid fa-file-import"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <span>Impor Massal Pegawai yang Ditugaskan</span>
+              <span class="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">Sementara</span>
+            </h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">Data hanya disimpan sementara untuk pembuatan surat ini dan tidak disimpan ke database Master Pegawai.</p>
+          </div>
+        </div>
+        <button onclick="closeImportSelectedPegawaiModal()" class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-grow text-xs">
+        <!-- Download Template & Instruction Box -->
+        <div class="bg-blue-50/60 border border-blue-200/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="space-y-0.5">
+            <p class="font-bold text-blue-900 text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-bps-blue"></i>
+              Format Kolom Template
+            </p>
+            <p class="text-[11px] text-blue-700">Wajib berisi kolom: <b>NIP</b>, <b>Nama Lengkap</b>, <b>Pangkat/Golongan</b>, <b>Jabatan</b>, dan <b>Unit Kerja</b>.</p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button type="button" onclick="downloadPegawaiTemplate('xlsx')" class="bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+              <i class="fa-solid fa-file-excel text-emerald-600"></i>
+              <span>Unduh .xlsx</span>
+            </button>
+            <button type="button" onclick="downloadPegawaiTemplate('csv')" class="bg-white hover:bg-blue-50 border border-blue-300 text-bps-blue px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+              <i class="fa-solid fa-file-csv text-bps-blue"></i>
+              <span>Unduh .csv</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- File Upload Drag & Drop Box -->
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1.5">Pilih Berkas Excel (.xlsx) atau CSV (.csv):</label>
+          <div id="dropzoneSelectedPegawai" ondragover="handleDragOver(event, this)" ondragleave="handleDragLeave(event, this)" ondrop="handleDropFile(event, 'selected')" 
+               onclick="document.getElementById('fileInputSelectedPegawai').click()"
+               class="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 rounded-xl p-5 text-center cursor-pointer transition-all group">
+            <input type="file" id="fileInputSelectedPegawai" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileSelect(event, 'selected')">
+            <div class="flex flex-col items-center justify-center space-y-1.5">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 group-hover:bg-emerald-200 text-emerald-600 flex items-center justify-center text-lg transition-colors">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <p class="font-semibold text-slate-700 text-xs">Klik untuk memilih file atau seret file ke sini</p>
+              <p class="text-[11px] text-slate-400">Mendukung format Microsoft Excel (.xlsx, .xls) dan Comma-Separated Values (.csv)</p>
+            </div>
+          </div>
+          <div id="fileInfoSelectedPegawai" class="hidden mt-2 flex items-center justify-between bg-slate-100 px-3 py-2 rounded-lg text-xs font-medium text-slate-700">
+            <span class="flex items-center gap-2 truncate">
+              <i class="fa-solid fa-file-excel text-emerald-600"></i>
+              <span id="fileNameSelectedPegawai" class="truncate font-semibold"></span>
+            </span>
+            <button type="button" onclick="clearImportSelection('selected')" class="text-rose-500 hover:text-rose-700 text-xs ml-2">Ganti File</button>
+          </div>
+        </div>
+
+        <!-- Preview & Validation Box -->
+        <div id="previewContainerSelectedPegawai" class="hidden space-y-3 pt-2">
+          <!-- Summary Stat Badges -->
+          <div class="grid grid-cols-3 gap-2.5">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] text-slate-500 font-semibold uppercase">Total Dibaca</div>
+              <div id="countTotalSelectedPegawai" class="text-base font-extrabold text-slate-800">0</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] text-emerald-700 font-semibold uppercase">Siap Ditambahkan</div>
+              <div id="countValidSelectedPegawai" class="text-base font-extrabold text-emerald-600">0</div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] text-amber-700 font-semibold uppercase">Dilewati / Tidak Valid</div>
+              <div id="countInvalidSelectedPegawai" class="text-base font-extrabold text-amber-600">0</div>
+            </div>
+          </div>
+
+          <!-- Preview Table -->
+          <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+            <div class="max-h-60 overflow-y-auto overflow-x-auto">
+              <table class="w-full text-left text-xs min-w-[620px]">
+                <thead class="bg-slate-100 text-slate-600 sticky top-0 text-[11px] uppercase font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="p-2.5 w-10 text-center">No</th>
+                    <th class="p-2.5 w-36 font-mono">NIP</th>
+                    <th class="p-2.5">Nama Lengkap</th>
+                    <th class="p-2.5 w-32">Pangkat/Gol</th>
+                    <th class="p-2.5 w-32">Jabatan</th>
+                    <th class="p-2.5 w-28 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="previewTableBodySelectedPegawai" class="divide-y divide-slate-100">
+                  <!-- Rows generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3.5 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+        <button type="button" onclick="closeImportSelectedPegawaiModal()" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-white transition-colors">
+          Batal
+        </button>
+        <button type="button" id="btnConfirmImportSelectedPegawai" onclick="confirmImportSelectedPegawai()" disabled 
+                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5">
+          <i class="fa-solid fa-user-plus"></i>
+          <span id="btnConfirmImportSelectedPegawaiText">Tambahkan ke Formulir</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPOR MASSAL MASTER PEGAWAI (PERMANEN) -->
+  <div id="modalImportMasterPegawai" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/70">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-bps-blue text-white flex items-center justify-center text-base">
+            <i class="fa-solid fa-users-gear"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+              <span>Impor Data ke Master Pegawai</span>
+              <span class="text-[10px] font-semibold bg-bps-accentblue text-bps-darkblue px-2 py-0.5 rounded-full border border-blue-200">Permanen</span>
+            </h3>
+            <p class="text-[11px] text-slate-500 mt-0.5">Data akan disimpan secara permanen ke Google Sheets (sheet <code>m_pegawai</code>). NIP yang sudah ada akan otomatis dicegah agar tidak duplikat.</p>
+          </div>
+        </div>
+        <button onclick="closeImportMasterPegawaiModal()" class="w-8 h-8 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-grow text-xs">
+        <!-- Download Template & Instruction Box -->
+        <div class="bg-blue-50/60 border border-blue-200/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="space-y-0.5">
+            <p class="font-bold text-blue-900 text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-bps-blue"></i>
+              Format Kolom Template
+            </p>
+            <p class="text-[11px] text-blue-700">Wajib berisi kolom: <b>NIP</b>, <b>Nama Lengkap</b>, <b>Pangkat/Golongan</b>, <b>Jabatan</b>, dan <b>Unit Kerja</b>.</p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button type="button" onclick="downloadPegawaiTemplate('xlsx')" class="bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+              <i class="fa-solid fa-file-excel text-emerald-600"></i>
+              <span>Unduh .xlsx</span>
+            </button>
+            <button type="button" onclick="downloadPegawaiTemplate('csv')" class="bg-white hover:bg-blue-50 border border-blue-300 text-bps-blue px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+              <i class="fa-solid fa-file-csv text-bps-blue"></i>
+              <span>Unduh .csv</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- File Upload Drag & Drop Box -->
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1.5">Pilih Berkas Excel (.xlsx) atau CSV (.csv):</label>
+          <div id="dropzoneMasterPegawai" ondragover="handleDragOver(event, this)" ondragleave="handleDragLeave(event, this)" ondrop="handleDropFile(event, 'master')" 
+               onclick="document.getElementById('fileInputMasterPegawai').click()"
+               class="border-2 border-dashed border-slate-300 hover:border-bps-blue bg-slate-50 hover:bg-blue-50/40 rounded-xl p-5 text-center cursor-pointer transition-all group">
+            <input type="file" id="fileInputMasterPegawai" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileSelect(event, 'master')">
+            <div class="flex flex-col items-center justify-center space-y-1.5">
+              <div class="w-10 h-10 rounded-full bg-blue-100 group-hover:bg-blue-200 text-bps-blue flex items-center justify-center text-lg transition-colors">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <p class="font-semibold text-slate-700 text-xs">Klik untuk memilih file atau seret file ke sini</p>
+              <p class="text-[11px] text-slate-400">Mendukung format Microsoft Excel (.xlsx, .xls) dan Comma-Separated Values (.csv)</p>
+            </div>
+          </div>
+          <div id="fileInfoMasterPegawai" class="hidden mt-2 flex items-center justify-between bg-slate-100 px-3 py-2 rounded-lg text-xs font-medium text-slate-700">
+            <span class="flex items-center gap-2 truncate">
+              <i class="fa-solid fa-file-excel text-emerald-600"></i>
+              <span id="fileNameMasterPegawai" class="truncate font-semibold"></span>
+            </span>
+            <button type="button" onclick="clearImportSelection('master')" class="text-rose-500 hover:text-rose-700 text-xs ml-2">Ganti File</button>
+          </div>
+        </div>
+
+        <!-- Preview & Validation Box -->
+        <div id="previewContainerMasterPegawai" class="hidden space-y-3 pt-2">
+          <!-- Summary Stat Badges -->
+          <div class="grid grid-cols-4 gap-2">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] text-slate-500 font-semibold uppercase">Total Data</div>
+              <div id="countTotalMasterPegawai" class="text-base font-extrabold text-slate-800">0</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] text-emerald-700 font-semibold uppercase">Siap Diimpor</div>
+              <div id="countValidMasterPegawai" class="text-base font-extrabold text-emerald-600">0</div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] text-amber-700 font-semibold uppercase">Duplikat (Lewati)</div>
+              <div id="countDuplicateMasterPegawai" class="text-base font-extrabold text-amber-600">0</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-center">
+              <div class="text-[10px] text-rose-700 font-semibold uppercase">Tidak Valid</div>
+              <div id="countInvalidMasterPegawai" class="text-base font-extrabold text-rose-600">0</div>
+            </div>
+          </div>
+
+          <!-- Preview Table -->
+          <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+            <div class="max-h-60 overflow-y-auto overflow-x-auto">
+              <table class="w-full text-left text-xs min-w-[620px]">
+                <thead class="bg-slate-100 text-slate-600 sticky top-0 text-[11px] uppercase font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="p-2.5 w-10 text-center">No</th>
+                    <th class="p-2.5 w-36 font-mono">NIP</th>
+                    <th class="p-2.5">Nama Lengkap</th>
+                    <th class="p-2.5 w-32">Pangkat/Gol</th>
+                    <th class="p-2.5 w-32">Jabatan</th>
+                    <th class="p-2.5 w-28 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="previewTableBodyMasterPegawai" class="divide-y divide-slate-100">
+                  <!-- Rows generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3.5 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+        <button type="button" onclick="closeImportMasterPegawaiModal()" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-white transition-colors">
+          Batal
+        </button>
+        <button type="button" id="btnConfirmImportMasterPegawai" onclick="confirmImportMasterPegawai()" disabled 
+                class="px-4 py-2 bg-bps-blue hover:bg-bps-darkblue text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5">
+          <i id="btnConfirmImportMasterPegawaiIcon" class="fa-solid fa-cloud-arrow-up"></i>
+          <span id="btnConfirmImportMasterPegawaiText">Simpan ke Master Pegawai</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: TAMBAH / EDIT PEJABAT PENANDATANGAN (CRUD PEJABAT) -->
   <div id="modalPejabat" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl space-y-4 border border-slate-100">
@@ -1277,6 +1540,10 @@
           iconBox.className = "w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl flex-shrink-0 ring-4 ring-amber-50/70";
           headerIcon.className = "fa-solid fa-triangle-exclamation";
           btnOk.className = "w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5";
+        } else if (type === "success") {
+          iconBox.className = "w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl flex-shrink-0 ring-4 ring-emerald-50/70";
+          headerIcon.className = "fa-solid fa-circle-check";
+          btnOk.className = "w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer flex items-center justify-center gap-1.5";
         } else {
           iconBox.className = "w-12 h-12 rounded-2xl bg-blue-50 text-bps-blue flex items-center justify-center text-xl flex-shrink-0 ring-4 ring-blue-50/70";
           headerIcon.className = "fa-solid fa-circle-info";
@@ -1415,7 +1682,8 @@
       renderDasarHukumChecklist();
       renderMasterPegawaiTable();
 
-      // Form Pegawai sengaja KOSONG (tidak otomatis menampilkan 1 orang)
+      // Form Pegawai: Default selalu KOSONG pada tampilan awal saat halaman dimuat atau direfresh
+      clearTempSelectedPegawai();
       appState.selectedPegawai = [];
       renderSelectedPegawai();
       updateModeVisuals();
@@ -1500,8 +1768,22 @@
     }
 
     // =========================================================================
-    // PEGAWAI SELECTION ENGINE (TUNGGAL VS KOLEKTIF)
+    // PEGAWAI SELECTION ENGINE (TUNGGAL VS KOLEKTIF) & PERSISTENSI SEMENTARA
     // =========================================================================
+    function saveTempSelectedPegawai() {
+      // Data disimpan dalam memori appState selama proses pengisian form.
+      // Sesuai ketentuan, data tidak dipersist ke storage agar jika direfresh langsung hilang & kembali ke tampilan awal.
+      clearTempSelectedPegawai();
+    }
+
+    function clearTempSelectedPegawai() {
+      try {
+        localStorage.removeItem("TUNTAS_TEMP_SELECTED_PEGAWAI");
+      } catch (e) {
+        console.warn("Gagal menghapus data pegawai sementara:", e);
+      }
+    }
+
     function addPegawaiToSelection(pegawai) {
       if (appState.selectedPegawai.some(p => p.nip === pegawai.nip)) {
         return; // Sudah dipilih
@@ -1512,12 +1794,14 @@
         peran: "Peserta"
       });
 
+      saveTempSelectedPegawai();
       renderSelectedPegawai();
       updateModeVisuals();
     }
 
     function removePegawaiFromSelection(index) {
       appState.selectedPegawai.splice(index, 1);
+      saveTempSelectedPegawai();
       renderSelectedPegawai();
       updateModeVisuals();
     }
@@ -1525,6 +1809,7 @@
     function updatePegawaiPeran(index, peran) {
       if (appState.selectedPegawai[index]) {
         appState.selectedPegawai[index].peran = peran;
+        saveTempSelectedPegawai();
       }
     }
 
@@ -1539,6 +1824,7 @@
       } else {
         appState.selectedPegawai[idx].peran = val;
         appState.selectedPegawai[idx].isManualPeran = false;
+        saveTempSelectedPegawai();
       }
     }
 
@@ -1547,6 +1833,7 @@
       if (!isManual && (!appState.selectedPegawai[idx].peran || appState.selectedPegawai[idx].peran.trim() === "")) {
         appState.selectedPegawai[idx].peran = "Peserta";
       }
+      saveTempSelectedPegawai();
       renderSelectedPegawai();
       if (isManual) {
         setTimeout(() => {
@@ -1562,6 +1849,7 @@
       const temp = appState.selectedPegawai[index];
       appState.selectedPegawai[index] = appState.selectedPegawai[target];
       appState.selectedPegawai[target] = temp;
+      saveTempSelectedPegawai();
       renderSelectedPegawai();
     }
 
@@ -1576,7 +1864,7 @@
               <div class="flex flex-col items-center justify-center space-y-1.5">
                 <i class="fa-solid fa-users text-2xl text-slate-300"></i>
                 <p class="font-medium text-slate-600 text-xs">Belum ada pegawai yang dipilih</p>
-                <p class="text-[11px] text-slate-400">Gunakan kolom pencarian di atas untuk memilih pegawai atau klik tombol Pegawai Baru.</p>
+                <p class="text-[11px] text-slate-400">Gunakan kolom pencarian di atas untuk memilih pegawai atau klik tombol Pegawai Baru / Impor Massal.</p>
               </div>
             </td>
           </tr>
@@ -1590,6 +1878,9 @@
         if (p.peran && !standardPeran.includes(p.peran) && p.isManualPeran === undefined) {
           p.isManualPeran = true;
         }
+
+        const isFirst = idx === 0;
+        const isLast = idx === appState.selectedPegawai.length - 1;
 
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50/80 transition-colors";
@@ -1641,16 +1932,16 @@
           </td>
           <td class="p-3 text-center">
             <div class="inline-flex items-center space-x-1">
-              <button type="button" onclick="movePegawai(${idx}, -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : ''} title="Geser urutan ke atas" 
-                      class="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+              <button type="button" onclick="movePegawai(${idx}, -1)" ${isFirst ? 'disabled' : ''} title="Geser urutan ke atas (▲)" 
+                      class="w-7 h-7 rounded-lg ${isFirst ? 'opacity-25 cursor-not-allowed text-slate-300' : 'hover:bg-slate-200 text-slate-600 active:scale-95'} flex items-center justify-center transition-all">
                 <i class="fa-solid fa-arrow-up text-[10px]"></i>
               </button>
-              <button type="button" onclick="movePegawai(${idx}, 1)" ${idx === appState.selectedPegawai.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : ''} title="Geser urutan ke bawah" 
-                      class="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+              <button type="button" onclick="movePegawai(${idx}, 1)" ${isLast ? 'disabled' : ''} title="Geser urutan ke bawah (▼)" 
+                      class="w-7 h-7 rounded-lg ${isLast ? 'opacity-25 cursor-not-allowed text-slate-300' : 'hover:bg-slate-200 text-slate-600 active:scale-95'} flex items-center justify-center transition-all">
                 <i class="fa-solid fa-arrow-down text-[10px]"></i>
               </button>
               <button type="button" onclick="removePegawaiFromSelection(${idx})" title="Hapus dari daftar tugas" 
-                      class="w-7 h-7 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 flex items-center justify-center transition-colors">
+                      class="w-7 h-7 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 flex items-center justify-center transition-all active:scale-95">
                 <i class="fa-solid fa-trash-can text-[11px]"></i>
               </button>
             </div>
@@ -2249,6 +2540,12 @@
 
         if (result.status === "success") {
           progressBar.style.width = "100%";
+          // Otomatis hapus / bersihkan pegawai yang ditugaskan ke tampilan awal setelah surat berhasil dibuat
+          clearTempSelectedPegawai();
+          appState.selectedPegawai = [];
+          renderSelectedPegawai();
+          updateModeVisuals();
+
           setTimeout(() => {
             modalProgress.classList.add("hidden");
             showSuccessModal(result.data);
@@ -2300,6 +2597,7 @@
       document.getElementById("formSurtug").reset();
       document.getElementById("tanggalPenetapanInput").value = new Date().toISOString().split('T')[0];
       updateFormattedDate();
+      clearTempSelectedPegawai();
       appState.selectedPegawai = [];
       renderSelectedPegawai();
       updateModeVisuals();
@@ -2858,6 +3156,460 @@
       closeSettingsModal();
       updateModeVisuals();
       alert("Pengaturan template berhasil disimpan.");
+    }
+
+    // =========================================================================
+    // MODUL IMPOR MASSAL: TEMPLATE & PARSER EXCEL/CSV (CLIENT-SIDE)
+    // =========================================================================
+    function downloadPegawaiTemplate(type = 'xlsx') {
+      const headers = ["NIP", "Nama Lengkap", "Pangkat/Golongan", "Jabatan", "Unit Kerja"];
+      const sampleData = [
+        ["198008112005021004", "Muhammad Adwin, S.Mn.", "Penata - III/c", "Kepala Subbagian Umum", "BPS Kabupaten Mempawah"],
+        ["200111222026031001", "Azhari, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Provinsi Kalimantan Barat"],
+        ["200409262026032001", "Putri Rehulina Damanik, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Bengkayang"]
+      ];
+
+      if (type === 'csv' || typeof XLSX === 'undefined') {
+        const csvContent = "\uFEFF" + [headers.join(",")].concat(sampleData.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(","))).join("\r\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "Template_Data_Pegawai_TUNTAS.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      const wsData = [headers, ...sampleData];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      ws['!cols'] = [
+        { wch: 24 }, // NIP
+        { wch: 32 }, // Nama Lengkap
+        { wch: 22 }, // Pangkat/Golongan
+        { wch: 28 }, // Jabatan
+        { wch: 32 }  // Unit Kerja
+      ];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Master Pegawai");
+      XLSX.writeFile(wb, "Template_Data_Pegawai_TUNTAS.xlsx");
+    }
+
+    async function parsePegawaiSpreadsheet(file) {
+      if (typeof XLSX === 'undefined') {
+        throw new Error("Library pemroses Excel (SheetJS) belum termuat. Pastikan koneksi internet aktif.");
+      }
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+        throw new Error("Berkas tidak memiliki lembar kerja (worksheet).");
+      }
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      if (!sheet) throw new Error("Lembar kerja kosong atau tidak dapat dibaca.");
+
+      const rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: "" });
+      if (!rawRows || rawRows.length === 0) {
+        throw new Error("Berkas Excel/CSV kosong.");
+      }
+
+      // Cari baris header
+      let headerRowIdx = -1;
+      let colMap = { nip: -1, nama: -1, pangkat_gol: -1, jabatan: -1, unit_kerja: -1 };
+
+      for (let r = 0; r < Math.min(rawRows.length, 10); r++) {
+        const row = rawRows[r].map(cell => String(cell || "").toLowerCase().trim().replace(/[^a-z0-9]/g, ""));
+        const nipIdx = row.findIndex(c => c.includes("nip") || c.includes("nomorinduk"));
+        const namaIdx = row.findIndex(c => c.includes("nama"));
+        if (nipIdx !== -1 && namaIdx !== -1) {
+          headerRowIdx = r;
+          colMap.nip = nipIdx;
+          colMap.nama = namaIdx;
+          colMap.pangkat_gol = row.findIndex(c => c.includes("pangkat") || c.includes("gol"));
+          colMap.jabatan = row.findIndex(c => c.includes("jabatan") || c.includes("posisi"));
+          colMap.unit_kerja = row.findIndex(c => c.includes("unit") || c.includes("satker") || c.includes("kantor"));
+          break;
+        }
+      }
+
+      let startIdx = 1;
+      if (headerRowIdx === -1) {
+        startIdx = 0;
+        colMap = { nip: 0, nama: 1, pangkat_gol: 2, jabatan: 3, unit_kerja: 4 };
+      } else {
+        startIdx = headerRowIdx + 1;
+      }
+
+      const result = [];
+      for (let r = startIdx; r < rawRows.length; r++) {
+        const row = rawRows[r];
+        if (!row || row.every(cell => String(cell || "").trim() === "")) continue;
+
+        let nip = colMap.nip !== -1 && row[colMap.nip] !== undefined ? String(row[colMap.nip]).trim().replace(/'/g, "") : "";
+        let nama = colMap.nama !== -1 && row[colMap.nama] !== undefined ? String(row[colMap.nama]).trim() : "";
+        let pangkat_gol = colMap.pangkat_gol !== -1 && row[colMap.pangkat_gol] !== undefined ? String(row[colMap.pangkat_gol]).trim() : "";
+        let jabatan = colMap.jabatan !== -1 && row[colMap.jabatan] !== undefined ? String(row[colMap.jabatan]).trim() : "";
+        let unit_kerja = colMap.unit_kerja !== -1 && row[colMap.unit_kerja] !== undefined ? String(row[colMap.unit_kerja]).trim() : "BPS Provinsi Kalimantan Barat";
+
+        // Bersihkan NIP dari spasi
+        nip = nip.replace(/\s+/g, "");
+
+        result.push({
+          nip: nip,
+          nama: nama,
+          pangkat_gol: pangkat_gol,
+          jabatan: jabatan,
+          unit_kerja: unit_kerja || "BPS Provinsi Kalimantan Barat"
+        });
+      }
+
+      if (result.length === 0) {
+        throw new Error("Tidak ada data pegawai yang dapat dibaca pada berkas.");
+      }
+
+      return result;
+    }
+
+    // Drag and drop helpers
+    function handleDragOver(e, el) {
+      e.preventDefault();
+      el.classList.add("border-bps-blue", "bg-blue-50/50");
+    }
+
+    function handleDragLeave(e, el) {
+      e.preventDefault();
+      el.classList.remove("border-bps-blue", "bg-blue-50/50");
+    }
+
+    function handleDropFile(e, mode) {
+      e.preventDefault();
+      const el = e.currentTarget;
+      el.classList.remove("border-bps-blue", "bg-blue-50/50");
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleImportFileProcess(e.dataTransfer.files[0], mode);
+      }
+    }
+
+    function handleFileSelect(e, mode) {
+      if (e.target && e.target.files && e.target.files.length > 0) {
+        handleImportFileProcess(e.target.files[0], mode);
+      }
+    }
+
+    function clearImportSelection(mode) {
+      if (mode === 'selected') {
+        document.getElementById('fileInputSelectedPegawai').value = "";
+        document.getElementById('fileInfoSelectedPegawai').classList.add('hidden');
+        document.getElementById('dropzoneSelectedPegawai').classList.remove('hidden');
+        document.getElementById('previewContainerSelectedPegawai').classList.add('hidden');
+        document.getElementById('btnConfirmImportSelectedPegawai').disabled = true;
+        importSelectedData = { file: null, items: [], validItems: [] };
+      } else {
+        document.getElementById('fileInputMasterPegawai').value = "";
+        document.getElementById('fileInfoMasterPegawai').classList.add('hidden');
+        document.getElementById('dropzoneMasterPegawai').classList.remove('hidden');
+        document.getElementById('previewContainerMasterPegawai').classList.add('hidden');
+        document.getElementById('btnConfirmImportMasterPegawai').disabled = true;
+        importMasterData = { file: null, items: [], validItems: [] };
+      }
+    }
+
+    // =========================================================================
+    // FITUR 2: IMPOR MASSAL PEGAWAI YANG DITUGASKAN (SEMENTARA)
+    // =========================================================================
+    let importSelectedData = {
+      file: null,
+      items: [],
+      validItems: []
+    };
+
+    function openImportSelectedPegawaiModal() {
+      clearImportSelection('selected');
+      document.getElementById("modalImportSelectedPegawai").classList.remove("hidden");
+    }
+
+    function closeImportSelectedPegawaiModal() {
+      document.getElementById("modalImportSelectedPegawai").classList.add("hidden");
+    }
+
+    async function handleImportFileProcess(file, mode) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+        showAlertModal("Format berkas tidak didukung. Mohon gunakan berkas dengan format .xlsx atau .csv.", "Format Berkas Salah", "danger");
+        return;
+      }
+
+      if (mode === 'selected') {
+        document.getElementById('fileNameSelectedPegawai').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        document.getElementById('dropzoneSelectedPegawai').classList.add('hidden');
+        document.getElementById('fileInfoSelectedPegawai').classList.remove('hidden');
+
+        try {
+          const rows = await parsePegawaiSpreadsheet(file);
+          importSelectedData.file = file;
+
+          const seenInBatch = new Set();
+          const previewList = [];
+          const validList = [];
+          let duplicateCount = 0;
+          let invalidCount = 0;
+
+          rows.forEach((p, idx) => {
+            let status = "valid";
+            let note = "Siap Ditambahkan";
+
+            if (!p.nip || !p.nama) {
+              status = "invalid";
+              note = "NIP atau Nama Kosong";
+              invalidCount++;
+            } else if (appState.selectedPegawai.some(sp => sp.nip === p.nip)) {
+              status = "duplicate_form";
+              note = "Sudah Terpilih di Form";
+              duplicateCount++;
+            } else if (seenInBatch.has(p.nip)) {
+              status = "duplicate_batch";
+              note = "Duplikat di Berkas";
+              duplicateCount++;
+            } else {
+              seenInBatch.add(p.nip);
+              validList.push(p);
+            }
+
+            previewList.push({ ...p, status, note, originalIndex: idx + 1 });
+          });
+
+          importSelectedData.items = previewList;
+          importSelectedData.validItems = validList;
+
+          // Update Counter Badges
+          document.getElementById('countTotalSelectedPegawai').textContent = rows.length;
+          document.getElementById('countValidSelectedPegawai').textContent = validList.length;
+          document.getElementById('countInvalidSelectedPegawai').textContent = duplicateCount + invalidCount;
+
+          // Render Preview Table
+          const tbody = document.getElementById('previewTableBodySelectedPegawai');
+          tbody.innerHTML = previewList.map(item => {
+            let statusPill = "";
+            if (item.status === 'valid') {
+              statusPill = `<span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full text-[10px] border border-emerald-200">Siap Ditambahkan</span>`;
+            } else if (item.status === 'invalid') {
+              statusPill = `<span class="bg-rose-100 text-rose-800 font-semibold px-2 py-0.5 rounded-full text-[10px] border border-rose-200" title="${item.note}">Tidak Lengkap</span>`;
+            } else {
+              statusPill = `<span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full text-[10px] border border-amber-200" title="${item.note}">Dilewati (Duplikat)</span>`;
+            }
+
+            return `
+              <tr class="hover:bg-slate-50 transition-colors ${item.status !== 'valid' ? 'bg-slate-50/50' : ''}">
+                <td class="p-2.5 text-center text-slate-400 font-semibold">${item.originalIndex}</td>
+                <td class="p-2.5 font-mono font-medium text-slate-800">${item.nip || '<span class="text-rose-400 italic">kosong</span>'}</td>
+                <td class="p-2.5 font-bold text-slate-900">${item.nama || '<span class="text-rose-400 italic">kosong</span>'}</td>
+                <td class="p-2.5 text-slate-600">${item.pangkat_gol || '-'}</td>
+                <td class="p-2.5 text-slate-600">${item.jabatan || '-'}</td>
+                <td class="p-2.5 text-center">${statusPill}</td>
+              </tr>
+            `;
+          }).join("");
+
+          document.getElementById('previewContainerSelectedPegawai').classList.remove('hidden');
+          const btn = document.getElementById('btnConfirmImportSelectedPegawai');
+          btn.disabled = validList.length === 0;
+          document.getElementById('btnConfirmImportSelectedPegawaiText').textContent = validList.length > 0 ? 
+            `Tambahkan ${validList.length} Pegawai ke Formulir` : `Tidak Ada Data Valid`;
+
+        } catch (err) {
+          showAlertModal("Gagal membaca berkas: " + err.message, "Kesalahan Pembacaan Berkas", "danger");
+          clearImportSelection('selected');
+        }
+
+      } else {
+        // Mode === 'master'
+        document.getElementById('fileNameMasterPegawai').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        document.getElementById('dropzoneMasterPegawai').classList.add('hidden');
+        document.getElementById('fileInfoMasterPegawai').classList.remove('hidden');
+
+        try {
+          const rows = await parsePegawaiSpreadsheet(file);
+          importMasterData.file = file;
+
+          const existingNips = new Set((appState.masterPegawai || []).map(p => String(p.nip || "").trim()));
+          const seenInBatch = new Set();
+          const previewList = [];
+          const validList = [];
+          let duplicateCount = 0;
+          let invalidCount = 0;
+
+          rows.forEach((p, idx) => {
+            let status = "valid";
+            let note = "Siap Diimpor";
+
+            if (!p.nip || !p.nama) {
+              status = "invalid";
+              note = "NIP atau Nama Kosong";
+              invalidCount++;
+            } else if (existingNips.has(p.nip)) {
+              status = "duplicate_master";
+              note = "Sudah Terdaftar di Master";
+              duplicateCount++;
+            } else if (seenInBatch.has(p.nip)) {
+              status = "duplicate_batch";
+              note = "Duplikat di Berkas";
+              duplicateCount++;
+            } else {
+              seenInBatch.add(p.nip);
+              validList.push(p);
+            }
+
+            previewList.push({ ...p, status, note, originalIndex: idx + 1 });
+          });
+
+          importMasterData.items = previewList;
+          importMasterData.validItems = validList;
+
+          // Update Counter Badges
+          document.getElementById('countTotalMasterPegawai').textContent = rows.length;
+          document.getElementById('countValidMasterPegawai').textContent = validList.length;
+          document.getElementById('countDuplicateMasterPegawai').textContent = duplicateCount;
+          document.getElementById('countInvalidMasterPegawai').textContent = invalidCount;
+
+          // Render Preview Table
+          const tbody = document.getElementById('previewTableBodyMasterPegawai');
+          tbody.innerHTML = previewList.map(item => {
+            let statusPill = "";
+            if (item.status === 'valid') {
+              statusPill = `<span class="bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full text-[10px] border border-emerald-200">Siap Diimpor</span>`;
+            } else if (item.status === 'invalid') {
+              statusPill = `<span class="bg-rose-100 text-rose-800 font-semibold px-2 py-0.5 rounded-full text-[10px] border border-rose-200" title="${item.note}">Tidak Lengkap</span>`;
+            } else {
+              statusPill = `<span class="bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full text-[10px] border border-amber-200" title="${item.note}">Duplikat (Dilewati)</span>`;
+            }
+
+            return `
+              <tr class="hover:bg-slate-50 transition-colors ${item.status !== 'valid' ? 'bg-slate-50/50' : ''}">
+                <td class="p-2.5 text-center text-slate-400 font-semibold">${item.originalIndex}</td>
+                <td class="p-2.5 font-mono font-medium text-slate-800">${item.nip || '<span class="text-rose-400 italic">kosong</span>'}</td>
+                <td class="p-2.5 font-bold text-slate-900">${item.nama || '<span class="text-rose-400 italic">kosong</span>'}</td>
+                <td class="p-2.5 text-slate-600">${item.pangkat_gol || '-'}</td>
+                <td class="p-2.5 text-slate-600">${item.jabatan || '-'}</td>
+                <td class="p-2.5 text-center">${statusPill}</td>
+              </tr>
+            `;
+          }).join("");
+
+          document.getElementById('previewContainerMasterPegawai').classList.remove('hidden');
+          const btn = document.getElementById('btnConfirmImportMasterPegawai');
+          btn.disabled = validList.length === 0;
+          document.getElementById('btnConfirmImportMasterPegawaiText').textContent = validList.length > 0 ? 
+            `Simpan ${validList.length} Pegawai ke Master` : `Tidak Ada Data Baru`;
+
+        } catch (err) {
+          showAlertModal("Gagal membaca berkas: " + err.message, "Kesalahan Pembacaan Berkas", "danger");
+          clearImportSelection('master');
+        }
+      }
+    }
+
+    function confirmImportSelectedPegawai() {
+      if (!importSelectedData.validItems || importSelectedData.validItems.length === 0) {
+        showAlertModal("Tidak ada data pegawai yang valid untuk ditambahkan.", "Perhatian", "warning");
+        return;
+      }
+
+      const added = importSelectedData.validItems.map(p => ({
+        ...p,
+        id: p.id || 0,
+        peran: "Peserta"
+      }));
+
+      appState.selectedPegawai.push(...added);
+      saveTempSelectedPegawai();
+      renderSelectedPegawai();
+      updateModeVisuals();
+      closeImportSelectedPegawaiModal();
+
+      showAlertModal(
+        `Sebanyak ${added.length} pegawai berhasil ditambahkan ke daftar penugasan Surat Tugas. Data disimpan sementara untuk pembuatan surat ini dan tidak disimpan ke Master Pegawai.`,
+        "Impor Sementara Berhasil",
+        "success"
+      );
+    }
+
+    // =========================================================================
+    // FITUR 3: IMPOR MASSAL MASTER PEGAWAI (PERMANEN)
+    // =========================================================================
+    let importMasterData = {
+      file: null,
+      items: [],
+      validItems: []
+    };
+
+    function openImportMasterPegawaiModal() {
+      clearImportSelection('master');
+      document.getElementById("modalImportMasterPegawai").classList.remove("hidden");
+    }
+
+    function closeImportMasterPegawaiModal() {
+      document.getElementById("modalImportMasterPegawai").classList.add("hidden");
+    }
+
+    async function confirmImportMasterPegawai() {
+      if (!importMasterData.validItems || importMasterData.validItems.length === 0) {
+        showAlertModal("Tidak ada data pegawai yang valid untuk diimpor.", "Perhatian", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnConfirmImportMasterPegawai");
+      const btnText = document.getElementById("btnConfirmImportMasterPegawaiText");
+      const btnIcon = document.getElementById("btnConfirmImportMasterPegawaiIcon");
+
+      btn.disabled = true;
+      btnIcon.className = "fa-solid fa-spinner fa-spin";
+      btnText.textContent = "Menyimpan ke Google Sheets...";
+
+      try {
+        const payload = {
+          action: "importMasterPegawai",
+          pegawaiList: importMasterData.validItems
+        };
+
+        const res = await sendBackendPost(payload);
+
+        if (res && res.status === "success") {
+          const addedList = res.data.addedList || [];
+          
+          // Gabungkan ke masterPegawai lokal
+          addedList.forEach(newPeg => {
+            if (!appState.masterPegawai.some(p => p.nip === newPeg.nip)) {
+              appState.masterPegawai.push(newPeg);
+            }
+          });
+
+          localStorage.setItem("SURTUG_MASTER_PEGAWAI", JSON.stringify(appState.masterPegawai));
+          renderMasterPegawaiTable();
+          closeImportMasterPegawaiModal();
+
+          // Tampilkan ringkasan hasil impor
+          showConfirmModal({
+            title: "Impor Master Pegawai Berhasil",
+            message: "Data pegawai berhasil disimpan permanen ke Google Sheets (sheet DB_PEGAWAI / m_pegawai).",
+            detail: `• Berhasil ditambahkan : ${res.data.addedCount} pegawai\n• Duplikat dilewati    : ${res.data.duplicateCount} pegawai\n• Data tidak lengkap   : ${res.data.invalidCount} pegawai`,
+            confirmText: "Selesai",
+            confirmIcon: "fa-check",
+            type: "success",
+            isAlert: true
+          });
+
+        } else {
+          showAlertModal((res && res.message) ? res.message : "Terjadi kesalahan saat menyimpan data ke database server.", "Gagal Impor", "danger");
+        }
+      } catch (err) {
+        showAlertModal("Terjadi kesalahan jaringan: " + err.message, "Kesalahan Sistem", "danger");
+      } finally {
+        btn.disabled = false;
+        btnIcon.className = "fa-solid fa-cloud-arrow-up";
+        btnText.textContent = "Simpan ke Master Pegawai";
+      }
     }
 </script>
 </body>
