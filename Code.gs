@@ -628,7 +628,120 @@ function handleUpdateArsip(payload) {
 }
 
 /**
- * Menghapus data arsip
+ * Mengekstrak ID Google Drive dari string ID atau URL
+ */
+function extractDriveId(input) {
+  if (!input || typeof input !== "string") return "";
+  const str = input.trim();
+  if (!str) return "";
+  if (!str.includes("/") && str.length >= 15) {
+    return str;
+  }
+  const matchD = str.match(/\/d\/([a-zA-Z0-9_-]{15,})/);
+  if (matchD) return matchD[1];
+  const matchFolders = str.match(/\/folders\/([a-zA-Z0-9_-]{15,})/);
+  if (matchFolders) return matchFolders[1];
+  const matchIdParam = str.match(/[?&]id=([a-zA-Z0-9_-]{15,})/);
+  if (matchIdParam) return matchIdParam[1];
+  return "";
+}
+
+/**
+ * Memeriksa apakah folder Drive aman untuk dihapus (spesifik milik satu surat tugas,
+ * bukan root Drive, bukan root arsip, bukan folder tahun, dan bukan folder bulan)
+ */
+function isSafeSpecificSuratFolder(folder) {
+  if (!folder) return false;
+  try {
+    const folderId = folder.getId();
+
+    // 1. Root Drive pengguna
+    try {
+      if (folderId === DriveApp.getRootFolder().getId()) return false;
+    } catch (e) {}
+
+    // 2. Folder Root Arsip yang dikonfigurasi
+    const rootIdConfig = CONFIG.DRIVE_ROOT_FOLDER_ID || "";
+    const rootIdProp = getSystemProperty("DRIVE_ROOT_FOLDER_ID", "");
+    if ((rootIdConfig && folderId === rootIdConfig) || (rootIdProp && folderId === rootIdProp)) {
+      return false;
+    }
+
+    // 3. Nama folder umum atau parent struktural
+    const name = folder.getName().trim();
+    if (name.toUpperCase() === "ARSIP_SURTUG_BPS_KALBAR") return false;
+
+    // Folder tahun (4 digit angka, misal "2024", "2025", "2026")
+    if (/^\d{4}$/.test(name)) return false;
+
+    // Folder bulan ("01 - Januari", "02 - Februari", dst.)
+    const monthNames = [
+      "01 - Januari", "02 - Februari", "03 - Maret", "04 - April", "05 - Mei", "06 - Juni",
+      "07 - Juli", "08 - Agustus", "09 - September", "10 - Oktober", "11 - November", "12 - Desember"
+    ];
+    if (monthNames.some(m => name.toLowerCase() === m.toLowerCase())) {
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Menghapus seluruh isi folder (file & subfolder) secara rekursif
+ */
+function deleteFolderContentsRecursively(folder, protectedDocIds) {
+  let count = 0;
+  if (!folder) return count;
+
+  // Hapus semua file di dalam folder
+  try {
+    const files = folder.getFiles();
+    while (files.hasNext()) {
+      const file = files.next();
+      try {
+        const fileId = file.getId();
+        if (protectedDocIds && protectedDocIds.includes(fileId)) {
+          continue; // Lewati template yang dilindungi
+        }
+        if (!file.isTrashed()) {
+          file.setTrashed(true);
+          count++;
+        }
+      } catch (fe) {
+        console.warn("Gagal mentrash file: " + fe.message);
+      }
+    }
+  } catch (e) {
+    console.warn("Gagal membaca file di dalam folder: " + e.message);
+  }
+
+  // Hapus semua subfolder secara rekursif
+  try {
+    const subfolders = folder.getFolders();
+    while (subfolders.hasNext()) {
+      const sub = subfolders.next();
+      try {
+        count += deleteFolderContentsRecursively(sub, protectedDocIds);
+        if (!sub.isTrashed()) {
+          sub.setTrashed(true);
+          count++;
+        }
+      } catch (sfe) {
+        console.warn("Gagal mentrash subfolder: " + sfe.message);
+      }
+    }
+  } catch (e) {
+    console.warn("Gagal membaca subfolder: " + e.message);
+  }
+
+  return count;
+}
+
+/**
+ * Menghapus data arsip beserta file dan folder terkait di Google Drive
  */
 function handleDeleteArsip(payload) {
   if (!payload.id && !payload.nomorSurat) {
@@ -641,15 +754,18 @@ function handleDeleteArsip(payload) {
     throw new Error("Tabel arsip belum tersedia.");
   }
 
-  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+  const lastCol = sheet.getLastColumn();
+  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
   let foundRow = -1;
   let targetId = payload.id;
+  let rowValues = null;
 
   for (let i = 0; i < data.length; i++) {
     if ((payload.id && String(data[i][0]) === String(payload.id)) ||
         (payload.nomorSurat && String(data[i][1]).trim() === String(payload.nomorSurat).trim())) {
       foundRow = i + 2;
       targetId = data[i][0];
+      rowValues = data[i];
       break;
     }
   }
@@ -658,9 +774,95 @@ function handleDeleteArsip(payload) {
     throw new Error("Data arsip tidak ditemukan.");
   }
 
+  // Siapkan ID dokumen template yang dilindungi agar TIDAK PERNAH terhapus
+  const protectedDocIds = [
+    CONFIG.TEMPLATE_INDIVIDU_DOC_ID,
+    CONFIG.TEMPLATE_KOLEKTIF_DOC_ID,
+    CONFIG.TEMPLATE_DOC_ID,
+    getSystemProperty("TEMPLATE_INDIVIDU_DOC_ID", ""),
+    getSystemProperty("TEMPLATE_KOLEKTIF_DOC_ID", ""),
+    getSystemProperty("TEMPLATE_DOC_ID", "")
+  ].filter(id => id && String(id).trim() !== "");
+
+  // Ekstrak ID berkas dan folder Google Drive
+  const rowDocId = rowValues.length > 17 ? rowValues[17] : "";
+  const rowPdfId = rowValues.length > 18 ? rowValues[18] : "";
+  const rowPdfUrl = rowValues.length > 19 ? rowValues[19] : "";
+  const rowFolderId = rowValues.length > 20 ? rowValues[20] : "";
+
+  const docId = extractDriveId(rowDocId || payload.docId || payload.docUrl);
+  const pdfId = extractDriveId(rowPdfId || payload.pdfId || payload.pdfUrl || rowPdfUrl);
+  let folderId = extractDriveId(rowFolderId || payload.folderId || payload.folderUrl);
+
+  // Jika folderId belum tercatat, coba temukan parent folder spesifik dari pdfId atau docId
+  if (!folderId && pdfId) {
+    try {
+      const pFile = DriveApp.getFileById(pdfId);
+      const parents = pFile.getParents();
+      if (parents.hasNext()) {
+        const pFolder = parents.next();
+        if (isSafeSpecificSuratFolder(pFolder)) {
+          folderId = pFolder.getId();
+        }
+      }
+    } catch (e) {}
+  }
+  if (!folderId && docId) {
+    try {
+      const dFile = DriveApp.getFileById(docId);
+      const parents = dFile.getParents();
+      if (parents.hasNext()) {
+        const dFolder = parents.next();
+        if (isSafeSpecificSuratFolder(dFolder)) {
+          folderId = dFolder.getId();
+        }
+      }
+    } catch (e) {}
+  }
+
+  let driveCleaned = false;
+
+  // 1. Hapus folder spesifik beserta seluruh isinya (Word, PDF, Docs, subfolder, dll.)
+  if (folderId) {
+    try {
+      const targetFolder = DriveApp.getFolderById(folderId);
+      if (targetFolder && isSafeSpecificSuratFolder(targetFolder)) {
+        deleteFolderContentsRecursively(targetFolder, protectedDocIds);
+        if (!targetFolder.isTrashed()) {
+          targetFolder.setTrashed(true);
+        }
+        driveCleaned = true;
+      }
+    } catch (e) {
+      console.warn("Folder Drive (" + folderId + ") tidak dapat diakses atau sudah dihapus: " + e.message);
+    }
+  }
+
+  // 2. Pastikan file Doc & PDF spesifik juga terhapus jika berada di luar folder atau belum terhapus
+  if (docId && !protectedDocIds.includes(docId)) {
+    try {
+      const docFile = DriveApp.getFileById(docId);
+      if (docFile && !docFile.isTrashed()) {
+        docFile.setTrashed(true);
+        driveCleaned = true;
+      }
+    } catch (e) {}
+  }
+
+  if (pdfId && !protectedDocIds.includes(pdfId)) {
+    try {
+      const pdfFile = DriveApp.getFileById(pdfId);
+      if (pdfFile && !pdfFile.isTrashed()) {
+        pdfFile.setTrashed(true);
+        driveCleaned = true;
+      }
+    } catch (e) {}
+  }
+
+  // 3. Hapus baris dari tabel t_surat_tugas
   sheet.deleteRow(foundRow);
 
-  // Hapus relasi personil terkait jika ada
+  // 4. Hapus relasi personil terkait pada sheet t_surat_tugas_personil
   const personilSheet = db.getSheetByName("t_surat_tugas_personil");
   if (personilSheet && personilSheet.getLastRow() > 1 && targetId) {
     const pData = personilSheet.getRange(2, 2, personilSheet.getLastRow() - 1, 1).getValues();
@@ -673,7 +875,9 @@ function handleDeleteArsip(payload) {
 
   return {
     status: "success",
-    message: "Data arsip berhasil dihapus."
+    message: driveCleaned ?
+      "Data arsip beserta seluruh berkas dan folder terkait di Google Drive berhasil dihapus." :
+      "Data arsip berhasil dihapus dari sistem."
   };
 }
 
