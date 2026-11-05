@@ -140,9 +140,9 @@
           <i class="fa-solid fa-sliders text-bps-orange"></i>
           <span>Pengaturan Template</span>
         </button>
-        <div class="text-xs text-blue-100 hidden sm:flex items-center space-x-2 font-medium bg-white/10 px-2.5 py-1 rounded-full border border-white/10">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Terkoneksi</span>
+        <div class="text-[10px] sm:text-xs text-blue-100 hidden sm:flex items-center gap-2 font-medium bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 tabular-nums" aria-live="off">
+          <i class="fa-regular fa-clock text-bps-orange"></i>
+          <span id="liveDateTime" class="whitespace-nowrap"></span>
         </div>
       </div>
     </div>
@@ -1684,6 +1684,9 @@
     // INISIALISASI HALAMAN
     // =========================================================================
     document.addEventListener("DOMContentLoaded", () => {
+      updateLiveDateTime();
+      setInterval(updateLiveDateTime, 1000);
+
       // 1. Set Tanggal Hari Ini
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -1720,6 +1723,23 @@
       // 4. Sinkronisasi Data Terbaru dari Backend Google Apps Script di Latar Belakang
       initDataFromAppsScript();
     });
+
+    function updateLiveDateTime() {
+      const dateTimeEl = document.getElementById("liveDateTime");
+      if (!dateTimeEl) return;
+
+      dateTimeEl.textContent = new Intl.DateTimeFormat("id-ID", {
+        timeZone: "Asia/Pontianak",
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).format(new Date());
+    }
 
     // =========================================================================
     // INTERAKSI BACKEND APPS SCRIPT
