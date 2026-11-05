@@ -297,34 +297,55 @@
               </div>
 
               <!-- Tabel Personil Terpilih -->
-              <div class="overflow-x-auto border border-slate-200/90 rounded-xl shadow-xs">
-                <table class="w-full text-left text-xs text-slate-700 min-w-[580px]">
-                  <thead class="bg-slate-100/90 text-slate-600 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200">
-                    <tr>
-                      <th class="p-3 w-12 text-center">No</th>
-                      <th class="p-3 w-[30%]">Nama & NIP</th>
-                      <th class="p-3 w-[30%]">Pangkat/Gol & Jabatan</th>
-                      <th class="p-3 w-48 sm:w-56">Peran</th>
-                      <th class="p-3 w-28 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody id="selectedPegawaiBody" class="divide-y divide-slate-100">
-                    <!-- Dynamic Rows dimuat via JavaScript -->
-                  </tbody>
-                </table>
-                <datalist id="peranDatalist">
-                  <option value="Peserta">
-                  <option value="Ketua Tim">
-                  <option value="Anggota Tim">
-                  <option value="Narasumber">
-                  <option value="Panitia">
-                  <option value="Mentor">
-                  <option value="Pengajar">
-                  <option value="Pendamping">
-                  <option value="Pengawas">
-                  <option value="Instruktur">
-                  <option value="Petugas">
-                </datalist>
+              <div class="border border-slate-200/90 rounded-xl shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs text-slate-700 min-w-[580px]">
+                    <thead class="bg-slate-100/90 text-slate-600 uppercase font-semibold text-[11px] tracking-wider border-b border-slate-200">
+                      <tr>
+                        <th class="p-3 w-12 text-center">No</th>
+                        <th class="p-3 w-[30%]">Nama & NIP</th>
+                        <th class="p-3 w-[30%]">Pangkat/Gol & Jabatan</th>
+                        <th class="p-3 w-48 sm:w-56">Peran</th>
+                        <th class="p-3 w-28 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="selectedPegawaiBody" class="divide-y divide-slate-100">
+                      <!-- Dynamic Rows dimuat via JavaScript -->
+                    </tbody>
+                  </table>
+                  <datalist id="peranDatalist">
+                    <option value="Peserta">
+                    <option value="Ketua Tim">
+                    <option value="Anggota Tim">
+                    <option value="Narasumber">
+                    <option value="Panitia">
+                    <option value="Mentor">
+                    <option value="Pengajar">
+                    <option value="Pendamping">
+                    <option value="Pengawas">
+                    <option value="Instruktur">
+                    <option value="Petugas">
+                  </datalist>
+                </div>
+
+                <!-- PAGINATION BAR PEGAWAI TERPILIH -->
+                <div id="selectedPegawaiPagination" class="hidden border-t border-slate-200 bg-slate-50/80 px-3.5 py-2.5 sm:px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-600">
+                  <div class="flex items-center gap-2">
+                    <span id="selectedPegawaiPaginationInfo">Menampilkan 0 dari 0 pegawai</span>
+                    <span class="text-slate-300 hidden sm:inline">|</span>
+                    <div class="flex items-center gap-1.5 hidden sm:flex">
+                      <span>Baris per halaman:</span>
+                      <select id="selectedPegawaiPageSize" onchange="changeSelectedPegawaiPageSize(this.value)" class="bg-white border border-slate-300 rounded-lg px-2 py-0.5 text-xs focus:ring-1 focus:ring-bps-blue focus:outline-none">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-1" id="selectedPegawaiPaginationControls"></div>
+                </div>
               </div>
             </div>
 
@@ -1611,6 +1632,10 @@
       dasarHukumList: [],
       masterPegawai: [],
       selectedPegawai: [], // Default kosong, tidak menampilkan pegawai secara otomatis
+      selectedPegawaiPagination: {
+        currentPage: 1,
+        pageSize: 10
+      },
       archiveList: [],
       archivePagination: {
         currentPage: 1,
@@ -1685,7 +1710,10 @@
       // Form Pegawai: Default selalu KOSONG pada tampilan awal saat halaman dimuat atau direfresh
       clearTempSelectedPegawai();
       appState.selectedPegawai = [];
-      renderSelectedPegawai();
+      if (appState.selectedPegawaiPagination) {
+        appState.selectedPegawaiPagination.currentPage = 1;
+      }
+      renderSelectedPegawai(1);
       updateModeVisuals();
 
       // 4. Sinkronisasi Data Terbaru dari Backend Google Apps Script di Latar Belakang
@@ -1795,14 +1823,19 @@
       });
 
       saveTempSelectedPegawai();
-      renderSelectedPegawai();
+      const pageSize = (appState.selectedPegawaiPagination && appState.selectedPegawaiPagination.pageSize) || 10;
+      const targetPage = Math.ceil(appState.selectedPegawai.length / pageSize);
+      renderSelectedPegawai(targetPage);
       updateModeVisuals();
     }
 
     function removePegawaiFromSelection(index) {
       appState.selectedPegawai.splice(index, 1);
       saveTempSelectedPegawai();
-      renderSelectedPegawai();
+      const pageSize = (appState.selectedPegawaiPagination && appState.selectedPegawaiPagination.pageSize) || 10;
+      const totalPages = Math.max(1, Math.ceil(appState.selectedPegawai.length / pageSize));
+      const curPage = Math.min((appState.selectedPegawaiPagination && appState.selectedPegawaiPagination.currentPage) || 1, totalPages);
+      renderSelectedPegawai(curPage);
       updateModeVisuals();
     }
 
@@ -1850,14 +1883,23 @@
       appState.selectedPegawai[index] = appState.selectedPegawai[target];
       appState.selectedPegawai[target] = temp;
       saveTempSelectedPegawai();
-      renderSelectedPegawai();
+
+      const pageSize = (appState.selectedPegawaiPagination && appState.selectedPegawaiPagination.pageSize) || 10;
+      const targetPage = Math.floor(target / pageSize) + 1;
+      renderSelectedPegawai(targetPage);
     }
 
-    function renderSelectedPegawai() {
+    function renderSelectedPegawai(page) {
       const tbody = document.getElementById("selectedPegawaiBody");
+      const paginationEl = document.getElementById("selectedPegawaiPagination");
+      const infoEl = document.getElementById("selectedPegawaiPaginationInfo");
+      const controlsEl = document.getElementById("selectedPegawaiPaginationControls");
+
       tbody.innerHTML = "";
 
-      if (appState.selectedPegawai.length === 0) {
+      const totalItems = appState.selectedPegawai.length;
+
+      if (totalItems === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="5" class="p-8 text-center text-slate-400">
@@ -1869,23 +1911,43 @@
             </td>
           </tr>
         `;
+        if (paginationEl) paginationEl.classList.add("hidden");
         return;
       }
 
+      if (!appState.selectedPegawaiPagination) {
+        appState.selectedPegawaiPagination = { currentPage: 1, pageSize: 10 };
+      }
+
+      const pageSize = appState.selectedPegawaiPagination.pageSize || 10;
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+      if (page !== undefined && page !== null) {
+        appState.selectedPegawaiPagination.currentPage = Math.max(1, Math.min(page, totalPages));
+      } else {
+        appState.selectedPegawaiPagination.currentPage = Math.max(1, Math.min(appState.selectedPegawaiPagination.currentPage || 1, totalPages));
+      }
+      const currentPage = appState.selectedPegawaiPagination.currentPage;
+
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalItems);
+      const pageItems = appState.selectedPegawai.slice(startIndex, endIndex);
+
       const standardPeran = ["Peserta", "Ketua Tim", "Anggota Tim", "Narasumber", "Panitia", "Mentor", "Pengajar", "Pendamping", "Pengawas", "Instruktur", "Petugas"];
 
-      appState.selectedPegawai.forEach((p, idx) => {
+      pageItems.forEach((p, localIdx) => {
+        const realIdx = startIndex + localIdx;
         if (p.peran && !standardPeran.includes(p.peran) && p.isManualPeran === undefined) {
           p.isManualPeran = true;
         }
 
-        const isFirst = idx === 0;
-        const isLast = idx === appState.selectedPegawai.length - 1;
+        const isFirst = realIdx === 0;
+        const isLast = realIdx === totalItems - 1;
 
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50/80 transition-colors";
         tr.innerHTML = `
-          <td class="p-3 text-center font-semibold text-slate-400">${idx + 1}</td>
+          <td class="p-3 text-center font-semibold text-slate-400">${realIdx + 1}</td>
           <td class="p-3">
             <p class="font-bold text-slate-900 leading-snug">${p.nama}</p>
             <p class="text-[11px] font-mono text-slate-500 mt-0.5">${p.nip}</p>
@@ -1897,18 +1959,18 @@
           <td class="p-3">
             ${p.isManualPeran ? `
               <div class="flex items-center space-x-1.5">
-                <input id="peranInput_${idx}" type="text" list="peranDatalist" value="${p.peran || ''}" 
-                       oninput="updatePegawaiPeran(${idx}, this.value)" 
+                <input id="peranInput_${realIdx}" type="text" list="peranDatalist" value="${p.peran || ''}" 
+                       oninput="updatePegawaiPeran(${realIdx}, this.value)" 
                        placeholder="Ketik peran..." 
                        class="w-full text-xs border border-bps-blue rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-bps-blue/20 bg-white font-medium">
-                <button type="button" onclick="setPeranMode(${idx}, false)" title="Pilih dari opsi dropdown" 
+                <button type="button" onclick="setPeranMode(${realIdx}, false)" title="Pilih dari opsi dropdown" 
                         class="p-2 text-xs text-slate-500 hover:text-bps-blue border border-slate-200 rounded-lg bg-slate-50 hover:bg-white transition-colors">
                   <i class="fa-solid fa-list text-[11px]"></i>
                 </button>
               </div>
             ` : `
               <div class="flex items-center space-x-1.5">
-                <select onchange="onPeranSelectChange(${idx}, this.value)" 
+                <select onchange="onPeranSelectChange(${realIdx}, this.value)" 
                         class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue bg-white font-medium">
                   <option value="Peserta" ${p.peran === 'Peserta' ? 'selected' : ''}>Peserta</option>
                   <option value="Ketua Tim" ${p.peran === 'Ketua Tim' ? 'selected' : ''}>Ketua Tim</option>
@@ -1923,7 +1985,7 @@
                   <option value="Petugas" ${p.peran === 'Petugas' ? 'selected' : ''}>Petugas</option>
                   <option value="__MANUAL__">✏️ Ketik Manual...</option>
                 </select>
-                <button type="button" onclick="setPeranMode(${idx}, true)" title="Ketik peran manual" 
+                <button type="button" onclick="setPeranMode(${realIdx}, true)" title="Ketik peran manual" 
                         class="p-2 text-xs text-slate-500 hover:text-bps-orange border border-slate-200 rounded-lg bg-slate-50 hover:bg-white transition-colors">
                   <i class="fa-solid fa-pen text-[11px]"></i>
                 </button>
@@ -1932,15 +1994,15 @@
           </td>
           <td class="p-3 text-center">
             <div class="inline-flex items-center space-x-1">
-              <button type="button" onclick="movePegawai(${idx}, -1)" ${isFirst ? 'disabled' : ''} title="Geser urutan ke atas (▲)" 
+              <button type="button" onclick="movePegawai(${realIdx}, -1)" ${isFirst ? 'disabled' : ''} title="Geser urutan ke atas (▲)" 
                       class="w-7 h-7 rounded-lg ${isFirst ? 'opacity-25 cursor-not-allowed text-slate-300' : 'hover:bg-slate-200 text-slate-600 active:scale-95'} flex items-center justify-center transition-all">
                 <i class="fa-solid fa-arrow-up text-[10px]"></i>
               </button>
-              <button type="button" onclick="movePegawai(${idx}, 1)" ${isLast ? 'disabled' : ''} title="Geser urutan ke bawah (▼)" 
+              <button type="button" onclick="movePegawai(${realIdx}, 1)" ${isLast ? 'disabled' : ''} title="Geser urutan ke bawah (▼)" 
                       class="w-7 h-7 rounded-lg ${isLast ? 'opacity-25 cursor-not-allowed text-slate-300' : 'hover:bg-slate-200 text-slate-600 active:scale-95'} flex items-center justify-center transition-all">
                 <i class="fa-solid fa-arrow-down text-[10px]"></i>
               </button>
-              <button type="button" onclick="removePegawaiFromSelection(${idx})" title="Hapus dari daftar tugas" 
+              <button type="button" onclick="removePegawaiFromSelection(${realIdx})" title="Hapus dari daftar tugas" 
                       class="w-7 h-7 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 flex items-center justify-center transition-all active:scale-95">
                 <i class="fa-solid fa-trash-can text-[11px]"></i>
               </button>
@@ -1949,6 +2011,24 @@
         `;
         tbody.appendChild(tr);
       });
+
+      if (paginationEl) {
+        paginationEl.classList.remove("hidden");
+        if (infoEl) infoEl.textContent = `Menampilkan ${startIndex + 1} - ${endIndex} dari ${totalItems} pegawai`;
+        if (controlsEl) controlsEl.innerHTML = generatePaginationHTML(currentPage, totalPages, "goToSelectedPegawaiPage");
+      }
+    }
+
+    function goToSelectedPegawaiPage(page) {
+      renderSelectedPegawai(page);
+    }
+
+    function changeSelectedPegawaiPageSize(size) {
+      if (!appState.selectedPegawaiPagination) {
+        appState.selectedPegawaiPagination = { currentPage: 1, pageSize: 10 };
+      }
+      appState.selectedPegawaiPagination.pageSize = parseInt(size, 10) || 10;
+      renderSelectedPegawai(1);
     }
 
     function updateModeVisuals() {
@@ -2599,7 +2679,10 @@
       updateFormattedDate();
       clearTempSelectedPegawai();
       appState.selectedPegawai = [];
-      renderSelectedPegawai();
+      if (appState.selectedPegawaiPagination) {
+        appState.selectedPegawaiPagination.currentPage = 1;
+      }
+      renderSelectedPegawai(1);
       updateModeVisuals();
       initDataFromAppsScript();
     }
@@ -3524,7 +3607,10 @@
 
       appState.selectedPegawai.push(...added);
       saveTempSelectedPegawai();
-      renderSelectedPegawai();
+      if (appState.selectedPegawaiPagination) {
+        appState.selectedPegawaiPagination.currentPage = 1;
+      }
+      renderSelectedPegawai(1);
       updateModeVisuals();
       closeImportSelectedPegawaiModal();
 
