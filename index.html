@@ -1064,14 +1064,14 @@
               <i class="fa-solid fa-circle-info text-bps-blue"></i>
               Format Kolom Template
             </p>
-            <p class="text-[11px] text-blue-700">Wajib berisi kolom: <b>NIP</b>, <b>Nama Lengkap</b>, <b>Pangkat/Golongan</b>, <b>Jabatan</b>, dan <b>Unit Kerja</b>.</p>
+            <p class="text-[11px] text-blue-700">Wajib berisi kolom: <b>NIP</b>, <b>Nama Lengkap</b>, <b>Pangkat/Golongan</b>, <b>Jabatan</b>, <b>Unit Kerja</b>, dan <b>Peran</b> (opsional).</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <button type="button" onclick="downloadPegawaiTemplate('xlsx')" class="bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+            <button type="button" onclick="downloadPegawaiTemplate('xlsx', 'selected')" class="bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
               <i class="fa-solid fa-file-excel text-emerald-600"></i>
               <span>Unduh .xlsx</span>
             </button>
-            <button type="button" onclick="downloadPegawaiTemplate('csv')" class="bg-white hover:bg-blue-50 border border-blue-300 text-bps-blue px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+            <button type="button" onclick="downloadPegawaiTemplate('csv', 'selected')" class="bg-white hover:bg-blue-50 border border-blue-300 text-bps-blue px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
               <i class="fa-solid fa-file-csv text-bps-blue"></i>
               <span>Unduh .csv</span>
             </button>
@@ -1123,14 +1123,15 @@
           <!-- Preview Table -->
           <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
             <div class="max-h-60 overflow-y-auto overflow-x-auto">
-              <table class="w-full text-left text-xs min-w-[620px]">
+              <table class="w-full text-left text-xs min-w-[680px]">
                 <thead class="bg-slate-100 text-slate-600 sticky top-0 text-[11px] uppercase font-bold border-b border-slate-200">
                   <tr>
                     <th class="p-2.5 w-10 text-center">No</th>
                     <th class="p-2.5 w-36 font-mono">NIP</th>
                     <th class="p-2.5">Nama Lengkap</th>
-                    <th class="p-2.5 w-32">Pangkat/Gol</th>
-                    <th class="p-2.5 w-32">Jabatan</th>
+                    <th class="p-2.5 w-28">Pangkat/Gol</th>
+                    <th class="p-2.5 w-28">Jabatan</th>
+                    <th class="p-2.5 w-28">Peran</th>
                     <th class="p-2.5 w-28 text-center">Status</th>
                   </tr>
                 </thead>
@@ -1191,11 +1192,11 @@
             <p class="text-[11px] text-blue-700">Wajib berisi kolom: <b>NIP</b>, <b>Nama Lengkap</b>, <b>Pangkat/Golongan</b>, <b>Jabatan</b>, dan <b>Unit Kerja</b>.</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <button type="button" onclick="downloadPegawaiTemplate('xlsx')" class="bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+            <button type="button" onclick="downloadPegawaiTemplate('xlsx', 'master')" class="bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
               <i class="fa-solid fa-file-excel text-emerald-600"></i>
               <span>Unduh .xlsx</span>
             </button>
-            <button type="button" onclick="downloadPegawaiTemplate('csv')" class="bg-white hover:bg-blue-50 border border-blue-300 text-bps-blue px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
+            <button type="button" onclick="downloadPegawaiTemplate('csv', 'master')" class="bg-white hover:bg-blue-50 border border-blue-300 text-bps-blue px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs active:scale-95">
               <i class="fa-solid fa-file-csv text-bps-blue"></i>
               <span>Unduh .csv</span>
             </button>
@@ -2046,7 +2047,10 @@
         modeDesc.textContent = "Silakan cari dan pilih minimal 1 orang pegawai yang akan diberikan surat penugasan.";
         modeIcon.innerHTML = `<i class="fa-solid fa-user-plus text-slate-400"></i>`;
         modeIcon.className = "w-11 h-11 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
-        if (badgeTpl) badgeTpl.innerHTML = `<i class="fa-solid fa-file-lines text-slate-400"></i><span>Pilih pegawai untuk menentukan template</span>`;
+        if (badgeTpl) {
+          badgeTpl.innerHTML = `<i class="fa-solid fa-file-lines text-slate-400"></i><span>Pilih pegawai untuk menentukan template</span>`;
+          badgeTpl.classList.remove("hidden");
+        }
       } else if (count === 1) {
         badge.textContent = "1 Pegawai Ditugaskan";
         badge.className = "bg-blue-50 text-bps-blue font-bold px-3.5 py-1.5 rounded-full text-xs border border-blue-200 shadow-xs inline-block";
@@ -2056,6 +2060,7 @@
         modeIcon.className = "w-11 h-11 rounded-2xl bg-blue-50 text-bps-blue flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
         if (badgeTpl) {
           badgeTpl.innerHTML = `<a href="https://docs.google.com/document/d/${appState.templateIndividuId}/edit?tab=t.0" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-semibold"><i class="fa-solid fa-file-word text-blue-500"></i><span>Template Individu Aktif</span><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
+          badgeTpl.classList.remove("hidden");
         }
       } else {
         badge.textContent = `${count} Pegawai Ditugaskan`;
@@ -2065,7 +2070,8 @@
         modeIcon.innerHTML = `<i class="fa-solid fa-users"></i>`;
         modeIcon.className = "w-11 h-11 rounded-2xl bg-amber-50 text-bps-orange flex items-center justify-center font-bold text-base shadow-xs flex-shrink-0";
         if (badgeTpl) {
-          badgeTpl.innerHTML = `<a href="https://docs.google.com/document/d/${appState.templateKolektifId}/edit?tab=t.0" target="_blank" class="text-amber-700 hover:text-amber-900 hover:underline flex items-center gap-1 font-semibold"><i class="fa-solid fa-file-word text-amber-500"></i><span>Template Kolektif Aktif</span><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>`;
+          badgeTpl.innerHTML = "";
+          badgeTpl.classList.add("hidden");
         }
       }
     }
@@ -3244,13 +3250,23 @@
     // =========================================================================
     // MODUL IMPOR MASSAL: TEMPLATE & PARSER EXCEL/CSV (CLIENT-SIDE)
     // =========================================================================
-    function downloadPegawaiTemplate(type = 'xlsx') {
-      const headers = ["NIP", "Nama Lengkap", "Pangkat/Golongan", "Jabatan", "Unit Kerja"];
-      const sampleData = [
+    function downloadPegawaiTemplate(type = 'xlsx', mode = 'selected') {
+      const isSelected = mode === 'selected';
+      const headers = isSelected ? 
+        ["NIP", "Nama Lengkap", "Pangkat/Golongan", "Jabatan", "Unit Kerja", "Peran"] : 
+        ["NIP", "Nama Lengkap", "Pangkat/Golongan", "Jabatan", "Unit Kerja"];
+
+      const sampleData = isSelected ? [
+        ["198008112005021004", "Muhammad Adwin, S.Mn.", "Penata - III/c", "Kepala Subbagian Umum", "BPS Kabupaten Mempawah", "Ketua Tim"],
+        ["200111222026031001", "Azhari, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Provinsi Kalimantan Barat", "Anggota Tim"],
+        ["200409262026032001", "Putri Rehulina Damanik, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Bengkayang", "Peserta"]
+      ] : [
         ["198008112005021004", "Muhammad Adwin, S.Mn.", "Penata - III/c", "Kepala Subbagian Umum", "BPS Kabupaten Mempawah"],
         ["200111222026031001", "Azhari, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Provinsi Kalimantan Barat"],
         ["200409262026032001", "Putri Rehulina Damanik, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Bengkayang"]
       ];
+
+      const fileName = isSelected ? "Template_Pegawai_Ditugaskan_TUNTAS" : "Template_Master_Pegawai_TUNTAS";
 
       if (type === 'csv' || typeof XLSX === 'undefined') {
         const csvContent = "\uFEFF" + [headers.join(",")].concat(sampleData.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(","))).join("\r\n");
@@ -3258,7 +3274,7 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "Template_Data_Pegawai_TUNTAS.csv";
+        link.download = `${fileName}.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -3268,16 +3284,20 @@
 
       const wsData = [headers, ...sampleData];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
-      ws['!cols'] = [
+      const cols = [
         { wch: 24 }, // NIP
         { wch: 32 }, // Nama Lengkap
         { wch: 22 }, // Pangkat/Golongan
         { wch: 28 }, // Jabatan
         { wch: 32 }  // Unit Kerja
       ];
+      if (isSelected) {
+        cols.push({ wch: 20 }); // Peran
+      }
+      ws['!cols'] = cols;
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Master Pegawai");
-      XLSX.writeFile(wb, "Template_Data_Pegawai_TUNTAS.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, isSelected ? "Pegawai Ditugaskan" : "Master Pegawai");
+      XLSX.writeFile(wb, `${fileName}.xlsx`);
     }
 
     async function parsePegawaiSpreadsheet(file) {
@@ -3300,7 +3320,7 @@
 
       // Cari baris header
       let headerRowIdx = -1;
-      let colMap = { nip: -1, nama: -1, pangkat_gol: -1, jabatan: -1, unit_kerja: -1 };
+      let colMap = { nip: -1, nama: -1, pangkat_gol: -1, jabatan: -1, unit_kerja: -1, peran: -1 };
 
       for (let r = 0; r < Math.min(rawRows.length, 10); r++) {
         const row = rawRows[r].map(cell => String(cell || "").toLowerCase().trim().replace(/[^a-z0-9]/g, ""));
@@ -3313,6 +3333,7 @@
           colMap.pangkat_gol = row.findIndex(c => c.includes("pangkat") || c.includes("gol"));
           colMap.jabatan = row.findIndex(c => c.includes("jabatan") || c.includes("posisi"));
           colMap.unit_kerja = row.findIndex(c => c.includes("unit") || c.includes("satker") || c.includes("kantor"));
+          colMap.peran = row.findIndex(c => c.includes("peran") || c.includes("role") || c.includes("statuspegawai") || c.includes("kedudukan"));
           break;
         }
       }
@@ -3320,7 +3341,7 @@
       let startIdx = 1;
       if (headerRowIdx === -1) {
         startIdx = 0;
-        colMap = { nip: 0, nama: 1, pangkat_gol: 2, jabatan: 3, unit_kerja: 4 };
+        colMap = { nip: 0, nama: 1, pangkat_gol: 2, jabatan: 3, unit_kerja: 4, peran: 5 };
       } else {
         startIdx = headerRowIdx + 1;
       }
@@ -3335,6 +3356,7 @@
         let pangkat_gol = colMap.pangkat_gol !== -1 && row[colMap.pangkat_gol] !== undefined ? String(row[colMap.pangkat_gol]).trim() : "";
         let jabatan = colMap.jabatan !== -1 && row[colMap.jabatan] !== undefined ? String(row[colMap.jabatan]).trim() : "";
         let unit_kerja = colMap.unit_kerja !== -1 && row[colMap.unit_kerja] !== undefined ? String(row[colMap.unit_kerja]).trim() : "BPS Provinsi Kalimantan Barat";
+        let peran = colMap.peran !== -1 && row[colMap.peran] !== undefined ? String(row[colMap.peran]).trim() : "";
 
         // Bersihkan NIP dari spasi
         nip = nip.replace(/\s+/g, "");
@@ -3344,7 +3366,8 @@
           nama: nama,
           pangkat_gol: pangkat_gol,
           jabatan: jabatan,
-          unit_kerja: unit_kerja || "BPS Provinsi Kalimantan Barat"
+          unit_kerja: unit_kerja || "BPS Provinsi Kalimantan Barat",
+          peran: peran || "Peserta"
         });
       }
 
@@ -3490,6 +3513,7 @@
                 <td class="p-2.5 font-bold text-slate-900">${item.nama || '<span class="text-rose-400 italic">kosong</span>'}</td>
                 <td class="p-2.5 text-slate-600">${item.pangkat_gol || '-'}</td>
                 <td class="p-2.5 text-slate-600">${item.jabatan || '-'}</td>
+                <td class="p-2.5 font-medium text-bps-blue">${item.peran || 'Peserta'}</td>
                 <td class="p-2.5 text-center">${statusPill}</td>
               </tr>
             `;
@@ -3602,7 +3626,7 @@
       const added = importSelectedData.validItems.map(p => ({
         ...p,
         id: p.id || 0,
-        peran: "Peserta"
+        peran: (p.peran && String(p.peran).trim()) ? String(p.peran).trim() : "Peserta"
       }));
 
       appState.selectedPegawai.push(...added);
