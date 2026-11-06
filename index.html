@@ -5,9 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tuntas - Tata Kelola dan Administrasi Surat Tugas BPS Provinsi Kalimantan Barat</title>
   
-  <!-- Favicon: Logo Tuntas BPS -->
-  <link rel="icon" type="image/png" href="img/logo_tuntas.png">
-  <link rel="apple-touch-icon" href="img/logo_tuntas.png">
+  <!-- Progressive Web App (PWA) Meta & Theme Configuration -->
+  <meta name="theme-color" content="#004B87">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TUNTAS">
+  <meta name="application-name" content="TUNTAS">
+  <meta name="msapplication-TileColor" content="#004B87">
+  <meta name="msapplication-TileImage" content="img/icon-192.png">
+
+  <!-- Favicon & PWA Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="img/logo_tuntas.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="img/icon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json" id="pwaManifestLink">
+
+  <!-- Dynamic PWA Manifest Setup (Fallback via Blob URL jika di Google Apps Script / local file) -->
+  <script>
+    (function initPwaManifest() {
+      try {
+        const currentUrl = window.location.href.split('#')[0];
+        const isGasOrFile = window.location.hostname.includes("script.google.com") || 
+                            window.location.hostname.includes("googleusercontent.com") ||
+                            window.location.protocol === "file:";
+
+        if (isGasOrFile) {
+          const manifestObj = {
+            "name": "TUNTAS - Surat Tugas BPS Kalbar",
+            "short_name": "TUNTAS",
+            "description": "Tata Kelola dan Administrasi Surat Tugas BPS Provinsi Kalimantan Barat",
+            "start_url": currentUrl,
+            "scope": currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1) || "./",
+            "display": "standalone",
+            "orientation": "any",
+            "theme_color": "#004B87",
+            "background_color": "#F8FAFC",
+            "icons": [
+              {
+                "src": "img/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any"
+              },
+              {
+                "src": "img/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any"
+              },
+              {
+                "src": "img/icon-maskable-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "maskable"
+              },
+              {
+                "src": "img/icon-maskable-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "maskable"
+              }
+            ]
+          };
+          const blob = new Blob([JSON.stringify(manifestObj, null, 2)], { type: "application/manifest+json" });
+          const blobUrl = URL.createObjectURL(blob);
+          const manifestTag = document.getElementById("pwaManifestLink");
+          if (manifestTag) {
+            manifestTag.setAttribute("href", blobUrl);
+          }
+        }
+      } catch (e) {
+        console.warn("[PWA] Dynamic manifest fallback notice:", e);
+      }
+    })();
+  </script>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -135,6 +211,14 @@
       </div>
 
       <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+        <!-- Tombol PWA: Install Aplikasi -->
+        <button type="button" id="btnInstallPwa"
+                class="hidden text-xs bg-gradient-to-r from-bps-orange to-[#ff8c42] hover:from-[#e56214] hover:to-bps-orange text-white font-semibold px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-white/30 shadow-md hover:shadow-lg transition-all duration-200 items-center space-x-1.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0"
+                title="Install TUNTAS ke perangkat Anda (Desktop / Mobile)">
+          <i class="fa-solid fa-download text-white text-xs sm:text-sm"></i>
+          <span class="tracking-wide"><span class="hidden sm:inline">Install Aplikasi</span><span class="sm:hidden">Install</span></span>
+        </button>
+
         <button type="button" id="btnPengaturanTemplate" onclick="openSettingsModal()" 
                 class="hidden text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-1.5 rounded-xl border border-white/20 transition-all items-center space-x-1.5 shadow-xs">
           <i class="fa-solid fa-sliders text-bps-orange"></i>
@@ -1679,6 +1763,112 @@
     ];
 
     // =========================================================================
+    // PROGRESSIVE WEB APP (PWA) CONTROLLER
+    // =========================================================================
+    let deferredInstallPrompt = null;
+
+    // 1. Tangkap event beforeinstallprompt seawal mungkin (Google Chrome / Microsoft Edge)
+    window.addEventListener("beforeinstallprompt", (e) => {
+      // Mencegah mini-infobar default browser agar dikontrol oleh tombol kustom kita
+      e.preventDefault();
+      deferredInstallPrompt = e;
+
+      // Munculkan tombol modern Install Aplikasi pada header
+      const btnInstall = document.getElementById("btnInstallPwa");
+      if (btnInstall) {
+        btnInstall.classList.remove("hidden");
+        btnInstall.classList.add("flex");
+      }
+      console.log("[PWA] Event beforeinstallprompt berhasil ditangkap.");
+    });
+
+    // 2. Tangkap event appinstalled ketika aplikasi telah berhasil dipasang
+    window.addEventListener("appinstalled", () => {
+      console.log("[PWA] Aplikasi TUNTAS sukses dipasang ke perangkat.");
+      deferredInstallPrompt = null;
+      const btnInstall = document.getElementById("btnInstallPwa");
+      if (btnInstall) {
+        btnInstall.classList.add("hidden");
+        btnInstall.classList.remove("flex");
+      }
+      if (typeof showAlertModal === "function") {
+        showAlertModal("Aplikasi TUNTAS telah berhasil dipasang di perangkat Anda dan siap dibuka langsung dari Layar Utama (Home Screen).", "Instalasi Berhasil", "success");
+      }
+    });
+
+    // 3. Handler saat tombol 'Install Aplikasi' diklik oleh pengguna
+    async function handleInstallPwaClick() {
+      if (deferredInstallPrompt) {
+        // Tampilkan dialog instalasi native ke layar beranda (Home Screen)
+        deferredInstallPrompt.prompt();
+        const choiceResult = await deferredInstallPrompt.userChoice;
+        if (choiceResult && choiceResult.outcome === "accepted") {
+          console.log("[PWA] Pengguna menyetujui pemasangan aplikasi.");
+        } else {
+          console.log("[PWA] Pengguna membatalkan dialog instalasi.");
+        }
+        deferredInstallPrompt = null;
+        const btnInstall = document.getElementById("btnInstallPwa");
+        if (btnInstall) {
+          btnInstall.classList.add("hidden");
+          btnInstall.classList.remove("flex");
+        }
+      } else {
+        // Fallback untuk perangkat iOS Safari atau browser tanpa event prompt langsung
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+          showAlertModal(
+            "Untuk menginstal TUNTAS di iPhone / iPad (iOS):\n\n1. Tekan tombol Bagikan (Share / simbol ⎋ atau panah ke atas) di peramban Safari.\n2. Gulir ke bawah lalu pilih 'Tambahkan ke Layar Utama' (Add to Home Screen).\n3. Tekan 'Tambah' di sudut kanan atas.",
+            "Petunjuk Instalasi iOS",
+            "info"
+          );
+        } else {
+          showAlertModal(
+            "Untuk menginstal TUNTAS ke perangkat Anda:\n\nBuka menu browser (ikon titik tiga di sudut kanan atas Chrome / Edge) lalu pilih 'Install TUNTAS' atau 'Tambahkan ke Layar Utama'.",
+            "Instalasi Aplikasi",
+            "info"
+          );
+        }
+      }
+    }
+
+    // 4. Inisialisasi PWA & Service Worker
+    function initPwa() {
+      const btnInstall = document.getElementById("btnInstallPwa");
+      if (btnInstall) {
+        btnInstall.addEventListener("click", handleInstallPwaClick);
+      }
+
+      // Deteksi jika aplikasi dibuka dalam mode Standalone (PWA sudah terinstal)
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches || 
+                           window.navigator.standalone === true ||
+                           document.referrer.includes("android-app://");
+      if (isStandalone && btnInstall) {
+        btnInstall.classList.add("hidden");
+        btnInstall.classList.remove("flex");
+        console.log("[PWA] Berjalan dalam mode Standalone (PWA terinstal).");
+      } else {
+        // Khusus iOS non-standalone: sediakan tombol instalasi dengan panduan interaktif
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS && btnInstall) {
+          btnInstall.classList.remove("hidden");
+          btnInstall.classList.add("flex");
+        }
+      }
+
+      // Registrasi Service Worker untuk HTTP/HTTPS
+      if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
+        navigator.serviceWorker.register("./sw.js")
+          .then((reg) => {
+            console.log("[PWA] Service Worker aktif. Scope:", reg.scope);
+          })
+          .catch((err) => {
+            console.warn("[PWA] Catatan registrasi Service Worker:", err);
+          });
+      }
+    }
+
+    // =========================================================================
     // INISIALISASI HALAMAN
     // =========================================================================
     document.addEventListener("DOMContentLoaded", () => {
@@ -1720,6 +1910,9 @@
 
       // 4. Sinkronisasi Data Terbaru dari Backend Google Apps Script di Latar Belakang
       initDataFromAppsScript();
+
+      // 5. Inisialisasi PWA (Progressive Web App)
+      initPwa();
     });
 
     function updateLiveDateTime() {
