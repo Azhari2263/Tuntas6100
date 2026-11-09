@@ -1671,19 +1671,113 @@ function handleDeletePeran(payload) {
  * Contoh: "Pranata Komputer Ahli Pertama" + "BPS Kota Singkawang" -> "Pranata Komputer Ahli Pertama BPS Kota Singkawang"
  */
 function formatJabatanSatker(jabatan, unitKerja) {
-  const jab = (jabatan || "").trim();
-  const satker = (unitKerja || "").trim();
+  let jab = (jabatan || "").trim();
+  let satker = (unitKerja || "").trim();
   if (!satker) return jab;
   if (!jab) return satker;
+
+  // Normalisasi spasi ganda
+  jab = jab.replace(/\s+/g, " ");
+  satker = satker.replace(/\s+/g, " ");
+
+  // 1. Jika jabatan sudah memuat seluruh nama satker secara utuh (case-insensitive)
   if (jab.toLowerCase().includes(satker.toLowerCase())) {
     return jab;
   }
+
+  // 2. Deteksi singkatan/variasi penulisan satker di dalam jabatan (misal: Kab., Prov., Kalbar)
+  const words = satker.split(" ");
+  const flexibleParts = [];
+  let i = 0;
+  while (i < words.length) {
+    const w = words[i];
+    const wl = w.toLowerCase();
+    if (wl === "kabupaten") {
+      flexibleParts.push("(?:Kabupaten|Kab\\.?|Kab)");
+    } else if (wl === "provinsi") {
+      if (i + 2 < words.length && words[i + 1].toLowerCase() === "kalimantan" && words[i + 2].toLowerCase() === "barat") {
+        flexibleParts.push("(?:(?:Provinsi|Prov\\.?|Prov)\\s+)?(?:Kalimantan\\s+Barat|Kalbar)");
+        i += 2;
+      } else {
+        flexibleParts.push("(?:Provinsi|Prov\\.?|Prov)");
+      }
+    } else if (wl === "kalimantan" && i + 1 < words.length && words[i + 1].toLowerCase() === "barat") {
+      flexibleParts.push("(?:Kalimantan\\s+Barat|Kalbar)");
+      i += 1;
+    } else {
+      flexibleParts.push(w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    }
+    i++;
+  }
+
+  const satkerFlexRegex = new RegExp("\\b" + flexibleParts.join("\\s+") + "(?:\\b|\\.|$)", "i");
+  if (satkerFlexRegex.test(jab)) {
+    return jab.replace(satkerFlexRegex, satker).trim();
+  }
+
+  // 3. Tangani placeholder generik BPS Kabupaten/Kota atau Kab/Kota
+  const genericBpsKabKota = /\bBPS\s+(?:Kabupaten|Kab\.?|Kab)\s*\/\s*Kota(?:\b|\.|$)/i;
+  if (genericBpsKabKota.test(jab)) {
+    return jab.replace(genericBpsKabKota, satker).trim();
+  }
+
+  const genericKabKota = /\b(?:Kabupaten|Kab\.?|Kab)\s*\/\s*Kota(?:\b|\.|$)/i;
+  if (genericKabKota.test(jab)) {
+    return jab.replace(genericKabKota, satker).trim();
+  }
+
+  // 4. Tangani variasi 'BPS Provinsi' / 'BPS Prov.' pada jabatan jika satker adalah BPS Provinsi
+  const genericBpsProv = /\bBPS\s+(?:Provinsi|Prov\.?|Prov)(?:\b|\.|$)/i;
+  if (genericBpsProv.test(jab)) {
+    if (/\bBPS\s+Provinsi\b/i.test(satker)) {
+      return jab.replace(genericBpsProv, satker).trim();
+    }
+  }
+
+  // 5. Tangani variasi 'BPS Kabupaten' atau 'BPS Kota' (yang tidak diikuti nama daerah lain)
+  const genericBpsKab = /\bBPS\s+(?:Kabupaten|Kab\.?|Kab)(?:\s*$|\s+(?=\/|\)|$))/i;
+  if (/\bBPS\s+Kabupaten\b/i.test(satker) && genericBpsKab.test(jab)) {
+    return jab.replace(genericBpsKab, satker).trim();
+  }
+
+  const genericBpsKota = /\bBPS\s+Kota(?:\s*$|\s+(?=\/|\)|$))/i;
+  if (/\bBPS\s+Kota\b/i.test(satker) && genericBpsKota.test(jab)) {
+    return jab.replace(genericBpsKota, satker).trim();
+  }
+
+  // 6. Tangani kata 'BPS' tunggal di akhir jabatan (misal: "Staf BPS", "Auditor BPS") jika satker diawali BPS
+  if (/\bBPS\s*$/i.test(jab) && /^BPS\b/i.test(satker)) {
+    return jab.replace(/\bBPS\s*$/i, satker).trim();
+  }
+
+  // 7. Deteksi tumpang tindih kata (overlap) akhiran jabatan dan awalan satker
+  const jabWords = jab.split(" ");
+  const satkerWords = satker.split(" ");
+  let overlapCount = 0;
+  const maxK = Math.min(jabWords.length, satkerWords.length);
+  for (let k = maxK; k > 0; k--) {
+    const suffix = jabWords.slice(-k).join(" ").toLowerCase();
+    const prefix = satkerWords.slice(0, k).join(" ").toLowerCase();
+    if (suffix === prefix) {
+      overlapCount = k;
+      break;
+    }
+  }
+
+  if (overlapCount > 0) {
+    const baseJab = jabWords.slice(0, -overlapCount).join(" ");
+    return (baseJab ? (baseJab + " " + satker) : satker).trim();
+  }
+
+  // 8. Cek jika nama satker tanpa prefix BPS sudah ada di dalam jabatan (misal: "Pelaksana Kota Singkawang")
   const satkerNoBps = satker.replace(/^BPS\s+/i, "").trim();
   if (satkerNoBps && jab.toLowerCase().includes(satkerNoBps.toLowerCase())) {
     const escaped = satkerNoBps.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return jab.replace(new RegExp(escaped, "i"), satker).trim();
   }
-  return jab + " " + satker;
+
+  // 9. Default: gabungkan langsung dengan spasi
+  return (jab + " " + satker).trim();
 }
 
 // =============================================================================
