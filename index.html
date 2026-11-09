@@ -249,6 +249,12 @@
           <i class="fa-solid fa-users text-blue-300 text-sm"></i>
           <span>Master Pegawai</span>
         </button>
+        <button onclick="openModalKelolaPeran()" id="tab-peran" 
+                class="px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap flex-shrink-0"
+                title="Kelola Pilihan Peran Pegawai">
+          <i class="fa-solid fa-user-tag text-purple-300 text-sm"></i>
+          <span>Pilihan Peran</span>
+        </button>
       </div>
     </div>
   </header>
@@ -375,6 +381,11 @@
                     <i class="fa-solid fa-user-plus text-bps-orange"></i>
                     <span>Pegawai Baru</span>
                   </button>
+                  <button type="button" onclick="openModalKelolaPeran()" title="Kelola Pilihan Peran Pegawai" 
+                          class="w-full sm:w-auto bg-purple-50 hover:bg-purple-100 border border-purple-200 hover:border-purple-300 text-purple-800 px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all shadow-xs active:scale-95 whitespace-nowrap">
+                    <i class="fa-solid fa-user-tag text-purple-600"></i>
+                    <span>Kelola Peran</span>
+                  </button>
                 </div>
               </div>
 
@@ -387,7 +398,15 @@
                         <th class="p-3 w-12 text-center">No</th>
                         <th class="p-3 w-[30%]">Nama & NIP</th>
                         <th class="p-3 w-[30%]">Pangkat/Gol & Jabatan</th>
-                        <th class="p-3 w-48 sm:w-56">Peran</th>
+                        <th class="p-3 w-48 sm:w-56">
+                          <div class="flex items-center justify-between">
+                            <span>Peran</span>
+                            <button type="button" onclick="openModalKelolaPeran()" title="Kelola Pilihan Peran" class="text-bps-blue hover:text-bps-darkblue font-semibold text-[10px] inline-flex items-center gap-1 bg-white hover:bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs transition-colors">
+                              <i class="fa-solid fa-gear text-[9px] text-bps-orange"></i>
+                              <span>Kelola</span>
+                            </button>
+                          </div>
+                        </th>
                         <th class="p-3 w-28 text-center">Aksi</th>
                       </tr>
                     </thead>
@@ -396,17 +415,7 @@
                     </tbody>
                   </table>
                   <datalist id="peranDatalist">
-                    <option value="Peserta">
-                    <option value="Ketua Tim">
-                    <option value="Anggota Tim">
-                    <option value="Narasumber">
-                    <option value="Panitia">
-                    <option value="Mentor">
-                    <option value="Pengajar">
-                    <option value="Pendamping">
-                    <option value="Pengawas">
-                    <option value="Instruktur">
-                    <option value="Petugas">
+                    <!-- Dynamic Options dimuat dari master peran -->
                   </datalist>
                 </div>
 
@@ -1547,6 +1556,71 @@
     </div>
   </div>
 
+  <!-- MODAL: KELOLA PILIHAN PERAN (CRUD MASTER PERAN) -->
+  <div id="modalKelolaPeran" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm font-bold shadow-2xs">
+            <i class="fa-solid fa-user-tag"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm sm:text-base">Kelola Pilihan Peran</h3>
+            <p class="text-[11px] text-slate-500">Tambah, ubah, atau hapus peran pegawai untuk Surat Tugas</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModalKelolaPeran()" class="w-8 h-8 rounded-lg hover:bg-slate-200/60 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-grow">
+        <!-- Form Tambah / Edit Peran -->
+        <form id="formPeranCrud" onsubmit="handleSavePeranSubmit(event)" class="bg-slate-50/80 p-3.5 rounded-xl border border-slate-200 space-y-3">
+          <input type="hidden" id="crudPeranId" value="">
+          <input type="hidden" id="crudPeranOldName" value="">
+          
+          <div class="flex items-center justify-between">
+            <label id="formPeranLabel" class="block font-semibold text-xs text-slate-700">Tambah Peran Baru:</label>
+            <button type="button" id="btnCancelEditPeran" onclick="cancelEditPeran()" class="hidden text-[11px] text-slate-500 hover:text-red-600 font-medium transition-colors">
+              <i class="fa-solid fa-xmark mr-0.5"></i> Batal Ubah
+            </button>
+          </div>
+
+          <div class="flex gap-2">
+            <input type="text" id="inputNamaPeran" required placeholder="Contoh: Koordinator Lapangan, Observer..." 
+                   class="flex-grow text-xs bg-white border border-slate-300 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400">
+            <button type="submit" id="btnSubmitPeran" 
+                    class="bg-bps-blue hover:bg-bps-darkblue text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5 flex-shrink-0 active:scale-95">
+              <i class="fa-solid fa-plus text-xs" id="iconSubmitPeran"></i>
+              <span id="textSubmitPeran">Tambah</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Tabel Daftar Peran -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+          <div class="bg-slate-100/80 px-3.5 py-2 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600">
+            <span>Daftar Pilihan Peran Aktif</span>
+            <span id="badgeTotalPeran" class="text-[10px] bg-white border border-slate-200 px-2 py-0.5 rounded-full font-mono text-slate-500">0 Peran</span>
+          </div>
+          <div class="max-h-64 overflow-y-auto divide-y divide-slate-100" id="peranCrudListContainer">
+            <!-- Dynamic rows dimuat via JavaScript -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-100 flex justify-end flex-shrink-0">
+        <button type="button" onclick="closeModalKelolaPeran()" class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: KONFIRMASI UMUM (CLEAN, RAPI, RESPONSIVE) -->
   <div id="modalConfirm" onclick="if(event.target === this) handleConfirmResult(false)" 
        class="hidden fixed inset-0 z-[60] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 transition-all">
@@ -1713,6 +1787,7 @@
       satker: null,
       pejabatList: [],
       dasarHukumList: [],
+      peranList: [],
       masterPegawai: [],
       selectedPegawai: [], // Default kosong, tidak menampilkan pegawai secara otomatis
       selectedPegawaiPagination: {
@@ -1737,17 +1812,31 @@
 
     // Data Default Fallback (disinkronkan dengan Google Sheets & LocalStorage)
     const DEFAULT_MASTER_PEGAWAI = [
-      { id: 1, nip: "198008112005021004", nama: "Muhammad Adwin, S.Mn.", pangkat_gol: "Penata - III/c", jabatan: "Kepala Subbagian Umum Kabupaten Mempawah", unit_kerja: "BPS Kabupaten Mempawah" },
-      { id: 2, nip: "200409262026032001", nama: "Putri Rehulina Damanik, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Bengkayang", unit_kerja: "BPS Kabupaten Bengkayang" },
-      { id: 3, nip: "200302162026032001", nama: "Hany Febrianty, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Landak", unit_kerja: "BPS Kabupaten Landak" },
-      { id: 4, nip: "200409072026032001", nama: "Clara Diva Verianinta Lagum, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Mempawah", unit_kerja: "BPS Kabupaten Mempawah" },
-      { id: 5, nip: "200211172026031001", nama: "Muhammad Raihan, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Sintang", unit_kerja: "BPS Kabupaten Sintang" },
-      { id: 6, nip: "200207032026031001", nama: "Dafa Riyandika Mahendra, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana BPS Kabupaten Sintang", unit_kerja: "BPS Kabupaten Sintang" },
-      { id: 7, nip: "200401182026032001", nama: "Zahra Safira Haryono, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Landak", unit_kerja: "BPS Kabupaten Landak" },
-      { id: 8, nip: "200104042026032001", nama: "Akma Batrisyia Jazima, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Mempawah", unit_kerja: "BPS Kabupaten Mempawah" },
-      { id: 9, nip: "200208142026031001", nama: "Agus Riyanto, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Kapuas Hulu", unit_kerja: "BPS Kabupaten Kapuas Hulu" },
-      { id: 10, nip: "200401222026032001", nama: "Dyah Widyastuti, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Kabupaten Melawi", unit_kerja: "BPS Kabupaten Melawi" },
-      { id: 11, nip: "200111222026031001", nama: "Azhari, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana BPS Provinsi Kalimantan Barat", unit_kerja: "BPS Provinsi Kalimantan Barat" }
+      { id: 1, nip: "198008112005021004", nama: "Muhammad Adwin, S.Mn.", pangkat_gol: "Penata - III/c", jabatan: "Kepala Subbagian Umum", unit_kerja: "BPS Kabupaten Mempawah" },
+      { id: 2, nip: "200409262026032001", nama: "Putri Rehulina Damanik, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Bengkayang" },
+      { id: 3, nip: "200302162026032001", nama: "Hany Febrianty, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Landak" },
+      { id: 4, nip: "200409072026032001", nama: "Clara Diva Verianinta Lagum, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Mempawah" },
+      { id: 5, nip: "200211172026031001", nama: "Muhammad Raihan, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Sintang" },
+      { id: 6, nip: "200207032026031001", nama: "Dafa Riyandika Mahendra, A.Md.Stat.", pangkat_gol: "Pengatur - II/c", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Sintang" },
+      { id: 7, nip: "200401182026032001", nama: "Zahra Safira Haryono, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Landak" },
+      { id: 8, nip: "200104042026032001", nama: "Akma Batrisyia Jazima, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Mempawah" },
+      { id: 9, nip: "200208142026031001", nama: "Agus Riyanto, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Kapuas Hulu" },
+      { id: 10, nip: "200401222026032001", nama: "Dyah Widyastuti, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana", unit_kerja: "BPS Kabupaten Melawi" },
+      { id: 11, nip: "200111222026031001", nama: "Azhari, S.Tr.Stat.", pangkat_gol: "Penata Muda - III/a", jabatan: "Pelaksana", unit_kerja: "BPS Provinsi Kalimantan Barat" }
+    ];
+
+    const DEFAULT_PERAN_LIST = [
+      { id: 1, nama_peran: "Peserta" },
+      { id: 2, nama_peran: "Ketua Tim" },
+      { id: 3, nama_peran: "Anggota Tim" },
+      { id: 4, nama_peran: "Narasumber" },
+      { id: 5, nama_peran: "Panitia" },
+      { id: 6, nama_peran: "Mentor" },
+      { id: 7, nama_peran: "Pengajar" },
+      { id: 8, nama_peran: "Pendamping" },
+      { id: 9, nama_peran: "Pengawas" },
+      { id: 10, nama_peran: "Instruktur" },
+      { id: 11, nama_peran: "Petugas" }
     ];
 
     const DEFAULT_PEJABAT = [
@@ -1889,10 +1978,14 @@
       const cachedHukum = localStorage.getItem("SURTUG_DASAR_HUKUM");
       const cachedArchive = localStorage.getItem("SURTUG_ARCHIVE_LIST");
 
+      const cachedPeran = localStorage.getItem("SURTUG_PERAN_LIST");
+
       appState.masterPegawai = cachedPegawai ? JSON.parse(cachedPegawai) : [...DEFAULT_MASTER_PEGAWAI];
       appState.pejabatList = cachedPejabat ? JSON.parse(cachedPejabat) : [...DEFAULT_PEJABAT];
       appState.dasarHukumList = cachedHukum ? JSON.parse(cachedHukum) : [...DEFAULT_DASAR_HUKUM];
+      appState.peranList = cachedPeran ? JSON.parse(cachedPeran) : [...DEFAULT_PERAN_LIST];
       if (cachedArchive) appState.archiveList = JSON.parse(cachedArchive);
+      renderPeranDatalist();
 
       // 3. Render Awal Antarmuka
       populatePejabatDropdown(appState.pejabatList);
@@ -1958,6 +2051,12 @@
             }));
             localStorage.setItem("SURTUG_DASAR_HUKUM", JSON.stringify(appState.dasarHukumList));
             renderDasarHukumChecklist();
+          }
+          if (res.data.peranList && res.data.peranList.length > 0) {
+            appState.peranList = res.data.peranList;
+            localStorage.setItem("SURTUG_PERAN_LIST", JSON.stringify(appState.peranList));
+            renderPeranDatalist();
+            renderSelectedPegawai();
           }
           if (res.data.previewNomorSurat) {
             appState.previewNomor = res.data.previewNomorSurat;
@@ -2066,6 +2165,9 @@
           const input = document.getElementById(`peranInput_${idx}`);
           if (input) input.focus();
         }, 50);
+      } else if (val === '__MANAGE_PERAN__') {
+        renderSelectedPegawai();
+        openModalKelolaPeran();
       } else {
         appState.selectedPegawai[idx].peran = val;
         appState.selectedPegawai[idx].isManualPeran = false;
@@ -2076,7 +2178,8 @@
     function setPeranMode(idx, isManual) {
       appState.selectedPegawai[idx].isManualPeran = isManual;
       if (!isManual && (!appState.selectedPegawai[idx].peran || appState.selectedPegawai[idx].peran.trim() === "")) {
-        appState.selectedPegawai[idx].peran = "Peserta";
+        const availableRoles = getPeranListNames();
+        appState.selectedPegawai[idx].peran = availableRoles[0] || "Peserta";
       }
       saveTempSelectedPegawai();
       renderSelectedPegawai();
@@ -2145,16 +2248,26 @@
       const endIndex = Math.min(startIndex + pageSize, totalItems);
       const pageItems = appState.selectedPegawai.slice(startIndex, endIndex);
 
-      const standardPeran = ["Peserta", "Ketua Tim", "Anggota Tim", "Narasumber", "Panitia", "Mentor", "Pengajar", "Pendamping", "Pengawas", "Instruktur", "Petugas"];
+      const availableRoles = getPeranListNames();
 
       pageItems.forEach((p, localIdx) => {
         const realIdx = startIndex + localIdx;
-        if (p.peran && !standardPeran.includes(p.peran) && p.isManualPeran === undefined) {
+        if (p.peran && !availableRoles.includes(p.peran) && p.isManualPeran === undefined) {
           p.isManualPeran = true;
         }
 
         const isFirst = realIdx === 0;
         const isLast = realIdx === totalItems - 1;
+
+        // Build role dropdown options dynamically
+        let roleOptionsHtml = availableRoles.map(r => 
+          `<option value="${escapeHtml(r)}" ${p.peran === r ? 'selected' : ''}>${escapeHtml(r)}</option>`
+        ).join("");
+        if (p.peran && !availableRoles.includes(p.peran)) {
+          roleOptionsHtml = `<option value="${escapeHtml(p.peran)}" selected>${escapeHtml(p.peran)}</option>` + roleOptionsHtml;
+        }
+
+        const displayJabatan = formatJabatanSatker(p.jabatan, p.unit_kerja);
 
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50/80 transition-colors";
@@ -2166,7 +2279,7 @@
           </td>
           <td class="p-3">
             <p class="font-medium text-slate-800">${p.pangkat_gol || '-'}</p>
-            <p class="text-[11px] text-slate-500 leading-snug">${p.jabatan || '-'}</p>
+            <p class="text-[11px] text-slate-500 leading-snug">${displayJabatan || '-'}</p>
           </td>
           <td class="p-3">
             ${p.isManualPeran ? `
@@ -2184,18 +2297,10 @@
               <div class="flex items-center space-x-1.5">
                 <select onchange="onPeranSelectChange(${realIdx}, this.value)" 
                         class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-bps-blue/20 focus:border-bps-blue bg-white font-medium">
-                  <option value="Peserta" ${p.peran === 'Peserta' ? 'selected' : ''}>Peserta</option>
-                  <option value="Ketua Tim" ${p.peran === 'Ketua Tim' ? 'selected' : ''}>Ketua Tim</option>
-                  <option value="Anggota Tim" ${p.peran === 'Anggota Tim' ? 'selected' : ''}>Anggota Tim</option>
-                  <option value="Narasumber" ${p.peran === 'Narasumber' ? 'selected' : ''}>Narasumber</option>
-                  <option value="Panitia" ${p.peran === 'Panitia' ? 'selected' : ''}>Panitia</option>
-                  <option value="Mentor" ${p.peran === 'Mentor' ? 'selected' : ''}>Mentor</option>
-                  <option value="Pengajar" ${p.peran === 'Pengajar' ? 'selected' : ''}>Pengajar</option>
-                  <option value="Pendamping" ${p.peran === 'Pendamping' ? 'selected' : ''}>Pendamping</option>
-                  <option value="Pengawas" ${p.peran === 'Pengawas' ? 'selected' : ''}>Pengawas</option>
-                  <option value="Instruktur" ${p.peran === 'Instruktur' ? 'selected' : ''}>Instruktur</option>
-                  <option value="Petugas" ${p.peran === 'Petugas' ? 'selected' : ''}>Petugas</option>
+                  ${roleOptionsHtml}
+                  <option disabled>──────────</option>
                   <option value="__MANUAL__">✏️ Ketik Manual...</option>
+                  <option value="__MANAGE_PERAN__">⚙️ Kelola Pilihan Peran...</option>
                 </select>
                 <button type="button" onclick="setPeranMode(${realIdx}, true)" title="Ketik peran manual" 
                         class="p-2 text-xs text-slate-500 hover:text-bps-orange border border-slate-200 rounded-lg bg-slate-50 hover:bg-white transition-colors">
@@ -2723,7 +2828,7 @@
             <div class="flex"><span class="w-24 flex-shrink-0">Nama</span><span class="w-4">:</span><span class="font-semibold">${p.nama}</span></div>
             <div class="flex"><span class="w-24 flex-shrink-0">NIP</span><span class="w-4">:</span><span>${p.nip}</span></div>
             <div class="flex"><span class="w-24 flex-shrink-0">Pangkat/Gol</span><span class="w-4">:</span><span>${p.pangkat_gol || '-'}</span></div>
-            <div class="flex"><span class="w-24 flex-shrink-0">Jabatan</span><span class="w-4">:</span><span>${p.jabatan || '-'}</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Jabatan</span><span class="w-4">:</span><span>${formatJabatanSatker(p.jabatan, p.unit_kerja) || '-'}</span></div>
           </div>
         `;
         document.getElementById("prevUntuk").textContent = `Mengikuti Kegiatan ${cleanTujuan} pada tanggal ${tglKegVal} sebagai ${peran}.`;
@@ -2761,7 +2866,7 @@
             <td class="border border-slate-900 p-1 font-semibold">${p.nama}</td>
             <td class="border border-slate-900 p-1 text-center font-mono">${p.nip}</td>
             <td class="border border-slate-900 p-1 text-center">${p.pangkat_gol || '-'}</td>
-            <td class="border border-slate-900 p-1">${p.jabatan || '-'}</td>
+            <td class="border border-slate-900 p-1">${formatJabatanSatker(p.jabatan, p.unit_kerja) || '-'}</td>
             <td class="border border-slate-900 p-1 text-center">${p.peran || 'Peserta'}</td>
           </tr>
         `).join("");
@@ -2816,7 +2921,10 @@
         pejabatJabatan: document.getElementById("pejabatJabatan").value,
         pejabatNip: appState.currentPejabatNip || "",
         customNomorSurat: appState.isCustomNomor ? document.getElementById("customNomorSurat").value : "",
-        pegawaiList: appState.selectedPegawai
+        pegawaiList: appState.selectedPegawai.map(p => ({
+          ...p,
+          jabatan: formatJabatanSatker(p.jabatan, p.unit_kerja)
+        }))
       };
 
       // Kirim ke Apps Script
@@ -3467,6 +3575,335 @@
       alert("Pengaturan template berhasil disimpan.");
     }
 
+
+    // =========================================================================
+    // MODUL PENGELOLAAN PERAN (CRUD MASTER PERAN) & FORMATTING
+    // =========================================================================
+
+    /**
+     * Menggabungkan data Jabatan dan Satuan Kerja (Satker) pegawai secara otomatis
+     * Contoh: Jabatan "Pranata Komputer Ahli Pertama" dan Satker "BPS Kota Singkawang"
+     * -> "Pranata Komputer Ahli Pertama BPS Kota Singkawang"
+     */
+    function formatJabatanSatker(jabatan, unitKerja) {
+      const jab = (jabatan || "").trim();
+      const satker = (unitKerja || "").trim();
+      if (!satker) return jab;
+      if (!jab) return satker;
+      if (jab.toLowerCase().includes(satker.toLowerCase())) {
+        return jab;
+      }
+      const satkerNoBps = satker.replace(/^BPS\s+/i, "").trim();
+      if (satkerNoBps && jab.toLowerCase().includes(satkerNoBps.toLowerCase())) {
+        const escaped = satkerNoBps.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return jab.replace(new RegExp(escaped, "i"), satker).trim();
+      }
+      return `${jab} ${satker}`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    /**
+     * Mengambil daftar nama peran aktif sebagai array string
+     */
+    function getPeranListNames() {
+      if (!appState.peranList || appState.peranList.length === 0) {
+        return DEFAULT_PERAN_LIST.map(p => p.nama_peran);
+      }
+      return appState.peranList.map(p => typeof p === 'string' ? p : (p.nama_peran || p.nama)).filter(Boolean);
+    }
+
+    /**
+     * Memperbarui datalist peran di DOM
+     */
+    function renderPeranDatalist() {
+      const datalist = document.getElementById("peranDatalist");
+      if (!datalist) return;
+      const roles = getPeranListNames();
+      datalist.innerHTML = roles.map(r => `<option value="${escapeHtml(r)}">`).join("");
+    }
+
+    /**
+     * Membuka modal Kelola Pilihan Peran
+     */
+    function openModalKelolaPeran() {
+      cancelEditPeran();
+      renderPeranCrudList();
+      const modal = document.getElementById("modalKelolaPeran");
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    /**
+     * Menutup modal Kelola Pilihan Peran
+     */
+    function closeModalKelolaPeran() {
+      const modal = document.getElementById("modalKelolaPeran");
+      if (modal) modal.classList.add("hidden");
+      cancelEditPeran();
+    }
+
+    /**
+     * Merender daftar peran di dalam modal CRUD
+     */
+    function renderPeranCrudList() {
+      const container = document.getElementById("peranCrudListContainer");
+      const badge = document.getElementById("badgeTotalPeran");
+      if (!container) return;
+
+      const roles = appState.peranList || [];
+      if (badge) badge.textContent = `${roles.length} Peran`;
+
+      if (roles.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-slate-400 space-y-1">
+            <i class="fa-solid fa-tags text-2xl text-slate-300"></i>
+            <p class="text-xs font-medium">Belum ada pilihan peran tersimpan</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = roles.map((item, idx) => {
+        const id = item.id || (idx + 1);
+        const name = typeof item === 'string' ? item : (item.nama_peran || item.nama || "");
+        const usedCount = appState.selectedPegawai.filter(p => p.peran === name).length;
+        const usedBadge = usedCount > 0 ? 
+          `<span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-medium">${usedCount} dipakai</span>` : 
+          "";
+
+        return `
+          <div class="p-3 sm:px-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+            <div class="flex items-center space-x-3 min-w-0">
+              <span class="text-xs font-semibold text-slate-400 w-6 text-center">${idx + 1}</span>
+              <div class="flex items-center space-x-2 truncate">
+                <i class="fa-solid fa-tag text-purple-400 text-xs flex-shrink-0"></i>
+                <span class="font-bold text-xs text-slate-800 truncate">${escapeHtml(name)}</span>
+                ${usedBadge}
+              </div>
+            </div>
+            <div class="flex items-center space-x-1 flex-shrink-0">
+              <button type="button" onclick="startEditPeran(${id}, '${escapeHtml(name)}')" title="Ubah Nama Peran" 
+                      class="w-7 h-7 rounded-lg text-slate-500 hover:text-bps-blue hover:bg-blue-50 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-pen-to-square text-xs"></i>
+              </button>
+              <button type="button" onclick="deletePeranConfirm(${id}, '${escapeHtml(name)}')" title="Hapus Peran" 
+                      class="w-7 h-7 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    /**
+     * Menangani submit form Tambah / Edit Peran
+     */
+    async function handleSavePeranSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById("inputNamaPeran");
+      const idInput = document.getElementById("crudPeranId");
+      const oldNameInput = document.getElementById("crudPeranOldName");
+
+      const val = input ? input.value.trim() : "";
+      if (!val) {
+        showAlertModal("Nama peran tidak boleh kosong.", "Peringatan", "warning");
+        return;
+      }
+
+      const isEdit = idInput && idInput.value !== "";
+      const editId = idInput ? idInput.value : "";
+      const oldName = oldNameInput ? oldNameInput.value : "";
+
+      if (isEdit) {
+        // Mode Ubah / Edit
+        const exists = appState.peranList.some(p => {
+          const pName = typeof p === 'string' ? p : p.nama_peran;
+          const pId = typeof p === 'string' ? null : p.id;
+          return pName.toLowerCase() === val.toLowerCase() && String(pId) !== String(editId);
+        });
+
+        if (exists) {
+          showAlertModal(`Peran "${val}" sudah ada dalam daftar.`, "Peran Sudah Ada", "warning");
+          return;
+        }
+
+        // Update item di peranList
+        appState.peranList = appState.peranList.map(p => {
+          if (typeof p === 'string') {
+            return p === oldName ? val : p;
+          }
+          if (String(p.id) === String(editId) || p.nama_peran === oldName) {
+            return { ...p, nama_peran: val };
+          }
+          return p;
+        });
+
+        // Update pegawai terpilih yang menggunakan nama peran lama
+        if (oldName && oldName !== val) {
+          appState.selectedPegawai.forEach(p => {
+            if (p.peran === oldName) {
+              p.peran = val;
+            }
+          });
+          saveTempSelectedPegawai();
+        }
+
+        sendBackendPost({
+          action: "updatePeran",
+          id: editId,
+          old_nama: oldName,
+          nama_peran: val
+        });
+      } else {
+        // Mode Tambah
+        const exists = appState.peranList.some(p => {
+          const pName = typeof p === 'string' ? p : p.nama_peran;
+          return pName.toLowerCase() === val.toLowerCase();
+        });
+
+        if (exists) {
+          showAlertModal(`Peran "${val}" sudah ada dalam daftar.`, "Peran Sudah Ada", "warning");
+          return;
+        }
+
+        const maxId = appState.peranList.reduce((acc, cur) => {
+          const curId = typeof cur === 'object' && cur.id ? parseInt(cur.id, 10) : 0;
+          return curId > acc ? curId : acc;
+        }, 0);
+        const newId = maxId + 1;
+
+        const newObj = { id: newId, nama_peran: val, is_active: true };
+        appState.peranList.push(newObj);
+
+        sendBackendPost({
+          action: "addPeran",
+          id: newId,
+          nama_peran: val
+        });
+      }
+
+      // Simpan perubahan ke LocalStorage
+      localStorage.setItem("SURTUG_PERAN_LIST", JSON.stringify(appState.peranList));
+
+      // Reset form dan perbarui tampilan dropdown seketika
+      cancelEditPeran();
+      renderPeranCrudList();
+      renderPeranDatalist();
+      renderSelectedPegawai();
+    }
+
+    /**
+     * Mengatur form ke mode Edit Peran
+     */
+    function startEditPeran(id, name) {
+      const idInput = document.getElementById("crudPeranId");
+      const oldNameInput = document.getElementById("crudPeranOldName");
+      const nameInput = document.getElementById("inputNamaPeran");
+      const label = document.getElementById("formPeranLabel");
+      const btnText = document.getElementById("textSubmitPeran");
+      const btnIcon = document.getElementById("iconSubmitPeran");
+      const cancelBtn = document.getElementById("btnCancelEditPeran");
+
+      if (idInput) idInput.value = id;
+      if (oldNameInput) oldNameInput.value = name;
+      if (nameInput) {
+        nameInput.value = name;
+        nameInput.focus();
+      }
+      if (label) label.textContent = `Ubah Peran "${name}":`;
+      if (btnText) btnText.textContent = "Simpan";
+      if (btnIcon) btnIcon.className = "fa-solid fa-check text-xs";
+      if (cancelBtn) cancelBtn.classList.remove("hidden");
+    }
+
+    /**
+     * Membatalkan mode edit peran dan kembali ke mode Tambah
+     */
+    function cancelEditPeran() {
+      const idInput = document.getElementById("crudPeranId");
+      const oldNameInput = document.getElementById("crudPeranOldName");
+      const nameInput = document.getElementById("inputNamaPeran");
+      const label = document.getElementById("formPeranLabel");
+      const btnText = document.getElementById("textSubmitPeran");
+      const btnIcon = document.getElementById("iconSubmitPeran");
+      const cancelBtn = document.getElementById("btnCancelEditPeran");
+
+      if (idInput) idInput.value = "";
+      if (oldNameInput) oldNameInput.value = "";
+      if (nameInput) nameInput.value = "";
+      if (label) label.textContent = "Tambah Peran Baru:";
+      if (btnText) btnText.textContent = "Tambah";
+      if (btnIcon) btnIcon.className = "fa-solid fa-plus text-xs";
+      if (cancelBtn) cancelBtn.classList.add("hidden");
+    }
+
+    /**
+     * Menghapus pilihan peran dengan konfirmasi pengguna
+     */
+    async function deletePeranConfirm(id, name) {
+      if (appState.peranList.length <= 1) {
+        showAlertModal("Minimal harus ada 1 pilihan peran di dalam sistem.", "Peringatan", "warning");
+        return;
+      }
+
+      const usedCount = appState.selectedPegawai.filter(p => p.peran === name).length;
+      let detailMsg = `Peran "${name}" akan dihapus permanen dari database.`;
+      if (usedCount > 0) {
+        detailMsg += ` Peran ini sedang dipilih oleh ${usedCount} pegawai yang ditugaskan dan akan diatur ulang ke peran standar.`;
+      }
+
+      const ok = await showConfirmModal({
+        title: "Hapus Pilihan Peran",
+        message: `Apakah Anda yakin ingin menghapus peran "${name}"?`,
+        detail: detailMsg,
+        confirmText: "Ya, Hapus Peran",
+        cancelText: "Batal",
+        confirmIcon: "fa-trash-can",
+        type: "danger"
+      });
+
+      if (!ok) return;
+
+      // Hapus dari peranList
+      appState.peranList = appState.peranList.filter(p => {
+        if (typeof p === 'string') return p !== name;
+        return String(p.id) !== String(id) && p.nama_peran !== name;
+      });
+
+      // Update pegawai yang menggunakan peran ini
+      if (usedCount > 0) {
+        const fallbackRole = getPeranListNames()[0] || "Peserta";
+        appState.selectedPegawai.forEach(p => {
+          if (p.peran === name) {
+            p.peran = fallbackRole;
+          }
+        });
+        saveTempSelectedPegawai();
+      }
+
+      // Simpan ke LocalStorage & kirim ke backend
+      localStorage.setItem("SURTUG_PERAN_LIST", JSON.stringify(appState.peranList));
+      sendBackendPost({
+        action: "deletePeran",
+        id: id,
+        nama_peran: name
+      });
+
+      cancelEditPeran();
+      renderPeranCrudList();
+      renderPeranDatalist();
+      renderSelectedPegawai();
+    }
+
     // =========================================================================
     // MODUL Import: TEMPLATE & PARSER EXCEL/CSV (CLIENT-SIDE)
     // =========================================================================
@@ -3732,7 +4169,7 @@
                 <td class="p-2.5 font-mono font-medium text-slate-800">${item.nip || '<span class="text-rose-400 italic">kosong</span>'}</td>
                 <td class="p-2.5 font-bold text-slate-900">${item.nama || '<span class="text-rose-400 italic">kosong</span>'}</td>
                 <td class="p-2.5 text-slate-600">${item.pangkat_gol || '-'}</td>
-                <td class="p-2.5 text-slate-600">${item.jabatan || '-'}</td>
+                <td class="p-2.5 text-slate-600">${formatJabatanSatker(item.jabatan, item.unit_kerja) || '-'}</td>
                 <td class="p-2.5 font-medium text-bps-blue">${item.peran || 'Peserta'}</td>
                 <td class="p-2.5 text-center">${statusPill}</td>
               </tr>

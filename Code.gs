@@ -90,6 +90,9 @@ function doGet(e) {
       case "getDasarHukum":
         return jsonResponse(handleGetDasarHukum());
 
+      case "getPeran":
+        return jsonResponse(handleGetPeran());
+
       case "previewNomor":
         const tahun = params.tahun || new Date().getFullYear();
         const satker = params.kode_satker || CONFIG.DEFAULT_KODE_SATKER;
@@ -155,6 +158,14 @@ function doPost(e) {
         return jsonResponse(handleUpdateDasarHukum(payload));
       case "deleteDasarHukum":
         return jsonResponse(handleDeleteDasarHukum(payload));
+
+      // Peran CRUD
+      case "addPeran":
+        return jsonResponse(handleAddPeran(payload));
+      case "updatePeran":
+        return jsonResponse(handleUpdatePeran(payload));
+      case "deletePeran":
+        return jsonResponse(handleDeletePeran(payload));
 
       // Riwayat & Arsip CRUD
       case "addArsip":
@@ -225,6 +236,9 @@ function handleGetInitialData() {
   // 4. Data Master Pegawai
   const pegawaiList = handleGetPegawai().data;
 
+  // 4b. Data Master Pilihan Peran
+  const peranList = handleGetPeran().data;
+
   // 5. Preview Nomor Surat Berikutnya
   const curYear = new Date().getFullYear();
   const nextNumber = getNextNumberPreview(curYear, satker.kode_satker, CONFIG.DEFAULT_KLASIFIKASI);
@@ -242,6 +256,7 @@ function handleGetInitialData() {
       pejabatList: pejabatList,
       dasarHukumList: dasarHukumList,
       pegawaiList: pegawaiList,
+      peranList: peranList,
       nextAgenda: nextNumber.agenda,
       previewNomorSurat: nextNumber.formatted,
       currentYear: curYear,
@@ -440,7 +455,7 @@ function handleCreateSuratTugas(payload) {
       p.nama,
       p.nip,
       p.pangkat_gol,
-      p.jabatan,
+      formatJabatanSatker(p.jabatan, p.unit_kerja),
       p.peran || "Peserta",
       index + 1
     ]);
@@ -1465,6 +1480,210 @@ function handleDeleteDasarHukum(payload) {
     status: "success",
     message: "Dasar hukum berhasil dihapus."
   };
+}
+
+
+
+// =============================================================================
+// HANDLER CRUD: PILIHAN PERAN
+// =============================================================================
+
+/**
+ * Mengambil master pilihan peran pegawai
+ */
+function handleGetPeran() {
+  const db = getDb();
+  let sheet = db.getSheetByName("m_peran");
+  const defaultPeran = [
+    { id: 1, nama_peran: "Peserta", is_active: true },
+    { id: 2, nama_peran: "Ketua Tim", is_active: true },
+    { id: 3, nama_peran: "Anggota Tim", is_active: true },
+    { id: 4, nama_peran: "Narasumber", is_active: true },
+    { id: 5, nama_peran: "Panitia", is_active: true },
+    { id: 6, nama_peran: "Mentor", is_active: true },
+    { id: 7, nama_peran: "Pengajar", is_active: true },
+    { id: 8, nama_peran: "Pendamping", is_active: true },
+    { id: 9, nama_peran: "Pengawas", is_active: true },
+    { id: 10, nama_peran: "Instruktur", is_active: true },
+    { id: 11, nama_peran: "Petugas", is_active: true }
+  ];
+
+  if (!sheet) {
+    try {
+      sheet = db.insertSheet("m_peran");
+      sheet.appendRow(["id_peran", "nama_peran", "is_active"]);
+      const initRows = defaultPeran.map(p => [p.id, p.nama_peran, true]);
+      sheet.getRange(2, 1, initRows.length, 3).setValues(initRows);
+    } catch (e) {
+      return { status: "success", data: defaultPeran };
+    }
+  }
+
+  if (sheet.getLastRow() <= 1) {
+    try {
+      const initRows = defaultPeran.map(p => [p.id, p.nama_peran, true]);
+      sheet.getRange(2, 1, initRows.length, 3).setValues(initRows);
+    } catch (e) {}
+    return { status: "success", data: defaultPeran };
+  }
+
+  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+  const list = data.map(r => ({
+    id: r[0],
+    nama_peran: String(r[1] || "").trim(),
+    is_active: r[2] === true || r[2] === "TRUE" || r[2] === "" || r[2] === undefined
+  })).filter(p => p.nama_peran && p.is_active);
+
+  return { status: "success", data: list.length > 0 ? list : defaultPeran };
+}
+
+/**
+ * Menambahkan pilihan peran baru ke database
+ */
+function handleAddPeran(payload) {
+  const namaPeran = (payload.nama_peran || payload.nama || "").trim();
+  if (!namaPeran) {
+    throw new Error("Nama peran wajib diisi.");
+  }
+
+  const db = getDb();
+  let sheet = db.getSheetByName("m_peran");
+  if (!sheet) {
+    sheet = db.insertSheet("m_peran");
+    sheet.appendRow(["id_peran", "nama_peran", "is_active"]);
+  }
+
+  let nextId = 1;
+  if (sheet.getLastRow() > 1) {
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+    const ids = [];
+    for (let i = 0; i < data.length; i++) {
+      ids.push(parseInt(data[i][0], 10) || 0);
+      if (String(data[i][1]).trim().toLowerCase() === namaPeran.toLowerCase()) {
+        throw new Error("Peran '" + namaPeran + "' sudah ada di database.");
+      }
+    }
+    nextId = Math.max(0, ...ids) + 1;
+  }
+
+  sheet.appendRow([nextId, namaPeran, true]);
+
+  return {
+    status: "success",
+    message: "Pilihan peran '" + namaPeran + "' berhasil ditambahkan.",
+    data: {
+      id: nextId,
+      nama_peran: namaPeran,
+      is_active: true
+    }
+  };
+}
+
+/**
+ * Mengubah data pilihan peran di database
+ */
+function handleUpdatePeran(payload) {
+  const id = payload.id;
+  const newNama = (payload.nama_peran || payload.nama || "").trim();
+  if (!id && !payload.old_nama) {
+    throw new Error("ID atau Nama Peran lama diperlukan untuk mengubah peran.");
+  }
+  if (!newNama) {
+    throw new Error("Nama peran baru tidak boleh kosong.");
+  }
+
+  const db = getDb();
+  const sheet = db.getSheetByName("m_peran");
+  if (!sheet || sheet.getLastRow() <= 1) {
+    throw new Error("Tabel master peran belum tersedia.");
+  }
+
+  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+  let foundRow = -1;
+
+  for (let i = 0; i < data.length; i++) {
+    if ((id && String(data[i][0]) === String(id)) ||
+        (payload.old_nama && String(data[i][1]).trim().toLowerCase() === String(payload.old_nama).trim().toLowerCase())) {
+      foundRow = i + 2;
+      break;
+    }
+  }
+
+  if (foundRow === -1) {
+    throw new Error("Data peran tidak ditemukan.");
+  }
+
+  sheet.getRange(foundRow, 2).setValue(newNama);
+
+  return {
+    status: "success",
+    message: "Pilihan peran berhasil diperbarui menjadi '" + newNama + "'.",
+    data: {
+      id: id,
+      nama_peran: newNama
+    }
+  };
+}
+
+/**
+ * Menghapus pilihan peran dari database
+ */
+function handleDeletePeran(payload) {
+  const id = payload.id;
+  const namaPeran = (payload.nama_peran || payload.nama || "").trim();
+  if (!id && !namaPeran) {
+    throw new Error("ID atau Nama peran diperlukan untuk menghapus peran.");
+  }
+
+  const db = getDb();
+  const sheet = db.getSheetByName("m_peran");
+  if (!sheet || sheet.getLastRow() <= 1) {
+    throw new Error("Tabel master peran belum tersedia.");
+  }
+
+  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+  let foundRow = -1;
+  let deletedNama = "";
+
+  for (let i = 0; i < data.length; i++) {
+    if ((id && String(data[i][0]) === String(id)) ||
+        (namaPeran && String(data[i][1]).trim().toLowerCase() === namaPeran.toLowerCase())) {
+      foundRow = i + 2;
+      deletedNama = data[i][1];
+      break;
+    }
+  }
+
+  if (foundRow === -1) {
+    throw new Error("Data peran tidak ditemukan.");
+  }
+
+  sheet.deleteRow(foundRow);
+
+  return {
+    status: "success",
+    message: "Pilihan peran '" + deletedNama + "' berhasil dihapus."
+  };
+}
+
+/**
+ * Menggabungkan data Jabatan dan Satker (Unit Kerja) pegawai
+ * Contoh: "Pranata Komputer Ahli Pertama" + "BPS Kota Singkawang" -> "Pranata Komputer Ahli Pertama BPS Kota Singkawang"
+ */
+function formatJabatanSatker(jabatan, unitKerja) {
+  const jab = (jabatan || "").trim();
+  const satker = (unitKerja || "").trim();
+  if (!satker) return jab;
+  if (!jab) return satker;
+  if (jab.toLowerCase().includes(satker.toLowerCase())) {
+    return jab;
+  }
+  const satkerNoBps = satker.replace(/^BPS\s+/i, "").trim();
+  if (satkerNoBps && jab.toLowerCase().includes(satkerNoBps.toLowerCase())) {
+    const escaped = satkerNoBps.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return jab.replace(new RegExp(escaped, "i"), satker).trim();
+  }
+  return jab + " " + satker;
 }
 
 // =============================================================================

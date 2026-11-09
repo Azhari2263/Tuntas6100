@@ -285,7 +285,7 @@ function applySinglePersonLayout(body, person) {
   const nama = person.nama || "";
   const nip = person.nip || "";
   const pangkatGol = person.pangkat_gol || "";
-  const jabatan = person.jabatan || "";
+  const jabatan = formatJabatanSatker(person.jabatan, person.unit_kerja);
   const peran = person.peran || "Peserta";
 
   // Template Baru <<...>>
@@ -534,7 +534,7 @@ function fillLampiranRow(row, idx, p, headerRow, colWidths) {
       val = p.pangkat_gol || "";
       align = DocumentApp.HorizontalAlignment.CENTER;
     } else if (c === jabColIdx) {
-      val = p.jabatan || "";
+      val = formatJabatanSatker(p.jabatan, p.unit_kerja);
       align = DocumentApp.HorizontalAlignment.LEFT;
     } else if (c === peranColIdx) {
       val = p.peran || "Peserta";
@@ -1141,7 +1141,7 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
       ["Kepada", ":", "Nama", ":", p.nama || ""],
       ["", "", "NIP", ":", p.nip || ""],
       ["", "", "Pangkat/Gol", ":", p.pangkat_gol || ""],
-      ["", "", "Jabatan", ":", p.jabatan || ""]
+      ["", "", "Jabatan", ":", formatJabatanSatker(p.jabatan, p.unit_kerja)]
     ]);
     tKepada.setBorderWidth(0);
     formatBorderlessTable(tKepada, [95, 15, 85, 15, 270]);
@@ -1207,7 +1207,7 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
         p.nama || "",
         p.nip || "",
         p.pangkat_gol || "",
-        p.jabatan || "",
+        formatJabatanSatker(p.jabatan, p.unit_kerja),
         p.peran || "Peserta"
       ]);
     });
@@ -1370,4 +1370,25 @@ function cleanExcessSectionBreaksViaApi(docId, isSingle) {
 
 function removeSectionBreaksViaApi(docId) {
   cleanExcessSectionBreaksViaApi(docId, true);
+}
+
+
+/**
+ * Menggabungkan data Jabatan dan Satker (Unit Kerja) pegawai
+ * Contoh: "Pranata Komputer Ahli Pertama" + "BPS Kota Singkawang" -> "Pranata Komputer Ahli Pertama BPS Kota Singkawang"
+ */
+function formatJabatanSatker(jabatan, unitKerja) {
+  const jab = (jabatan || "").trim();
+  const satker = (unitKerja || "").trim();
+  if (!satker) return jab;
+  if (!jab) return satker;
+  if (jab.toLowerCase().includes(satker.toLowerCase())) {
+    return jab;
+  }
+  const satkerNoBps = satker.replace(/^BPS\s+/i, "").trim();
+  if (satkerNoBps && jab.toLowerCase().includes(satkerNoBps.toLowerCase())) {
+    const escaped = satkerNoBps.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return jab.replace(new RegExp(escaped, "i"), satker).trim();
+  }
+  return jab + " " + satker;
 }

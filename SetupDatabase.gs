@@ -65,25 +65,42 @@ function setupSurTugDatabase() {
   setupSheet(ss, "m_pegawai", [
     "id_pegawai", "nip", "nama_lengkap", "pangkat_gol", "jabatan", "unit_kerja", "is_active"
   ], [
-    [1, "198008112005021004", "Muhammad Adwin, S.Mn.", "Penata - III/c", "Kepala Subbagian Umum Kabupaten Mempawah", "BPS Kabupaten Mempawah", true],
-    [2, "200409262026032001", "Putri Rehulina Damanik, A.Md.Stat.", "Pengatur - II/c", "Pelaksana BPS Kabupaten Bengkayang", "BPS Kabupaten Bengkayang", true],
-    [3, "200302162026032001", "Hany Febrianty, A.Md.Stat.", "Pengatur - II/c", "Pelaksana BPS Kabupaten Landak", "BPS Kabupaten Landak", true],
-    [4, "200409072026032001", "Clara Diva Verianinta Lagum, A.Md.Stat.", "Pengatur - II/c", "Pelaksana BPS Kabupaten Mempawah", "BPS Kabupaten Mempawah", true],
-    [5, "200211172026031001", "Muhammad Raihan, A.Md.Stat.", "Pengatur - II/c", "Pelaksana BPS Kabupaten Sintang", "BPS Kabupaten Sintang", true],
-    [6, "200207032026031001", "Dafa Riyandika Mahendra, A.Md.Stat.", "Pengatur - II/c", "Pelaksana BPS Kabupaten Sintang", "BPS Kabupaten Sintang", true],
-    [7, "200401182026032001", "Zahra Safira Haryono, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Landak", "BPS Kabupaten Landak", true],
-    [8, "200104042026032001", "Akma Batrisyia Jazima, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Mempawah", "BPS Kabupaten Mempawah", true],
-    [9, "200208142026031001", "Agus Riyanto, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Kapuas Hulu", "BPS Kabupaten Kapuas Hulu", true],
-    [10, "200401222026032001", "Dyah Widyastuti, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Melawi", "BPS Kabupaten Melawi", true],
-    [11, "200111222026031001", "Azhari, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Provinsi Kalimantan Barat", "BPS Provinsi Kalimantan Barat", true],
-    [12, "200211202026032001", "Iftina Ika Rahmawati, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Bengkayang", "BPS Kabupaten Bengkayang", true],
-    [13, "200401062026032001", "Aulia Hayuningtyas, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kota Pontianak", "BPS Kota Pontianak", true],
-    [14, "200202192026032001", "Diva Maharani Basuki, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Sambas", "BPS Kabupaten Sambas", true],
-    [15, "199909282026031001", "Bertolomeus Laksana Jayadri, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Sanggau", "BPS Kabupaten Sanggau", true],
-    [16, "200301042026032002", "Rakaninda Indah Kuswardani, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana BPS Kabupaten Sanggau", "BPS Kabupaten Sanggau", true]
+    [1, "198008112005021004", "Muhammad Adwin, S.Mn.", "Penata - III/c", "Kepala Subbagian Umum", "BPS Kabupaten Mempawah", true],
+    [2, "200409262026032001", "Putri Rehulina Damanik, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Bengkayang", true],
+    [3, "200302162026032001", "Hany Febrianty, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Landak", true],
+    [4, "200409072026032001", "Clara Diva Verianinta Lagum, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Mempawah", true],
+    [5, "200211172026031001", "Muhammad Raihan, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Sintang", true],
+    [6, "200207032026031001", "Dafa Riyandika Mahendra, A.Md.Stat.", "Pengatur - II/c", "Pelaksana", "BPS Kabupaten Sintang", true],
+    [7, "200401182026032001", "Zahra Safira Haryono, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Landak", true],
+    [8, "200104042026032001", "Akma Batrisyia Jazima, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Mempawah", true],
+    [9, "200208142026031001", "Agus Riyanto, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Kapuas Hulu", true],
+    [10, "200401222026032001", "Dyah Widyastuti, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Melawi", true],
+    [11, "200111222026031001", "Azhari, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Provinsi Kalimantan Barat", true],
+    [12, "200211202026032001", "Iftina Ika Rahmawati, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Bengkayang", true],
+    [13, "200401062026032001", "Aulia Hayuningtyas, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kota Pontianak", true],
+    [14, "200202192026032001", "Diva Maharani Basuki, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Sambas", true],
+    [15, "199909282026031001", "Bertolomeus Laksana Jayadri, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Sanggau", true],
+    [16, "200301042026032002", "Rakaninda Indah Kuswardani, S.Tr.Stat.", "Penata Muda - III/a", "Pelaksana", "BPS Kabupaten Sanggau", true]
   ]);
 
-  // 6. Inisialisasi Sheet t_surat_tugas
+  // 6. Inisialisasi Sheet m_peran (Daftar Pilihan Peran Pegawai)
+  setupSheet(ss, "m_peran", [
+    "id_peran", "nama_peran", "is_active"
+  ], [
+    [1, "Peserta", true],
+    [2, "Ketua Tim", true],
+    [3, "Anggota Tim", true],
+    [4, "Narasumber", true],
+    [5, "Panitia", true],
+    [6, "Mentor", true],
+    [7, "Pengajar", true],
+    [8, "Pendamping", true],
+    [9, "Pengawas", true],
+    [10, "Instruktur", true],
+    [11, "Petugas", true]
+  ]);
+
+  // 7. Inisialisasi Sheet t_surat_tugas
   setupSheet(ss, "t_surat_tugas", [
     "id_surtug", "nomor_surat", "no_agenda", "sifat", "kode_satker", "kode_klasifikasi",
     "tahun", "tgl_penetapan", "tempat_penetapan", "jenis_penugasan", "rujukan_pejabat",
@@ -91,13 +108,13 @@ function setupSurTugDatabase() {
     "total_personil", "drive_doc_id", "drive_pdf_id", "drive_pdf_url", "drive_folder_id", "created_at"
   ], []);
 
-  // 7. Inisialisasi Sheet t_surat_tugas_personil
+  // 8. Inisialisasi Sheet t_surat_tugas_personil
   setupSheet(ss, "t_surat_tugas_personil", [
     "id_relasi", "id_surtug", "id_pegawai", "nama_snapshot", "nip_snapshot",
     "pangkat_gol_snapshot", "jabatan_snapshot", "peran", "urutan"
   ], []);
 
-  // 8. Inisialisasi Sheet sys_counter
+  // 9. Inisialisasi Sheet sys_counter
   setupSheet(ss, "sys_counter", [
     "tahun", "kode_satker", "last_agenda_number"
   ], [
