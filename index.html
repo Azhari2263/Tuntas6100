@@ -188,9 +188,6 @@
 </head>
 <body class="bg-slate-50/70 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- TOAST NOTIFICATION CONTAINER -->
-  <div id="toastContainer" class="fixed top-20 right-4 sm:right-6 z-50 flex flex-col space-y-2.5 max-w-sm w-full pointer-events-none"></div>
-
   <!-- TOP HEADER / NAVBAR RESMI BPS -->
   <header class="bg-gradient-to-r from-bps-darkblue via-[#004a82] to-bps-blue text-white shadow-md border-b-4 border-bps-orange sticky top-0 z-40 w-full">
     <div class="w-full px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-14 py-3 sm:py-3.5 flex items-center justify-between">
@@ -223,42 +220,19 @@
         </button>
 
         <button type="button" id="btnPengaturanTemplate" onclick="openSettingsModal()" 
-                class="hidden text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-1.5 rounded-xl border border-white/20 transition-all items-center space-x-1.5 shadow-xs"
-                title="Konfigurasi Master Template & Drive (Khusus Admin)">
+                class="hidden text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-1.5 rounded-xl border border-white/20 transition-all items-center space-x-1.5 shadow-xs">
           <i class="fa-solid fa-sliders text-bps-orange"></i>
           <span>Pengaturan Template</span>
         </button>
-
-        <div class="text-[10px] sm:text-xs text-blue-100 hidden md:flex items-center gap-2 font-medium bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 tabular-nums" aria-live="off">
+        <div class="text-[10px] sm:text-xs text-blue-100 hidden sm:flex items-center gap-2 font-medium bg-white/10 px-2.5 py-1 rounded-lg border border-white/10 tabular-nums" aria-live="off">
           <i class="fa-regular fa-clock text-bps-orange"></i>
           <span id="liveDateTime" class="whitespace-nowrap"></span>
-        </div>
-
-        <!-- Profil Pengguna & Tombol Keluar (Tampil saat pengguna login) -->
-        <div id="userNavProfile" class="hidden items-center space-x-2 sm:space-x-3 bg-white/10 border border-white/20 rounded-xl px-2.5 py-1 shadow-xs">
-          <div class="flex items-center space-x-2">
-            <div id="userNavAvatar" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-bps-orange to-amber-400 text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0">
-              <i class="fa-solid fa-user"></i>
-            </div>
-            <div class="hidden sm:block text-left min-w-0 max-w-[130px] md:max-w-[170px]">
-              <div id="userNavName" class="text-xs font-bold text-white truncate leading-tight">Nama Pengguna</div>
-              <div class="flex items-center gap-1 mt-0.5">
-                <span id="userNavRole" class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 uppercase tracking-wider">Admin</span>
-              </div>
-            </div>
-          </div>
-          <button type="button" onclick="handleLogout()" 
-                  class="text-xs bg-rose-500/80 hover:bg-rose-600 text-white font-semibold px-2 sm:px-2.5 py-1.2 rounded-lg transition-all flex items-center gap-1.5 shadow-xs cursor-pointer ml-1"
-                  title="Keluar dari akun (Logout)">
-            <i class="fa-solid fa-right-from-bracket text-xs"></i>
-            <span class="hidden md:inline text-[11px]">Keluar</span>
-          </button>
         </div>
       </div>
     </div>
 
     <!-- SUB-NAV / TABS (Responsive Scrollable on Mobile) -->
-    <div id="sub-nav-tabs" class="bg-[#00345b] border-t border-white/10">
+    <div class="bg-[#00345b] border-t border-white/10">
       <div class="w-full px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-14 flex space-x-1.5 sm:space-x-3 text-xs sm:text-sm overflow-x-auto py-1 scrollbar-none">
         <button onclick="switchTab('create')" id="tab-create" 
                 class="px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-bps-orange text-white font-semibold flex items-center space-x-2 rounded-t-lg bg-white/10 transition-all whitespace-nowrap flex-shrink-0">
@@ -287,156 +261,6 @@
 
   <!-- MAIN CONTENT CONTAINER -->
   <main class="flex-grow w-full px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-14 py-5 sm:py-6 lg:py-8 space-y-6">
-
-    <!-- ========================================================================= -->
-    <!-- TAB 0: HALAMAN LOGIN AUTENTIKASI (Dilindungi & Otomatis dialihkan) -->
-    <!-- ========================================================================= -->
-    <div id="section-login" class="hidden min-h-[72vh] flex items-center justify-center py-6 px-2 sm:px-4">
-      <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden transform transition-all duration-300">
-        <!-- Header Banner Login -->
-        <div class="bg-gradient-to-br from-bps-darkblue via-[#004a82] to-bps-blue p-6 sm:p-8 text-white text-center relative overflow-hidden">
-          <div class="absolute -right-10 -bottom-10 w-36 h-36 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
-          <div class="absolute -left-10 -top-10 w-36 h-36 bg-bps-orange/20 rounded-full blur-xl pointer-events-none"></div>
-          
-          <div class="relative z-10 flex flex-col items-center">
-            <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white p-2.5 rounded-2xl shadow-xl flex items-center justify-center mb-3 ring-4 ring-white/20">
-              <img src="img/logo_tuntas.png" alt="Logo Tuntas" class="h-10 sm:h-12 w-auto object-contain">
-            </div>
-            <div class="flex items-center gap-2 mb-1">
-              <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight">TUNTAS 6100</h2>
-              <span class="text-[10px] font-bold uppercase tracking-wider bg-bps-orange text-white px-2 py-0.5 rounded-full shadow-xs">
-                BPS Kalbar
-              </span>
-            </div>
-            <p class="text-xs sm:text-sm text-blue-100/90 font-medium max-w-xs leading-relaxed">
-              Sistem Tata Kelola & Administrasi Surat Tugas
-            </p>
-          </div>
-        </div>
-
-        <!-- Form Body -->
-        <div class="p-6 sm:p-8 space-y-5">
-          <!-- Flash Alert Message (Error / Warning / Info) -->
-          <div id="loginAlertBox" class="hidden rounded-xl p-3 text-xs flex items-start gap-2.5 transition-all">
-            <i id="loginAlertIcon" class="fa-solid fa-circle-exclamation mt-0.5 flex-shrink-0 text-sm"></i>
-            <span id="loginAlertMessage" class="flex-grow font-medium leading-relaxed"></span>
-          </div>
-
-          <form id="formLogin" onsubmit="handleLoginSubmit(event)" class="space-y-4">
-            <!-- Input Username / NIP -->
-            <div>
-              <label for="loginUsername" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Username / NIP Pegawai <span class="text-rose-500">*</span>
-              </label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-user text-sm"></i>
-                </div>
-                <input type="text" id="loginUsername" required autocomplete="username"
-                       placeholder="Contoh: admin, operator, atau NIP pegawai..."
-                       class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-bps-blue focus:border-bps-blue transition-all">
-              </div>
-            </div>
-
-            <!-- Input Password -->
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label for="loginPassword" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Kata Sandi <span class="text-rose-500">*</span>
-                </label>
-              </div>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-lock text-sm"></i>
-                </div>
-                <input type="password" id="loginPassword" required autocomplete="current-password"
-                       placeholder="Masukkan kata sandi..."
-                       class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-bps-blue focus:border-bps-blue transition-all">
-                <button type="button" onclick="togglePasswordVisibility('loginPassword', 'iconTogglePassword')" 
-                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                        title="Tampilkan / Sembunyikan Kata Sandi">
-                  <i id="iconTogglePassword" class="fa-solid fa-eye text-sm"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- Role Selector (Deteksi Otomatis / Override) -->
-            <div>
-              <label for="loginRoleSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Peran / Hak Akses
-              </label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-shield-halved text-sm"></i>
-                </div>
-                <select id="loginRoleSelect"
-                        class="w-full pl-10 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-bps-blue focus:border-bps-blue transition-all appearance-none cursor-pointer">
-                  <option value="auto">Deteksi Otomatis Sesuai Akun</option>
-                  <option value="Admin">Administrator (Akses Penuh)</option>
-                  <option value="Operator">Operator (Surat, Arsip & Master Pegawai)</option>
-                  <option value="Pegawai">Pegawai (Surat Tugas & Arsip)</option>
-                </select>
-                <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="fa-solid fa-chevron-down text-xs"></i>
-                </div>
-              </div>
-            </div>
-
-            <!-- Remember Me -->
-            <div class="flex items-center justify-between text-xs pt-0.5">
-              <label class="flex items-center space-x-2 text-slate-600 cursor-pointer select-none">
-                <input type="checkbox" id="loginRememberMe" checked
-                       class="rounded border-slate-300 text-bps-blue focus:ring-bps-blue/20 w-4 h-4 cursor-pointer">
-                <span>Ingat saya di perangkat ini</span>
-              </label>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="pt-2">
-              <button type="submit" id="btnLoginSubmit"
-                      class="w-full bg-gradient-to-r from-bps-blue to-bps-darkblue hover:from-[#005a96] hover:to-[#00223b] text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0">
-                <i class="fa-solid fa-right-to-bracket text-base"></i>
-                <span>Masuk ke Aplikasi</span>
-              </button>
-            </div>
-          </form>
-
-          <!-- Quick Login Demo Buttons -->
-          <div class="pt-4 border-t border-slate-200/80">
-            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center mb-2.5">
-              Login Cepat / Akun Demo
-            </p>
-            <div class="grid grid-cols-3 gap-2">
-              <button type="button" onclick="quickLogin('admin')"
-                      class="px-2 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center justify-center gap-0.5 shadow-2xs hover:shadow-xs cursor-pointer"
-                      title="Masuk sebagai Administrator">
-                <span class="flex items-center gap-1"><i class="fa-solid fa-user-shield text-[11px]"></i> Admin</span>
-                <span class="text-[9px] font-normal text-emerald-600">Akses Penuh</span>
-              </button>
-              <button type="button" onclick="quickLogin('operator')"
-                      class="px-2 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center justify-center gap-0.5 shadow-2xs hover:shadow-xs cursor-pointer"
-                      title="Masuk sebagai Operator">
-                <span class="flex items-center gap-1"><i class="fa-solid fa-user-gear text-[11px]"></i> Operator</span>
-                <span class="text-[9px] font-normal text-sky-600">Surat & Data</span>
-              </button>
-              <button type="button" onclick="quickLogin('pegawai')"
-                      class="px-2 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center justify-center gap-0.5 shadow-2xs hover:shadow-xs cursor-pointer"
-                      title="Masuk sebagai Pegawai">
-                <span class="flex items-center gap-1"><i class="fa-solid fa-user-check text-[11px]"></i> Pegawai</span>
-                <span class="text-[9px] font-normal text-purple-600">Surat Tugas</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer Info -->
-        <div class="bg-slate-50 border-t border-slate-200/80 px-6 py-3.5 text-center">
-          <p class="text-[11px] text-slate-500 font-medium">
-            Badan Pusat Statistik Provinsi Kalimantan Barat &copy; 2026
-          </p>
-        </div>
-      </div>
-    </div>
 
     <!-- TAB 1: FORM BUAT SURAT TUGAS -->
     <div id="section-create" class="space-y-6">
@@ -1954,9 +1778,6 @@
     // STATE GLOBAL APLIKASI
     // =========================================================================
     let appState = {
-      // Autentikasi Pengguna & Navigasi Rute
-      currentUser: null,
-      returnUrl: null,
       // Backend URL terhubung secara permanen ke Google Apps Script
       scriptUrl: "https://script.google.com/macros/s/AKfycbw6zQ2lJn-CUoE7w0wutaxiaurU-oS3E7rlnWb_Zlnf8ZouW6MMln92miEY1j6iMD7m/exec",
       templateIndividuId: "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc",
@@ -1988,37 +1809,6 @@
       previewNomor: "B-555/61513/KP.650/2026",
       isCustomNomor: false
     };
-
-    // Data Akun Kredensial Pengguna & Hak Akses (RBAC)
-    const DEFAULT_ACCOUNTS = [
-      {
-        username: "admin",
-        password: "admin123",
-        nama: "Muh Saichudin",
-        nip: "196805201992031002",
-        role: "Admin",
-        satker: "BPS Provinsi Kalimantan Barat",
-        jabatan: "Kepala BPS Provinsi Kalimantan Barat"
-      },
-      {
-        username: "operator",
-        password: "operator123",
-        nama: "Muhammad Adwin, S.Mn.",
-        nip: "198008112005021004",
-        role: "Operator",
-        satker: "BPS Kabupaten Mempawah",
-        jabatan: "Kepala Subbagian Umum"
-      },
-      {
-        username: "pegawai",
-        password: "pegawai123",
-        nama: "Azhari, S.Tr.Stat.",
-        nip: "200111222026031001",
-        role: "Pegawai",
-        satker: "BPS Provinsi Kalimantan Barat",
-        jabatan: "Statistisi Ahli Pertama"
-      }
-    ];
 
     // Data Default Fallback (disinkronkan dengan Google Sheets & LocalStorage)
     const DEFAULT_MASTER_PEGAWAI = [
@@ -2216,9 +2006,6 @@
 
       // 5. Inisialisasi PWA (Progressive Web App)
       initPwa();
-
-      // 6. Inisialisasi Autentikasi & Tampilan Sesi Pengguna
-      initAuthView();
     });
 
     function updateLiveDateTime() {
@@ -2301,577 +2088,21 @@
     }
 
     // =========================================================================
-    // SISTEM ROUTING & AUTENTIKASI PENGGUNA (URL & ROLE-BASED ACCESS CONTROL)
+    // LOGIKA TAB & NAVIGASI
     // =========================================================================
-
-
-
-    /**
-     * Mengambil sesi pengguna yang sedang aktif (dari sessionStorage atau localStorage)
-     */
-    function getAuthSession() {
-      if (appState.currentUser) return appState.currentUser;
-      try {
-        const sess = sessionStorage.getItem("TUNTAS_AUTH_USER");
-        if (sess) {
-          appState.currentUser = JSON.parse(sess);
-          return appState.currentUser;
-        }
-        const local = localStorage.getItem("TUNTAS_AUTH_USER");
-        if (local) {
-          appState.currentUser = JSON.parse(local);
-          return appState.currentUser;
-        }
-      } catch (e) {
-        console.warn("Gagal membaca auth session:", e);
-      }
-      return null;
-    }
-
-    /**
-     * Menyimpan sesi pengguna yang berhasil login
-     */
-    function setAuthSession(user, rememberMe = true) {
-      appState.currentUser = user;
-      try {
-        sessionStorage.setItem("TUNTAS_AUTH_USER", JSON.stringify(user));
-        if (rememberMe) {
-          localStorage.setItem("TUNTAS_AUTH_USER", JSON.stringify(user));
-        } else {
-          localStorage.removeItem("TUNTAS_AUTH_USER");
-        }
-      } catch (e) {
-        console.warn("Gagal menyimpan auth session:", e);
-      }
-    }
-
-    /**
-     * Menghapus sesi pengguna saat logout
-     */
-    function clearAuthSession() {
-      appState.currentUser = null;
-      try {
-        sessionStorage.removeItem("TUNTAS_AUTH_USER");
-        localStorage.removeItem("TUNTAS_AUTH_USER");
-      } catch (e) {
-        console.warn("Gagal menghapus auth session:", e);
-      }
-    }
-
-    /**
-     * Memverifikasi kredensial login pengguna
-     */
-    function authenticateUser(usernameInput, passwordInput, roleOverride = "auto") {
-      const u = (usernameInput || "").trim().toLowerCase();
-      const p = (passwordInput || "").trim();
-
-      if (!u || !p) return null;
-
-      // 1. Cek Akun Predefined (Admin, Operator, Pegawai)
-      const matchedDefault = DEFAULT_ACCOUNTS.find(acc => 
-        acc.username.toLowerCase() === u || (acc.nip && acc.nip === u)
-      );
-
-      if (matchedDefault) {
-        const validPasswords = [
-          matchedDefault.password,
-          matchedDefault.username,
-          matchedDefault.nip,
-          "admin",
-          "admin123",
-          "operator",
-          "operator123",
-          "pegawai",
-          "pegawai123",
-          "password",
-          "bpskalbar",
-          "123456"
-        ];
-        if (validPasswords.includes(p)) {
-          const role = (roleOverride && roleOverride !== "auto") ? roleOverride : matchedDefault.role;
-          return {
-            username: matchedDefault.username,
-            nama: matchedDefault.nama,
-            nip: matchedDefault.nip,
-            role: role,
-            satker: matchedDefault.satker,
-            jabatan: matchedDefault.jabatan,
-            loginAt: new Date().toISOString()
-          };
-        }
-      }
-
-      // 2. Cek apakah cocok dengan data Master Pegawai
-      const pegList = appState.masterPegawai && appState.masterPegawai.length > 0 
-        ? appState.masterPegawai 
-        : DEFAULT_MASTER_PEGAWAI;
-      
-      const foundPeg = pegList.find(peg => 
-        (peg.nip && peg.nip.trim() === u) || 
-        (peg.nama && peg.nama.toLowerCase().includes(u) && u.length >= 4)
-      );
-
-      if (foundPeg) {
-        let role = "Pegawai";
-        if (roleOverride && roleOverride !== "auto") {
-          role = roleOverride;
-        } else {
-          const jabLower = (foundPeg.jabatan || "").toLowerCase();
-          if (jabLower.includes("kepala") || jabLower.includes("administrator")) {
-            role = "Admin";
-          } else if (jabLower.includes("tata usaha") || jabLower.includes("umum") || jabLower.includes("operator")) {
-            role = "Operator";
-          }
-        }
-
-        return {
-          username: foundPeg.nip || foundPeg.nama,
-          nama: foundPeg.nama,
-          nip: foundPeg.nip,
-          role: role,
-          satker: foundPeg.unit_kerja || "BPS Provinsi Kalimantan Barat",
-          jabatan: foundPeg.jabatan || "Pegawai",
-          loginAt: new Date().toISOString()
-        };
-      }
-
-      // 3. Fallback jika memilih role manual dan password standar
-      if (roleOverride && roleOverride !== "auto") {
-        const validPass = ["admin", "admin123", "operator", "operator123", "pegawai", "pegawai123", "password", "123456", "bpskalbar"];
-        if (validPass.includes(p) || p.length >= 4) {
-          return {
-            username: usernameInput.trim(),
-            nama: usernameInput.trim().toUpperCase(),
-            nip: "",
-            role: roleOverride,
-            satker: "BPS Provinsi Kalimantan Barat",
-            jabatan: roleOverride,
-            loginAt: new Date().toISOString()
-          };
-        }
-      }
-
-      return null;
-    }
-
-    /**
-     * Memeriksa hak akses peran terhadap menu / fitur
-     */
-    function isActionAllowedForRole(action, role) {
-      if (action === "create" || action === "archive") return true;
-      if (action === "pegawai" || action === "peran") return role === "Admin" || role === "Operator";
-      if (action === "pengaturan") return role === "Admin";
-      return false;
-    }
-
-    /**
-     * Berpindah antar tab utama aplikasi tanpa mengubah URL
-     */
     function switchTab(tabId) {
-      const user = getAuthSession();
-      if (!user) {
-        hideAllSections();
-        closeAllModals();
-        updateHeaderAndNavUI(null);
-        const loginSec = document.getElementById("section-login");
-        if (loginSec) loginSec.classList.remove("hidden");
-        return;
-      }
+      ['create', 'archive', 'pegawai'].forEach(t => {
+        document.getElementById(`section-${t}`).classList.add("hidden");
+        document.getElementById(`tab-${t}`).className = "px-4 py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap";
+      });
 
-      if (!isActionAllowedForRole(tabId, user.role)) {
-        let msg = "Akses Ditolak: Anda tidak memiliki izin untuk mengakses halaman ini.";
-        if (tabId === "pegawai") {
-          msg = "Akses Ditolak: Halaman Master Pegawai hanya dapat diakses oleh Administrator atau Operator.";
-        }
-        showToastNotification(msg, "warning");
-        return;
-      }
+      document.getElementById(`section-${tabId}`).classList.remove("hidden");
+      document.getElementById(`tab-${tabId}`).className = "px-4 py-2.5 border-b-2 border-bps-orange text-white font-semibold flex items-center space-x-2 rounded-t-lg bg-white/10 transition-all whitespace-nowrap";
 
-      // Sembunyikan semua section utama dan modal
-      hideAllSections();
-      closeAllModals();
-
-      // Atur tab aktif secara visual
-      setActiveTabVisual(tabId);
-
-      // Tampilkan section sesuai tabId yang dipilih
-      if (tabId === 'create') {
-        const sec = document.getElementById("section-create");
-        if (sec) sec.classList.remove("hidden");
-      } else if (tabId === 'archive') {
-        const sec = document.getElementById("section-archive");
-        if (sec) sec.classList.remove("hidden");
+      if (tabId === 'archive') {
         loadArchiveData();
       } else if (tabId === 'pegawai') {
-        const sec = document.getElementById("section-pegawai");
-        if (sec) sec.classList.remove("hidden");
         renderMasterPegawaiTable();
-      } else if (tabId === 'peran') {
-        openModalKelolaPeran();
-      }
-    }
-
-    /**
-     * Kompatibilitas fungsi navigasi tanpa mengubah URL
-     */
-    function navigateTo(target) {
-      if (!target) return;
-      if (target.includes("create") || target.includes("buat")) switchTab("create");
-      else if (target.includes("archive") || target.includes("arsip")) switchTab("archive");
-      else if (target.includes("pegawai")) switchTab("pegawai");
-      else if (target.includes("peran")) openModalKelolaPeran();
-      else if (target.includes("pengaturan") || target.includes("setting")) openSettingsModal();
-      else if (target.includes("login") || target.includes("masuk")) {
-        hideAllSections();
-        closeAllModals();
-        const loginSec = document.getElementById("section-login");
-        if (loginSec) loginSec.classList.remove("hidden");
-      } else {
-        switchTab("create");
-      }
-    }
-
-    /**
-     * Memperbarui status tampilan navbar dan header sesuai role
-     */
-    function updateHeaderAndNavUI(user) {
-      const subNav = document.getElementById("sub-nav-tabs");
-      const userProfile = document.getElementById("userNavProfile");
-      const btnSettings = document.getElementById("btnPengaturanTemplate");
-      const tabPegawai = document.getElementById("tab-pegawai");
-      const tabPeran = document.getElementById("tab-peran");
-
-      if (!user) {
-        if (subNav) subNav.classList.add("hidden");
-        if (userProfile) {
-          userProfile.classList.add("hidden");
-          userProfile.classList.remove("flex");
-        }
-        if (btnSettings) {
-          btnSettings.classList.add("hidden");
-          btnSettings.classList.remove("flex");
-        }
-        return;
-      }
-
-      // User terautentikasi
-      if (subNav) subNav.classList.remove("hidden");
-      if (userProfile) {
-        userProfile.classList.remove("hidden");
-        userProfile.classList.add("flex");
-
-        const nameEl = document.getElementById("userNavName");
-        const roleEl = document.getElementById("userNavRole");
-        if (nameEl) {
-          nameEl.textContent = user.nama || user.username || "Pengguna";
-          nameEl.title = `${user.nama || ''} (${user.jabatan || ''}) - ${user.satker || ''}`;
-        }
-        if (roleEl) {
-          roleEl.textContent = user.role || "Pegawai";
-          roleEl.className = "text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider border ";
-          if (user.role === "Admin") {
-            roleEl.className += "bg-emerald-500/30 text-emerald-200 border-emerald-400/40";
-          } else if (user.role === "Operator") {
-            roleEl.className += "bg-sky-500/30 text-sky-200 border-sky-400/40";
-          } else {
-            roleEl.className += "bg-purple-500/30 text-purple-200 border-purple-400/40";
-          }
-        }
-      }
-
-      // Hak Akses Tab & Tombol berdasarkan Role
-      if (user.role === "Admin") {
-        if (tabPegawai) tabPegawai.classList.remove("hidden");
-        if (tabPeran) tabPeran.classList.remove("hidden");
-        if (btnSettings) {
-          btnSettings.classList.remove("hidden");
-          btnSettings.classList.add("flex");
-        }
-      } else if (user.role === "Operator") {
-        if (tabPegawai) tabPegawai.classList.remove("hidden");
-        if (tabPeran) tabPeran.classList.remove("hidden");
-        if (btnSettings) {
-          btnSettings.classList.add("hidden");
-          btnSettings.classList.remove("flex");
-        }
-      } else {
-        // Role: Pegawai (Staf)
-        if (tabPegawai) tabPegawai.classList.add("hidden");
-        if (tabPeran) tabPeran.classList.add("hidden");
-        if (btnSettings) {
-          btnSettings.classList.add("hidden");
-          btnSettings.classList.remove("flex");
-        }
-      }
-    }
-
-    /**
-     * Mengatur status tab aktif pada antarmuka
-     */
-    function setActiveTabVisual(activeTabName) {
-      ['create', 'archive', 'pegawai', 'peran'].forEach(t => {
-        const tabEl = document.getElementById(`tab-${t}`);
-        if (tabEl) {
-          if (t === activeTabName) {
-            tabEl.className = "px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-bps-orange text-white font-semibold flex items-center space-x-2 rounded-t-lg bg-white/10 transition-all whitespace-nowrap flex-shrink-0";
-          } else {
-            tabEl.className = "px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap flex-shrink-0";
-          }
-        }
-      });
-    }
-
-    /**
-     * Menyembunyikan seluruh section utama
-     */
-    function hideAllSections() {
-      const ids = ["section-create", "section-archive", "section-pegawai", "section-login"];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add("hidden");
-      });
-    }
-
-    /**
-     * Menutup seluruh modal dialog
-     */
-    function closeAllModals() {
-      const m1 = document.getElementById("modalSettings");
-      if (m1) m1.classList.add("hidden");
-      const m2 = document.getElementById("modalKelolaPeran");
-      if (m2) m2.classList.add("hidden");
-      if (typeof cancelEditPeran === "function") cancelEditPeran();
-    }
-
-    /**
-     * Submit formulir login
-     */
-    function handleLoginSubmit(event) {
-      if (event) event.preventDefault();
-      const usernameInput = document.getElementById("loginUsername");
-      const passwordInput = document.getElementById("loginPassword");
-      const roleSelect = document.getElementById("loginRoleSelect");
-      const rememberCheckbox = document.getElementById("loginRememberMe");
-
-      const username = usernameInput ? usernameInput.value.trim() : "";
-      const password = passwordInput ? passwordInput.value : "";
-      const roleOverride = roleSelect ? roleSelect.value : "auto";
-      const rememberMe = rememberCheckbox ? rememberCheckbox.checked : true;
-
-      if (!username) {
-        showLoginAlert("Silakan masukkan Username atau NIP Pegawai.", "warning");
-        if (usernameInput) usernameInput.focus();
-        return;
-      }
-      if (!password) {
-        showLoginAlert("Silakan masukkan kata sandi.", "warning");
-        if (passwordInput) passwordInput.focus();
-        return;
-      }
-
-      const user = authenticateUser(username, password, roleOverride);
-      if (!user) {
-        showLoginAlert("Username atau kata sandi tidak sesuai. Silakan coba kembali atau gunakan tombol Login Cepat.", "error");
-        return;
-      }
-
-      // Simpan Sesi
-      setAuthSession(user, rememberMe);
-      showToastNotification(`Selamat datang, ${user.nama} (${user.role})!`, "success");
-
-      // Tampilkan antarmuka aplikasi utama tanpa mengubah URL
-      const secLogin = document.getElementById("section-login");
-      if (secLogin) secLogin.classList.add("hidden");
-      updateHeaderAndNavUI(user);
-      switchTab("create");
-    }
-
-    /**
-     * Login cepat dengan satu klik (Demo Mode)
-     */
-    function quickLogin(roleKey) {
-      const usernameInput = document.getElementById("loginUsername");
-      const passwordInput = document.getElementById("loginPassword");
-      const roleSelect = document.getElementById("loginRoleSelect");
-
-      if (roleKey === "admin") {
-        if (usernameInput) usernameInput.value = "admin";
-        if (passwordInput) passwordInput.value = "admin123";
-        if (roleSelect) roleSelect.value = "Admin";
-      } else if (roleKey === "operator") {
-        if (usernameInput) usernameInput.value = "operator";
-        if (passwordInput) passwordInput.value = "operator123";
-        if (roleSelect) roleSelect.value = "Operator";
-      } else if (roleKey === "pegawai") {
-        if (usernameInput) usernameInput.value = "pegawai";
-        if (passwordInput) passwordInput.value = "pegawai123";
-        if (roleSelect) roleSelect.value = "Pegawai";
-      }
-      handleLoginSubmit();
-    }
-
-    /**
-     * Toggle visibility kata sandi
-     */
-    function togglePasswordVisibility(inputId, iconId) {
-      const input = document.getElementById(inputId);
-      const icon = document.getElementById(iconId);
-      if (!input || !icon) return;
-
-      if (input.type === "password") {
-        input.type = "text";
-        icon.classList.remove("fa-eye");
-        icon.classList.add("fa-eye-slash");
-      } else {
-        input.type = "password";
-        icon.classList.remove("fa-eye-slash");
-        icon.classList.add("fa-eye");
-      }
-    }
-
-    /**
-     * Menampilkan pesan alert pada formulir login
-     */
-    function showLoginAlert(message, type = "error") {
-      const alertBox = document.getElementById("loginAlertBox");
-      const alertMsg = document.getElementById("loginAlertMessage");
-      const alertIcon = document.getElementById("loginAlertIcon");
-      if (!alertBox || !alertMsg) return;
-
-      alertBox.classList.remove("hidden", "bg-rose-50", "text-rose-700", "border-rose-200", 
-                               "bg-amber-50", "text-amber-700", "border-amber-200",
-                               "bg-blue-50", "text-blue-700", "border-blue-200");
-      alertIcon.className = "mt-0.5 flex-shrink-0 text-sm fa-solid ";
-
-      if (type === "warning") {
-        alertBox.classList.add("bg-amber-50", "text-amber-700", "border", "border-amber-200");
-        alertIcon.classList.add("fa-triangle-exclamation", "text-amber-500");
-      } else if (type === "info") {
-        alertBox.classList.add("bg-blue-50", "text-blue-700", "border", "border-blue-200");
-        alertIcon.classList.add("fa-circle-info", "text-blue-500");
-      } else {
-        alertBox.classList.add("bg-rose-50", "text-rose-700", "border", "border-rose-200");
-        alertIcon.classList.add("fa-circle-exclamation", "text-rose-500");
-      }
-
-      alertMsg.textContent = message;
-    }
-
-    /**
-     * Proses Keluar / Logout Pengguna
-     */
-    function handleLogout() {
-      if (confirm("Apakah Anda yakin ingin keluar dari sistem TUNTAS?")) {
-        clearAuthSession();
-        hideAllSections();
-        closeAllModals();
-        updateHeaderAndNavUI(null);
-        const loginSec = document.getElementById("section-login");
-        if (loginSec) loginSec.classList.remove("hidden");
-        showToastNotification("Anda telah berhasil keluar dari sistem TUNTAS.", "info");
-      }
-    }
-
-    /**
-     * Menampilkan notifikasi Toast mengambang yang modern & elegan
-     */
-    function showToastNotification(message, type = "info") {
-      const container = document.getElementById("toastContainer");
-      if (!container) {
-        if (type === "warning" || type === "error") alert(message);
-        return;
-      }
-
-      const toast = document.createElement("div");
-      toast.className = `pointer-events-auto transform transition-all duration-300 ease-out translate-y-2 opacity-0 p-3 sm:p-3.5 rounded-2xl shadow-xl border flex items-start gap-3 text-xs sm:text-sm font-medium ${
-        type === "success" ? "bg-emerald-50 text-emerald-900 border-emerald-200" :
-        type === "warning" ? "bg-amber-50 text-amber-900 border-amber-200" :
-        type === "error" ? "bg-rose-50 text-rose-900 border-rose-200" :
-        "bg-slate-900 text-white border-slate-700"
-      }`;
-
-      const iconClass = type === "success" ? "fa-circle-check text-emerald-500" :
-                        type === "warning" ? "fa-triangle-exclamation text-amber-500" :
-                        type === "error" ? "fa-circle-xmark text-rose-500" :
-                        "fa-circle-info text-blue-400";
-
-      toast.innerHTML = `
-        <i class="fa-solid ${iconClass} text-base mt-0.5 flex-shrink-0"></i>
-        <div class="flex-grow leading-snug">${escapeHtml(message)}</div>
-        <button type="button" class="text-current opacity-60 hover:opacity-100 flex-shrink-0 ml-1 cursor-pointer" title="Tutup Notifikasi">
-          <i class="fa-solid fa-xmark text-xs"></i>
-        </button>
-      `;
-
-      const closeBtn = toast.querySelector("button");
-      const removeToast = () => {
-        toast.classList.add("opacity-0", "-translate-y-2");
-        setTimeout(() => toast.remove(), 300);
-      };
-      if (closeBtn) closeBtn.onclick = removeToast;
-
-      container.appendChild(toast);
-      requestAnimationFrame(() => {
-        toast.classList.remove("translate-y-2", "opacity-0");
-      });
-
-      setTimeout(removeToast, 4000);
-    }
-
-    /**
-     * Inisialisasi Tampilan Berdasarkan Sesi Autentikasi & Modal Listeners
-     */
-    function initAuthView() {
-      // Hapus hash dari URL jika ada, agar URL tetap bersih tanpa rute per halaman
-      if (window.location.hash) {
-        try {
-          history.replaceState(null, document.title, window.location.pathname + window.location.search);
-        } catch (e) {
-          // Abaikan jika lingkungan sandboxed
-        }
-      }
-
-      // Event listener klik backdrop modal untuk menutup modal
-      const modalSettings = document.getElementById("modalSettings");
-      if (modalSettings) {
-        modalSettings.addEventListener("click", (e) => {
-          if (e.target === modalSettings) closeSettingsModal();
-        });
-      }
-
-      const modalKelolaPeran = document.getElementById("modalKelolaPeran");
-      if (modalKelolaPeran) {
-        modalKelolaPeran.addEventListener("click", (e) => {
-          if (e.target === modalKelolaPeran) closeModalKelolaPeran();
-        });
-      }
-
-      // Shortcut Keyboard: Tombol Esc menutup modal aktif
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          const mPeran = document.getElementById("modalKelolaPeran");
-          const mSet = document.getElementById("modalSettings");
-          if (mPeran && !mPeran.classList.contains("hidden")) {
-            closeModalKelolaPeran();
-          } else if (mSet && !mSet.classList.contains("hidden")) {
-            closeSettingsModal();
-          }
-        }
-      });
-
-      // Periksa status login
-      const currentUser = getAuthSession();
-      if (!currentUser) {
-        hideAllSections();
-        closeAllModals();
-        updateHeaderAndNavUI(null);
-        const loginSec = document.getElementById("section-login");
-        if (loginSec) loginSec.classList.remove("hidden");
-      } else {
-        const loginSec = document.getElementById("section-login");
-        if (loginSec) loginSec.classList.add("hidden");
-        updateHeaderAndNavUI(currentUser);
-        switchTab("create");
       }
     }
 
@@ -4449,11 +3680,6 @@
     // MODAL PENGATURAN TEMPLATE
     // =========================================================================
     function openSettingsModal() {
-      const user = getAuthSession();
-      if (user && user.role !== "Admin") {
-        showToastNotification("Akses Ditolak: Pengaturan Template hanya dapat diakses oleh Administrator.", "warning");
-        return;
-      }
       document.getElementById("cfgTemplateIndividu").value = appState.templateIndividuId || "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc";
       document.getElementById("cfgTemplateKolektif").value = appState.templateKolektifId || "1cBumvJgAlR1l2J4aIk1eo-LPs_rH0snA8RDVYSjDDx4";
       document.getElementById("cfgFolderId").value = appState.folderId || "1-73PTEFaw7I6H3mC1IRQC69yYukQ4WSW";
@@ -4688,11 +3914,6 @@
      * Membuka modal Kelola Pilihan Peran
      */
     function openModalKelolaPeran() {
-      const user = getAuthSession();
-      if (user && user.role === "Pegawai") {
-        showToastNotification("Akses Ditolak: Pilihan Peran hanya dapat diakses oleh Administrator atau Operator.", "warning");
-        return;
-      }
       cancelEditPeran();
       renderPeranCrudList();
       const modal = document.getElementById("modalKelolaPeran");
