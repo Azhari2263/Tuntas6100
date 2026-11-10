@@ -3385,10 +3385,10 @@
           </td>
           <td class="p-3.5 text-center">
             <div class="inline-flex items-center space-x-1.5">
-              <button type="button" onclick="openEditPegawaiModal('${encodeURIComponent(String(p.id !== undefined && p.id !== null ? p.id : ''))}', '${encodeURIComponent(String(p.nip || ''))}')" title="Edit Pegawai" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-bps-blue flex items-center justify-center transition-colors shadow-xs">
+              <button type="button" onclick="openEditPegawaiModal('${encodeURIComponent(String(p.id !== undefined && p.id !== null && String(p.id).trim() !== '' ? p.id : (p.nip || '')))}', '${encodeURIComponent(String(p.nip || ''))}')" title="Edit Pegawai" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-bps-blue flex items-center justify-center transition-colors shadow-xs">
                 <i class="fa-solid fa-pen-to-square text-[11px]"></i>
               </button>
-              <button type="button" onclick="deletePegawai('${encodeURIComponent(String(p.id !== undefined && p.id !== null ? p.id : ''))}', '${encodeURIComponent(String(p.nip || ''))}')" title="Hapus Pegawai" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 flex items-center justify-center transition-colors shadow-xs">
+              <button type="button" onclick="deletePegawai('${encodeURIComponent(String(p.id !== undefined && p.id !== null && String(p.id).trim() !== '' ? p.id : (p.nip || '')))}', '${encodeURIComponent(String(p.nip || ''))}')" title="Hapus Pegawai" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 flex items-center justify-center transition-colors shadow-xs">
                 <i class="fa-solid fa-trash-can text-[11px]"></i>
               </button>
             </div>
@@ -3431,7 +3431,9 @@
       const editInput = document.getElementById("editPegawaiId");
       if (editInput) {
         editInput.value = "";
+        editInput.dataset.mode = "add";
         delete editInput.dataset.originalNip;
+        delete editInput.dataset.originalId;
       }
       document.getElementById("newNip").value = "";
       document.getElementById("newNama").value = "";
@@ -3442,12 +3444,17 @@
     }
 
     function openEditPegawaiModal(encodedId, encodedNip) {
-      const id = encodedId ? decodeURIComponent(encodedId) : "";
-      const nip = encodedNip ? decodeURIComponent(encodedNip) : "";
-      const found = appState.masterPegawai.find(p => 
-        (id && String(p.id) === String(id)) || 
-        (nip && String(p.nip).trim() === String(nip).trim())
-      );
+      const id = encodedId ? decodeURIComponent(encodedId).trim() : "";
+      const nip = encodedNip ? decodeURIComponent(encodedNip).trim() : "";
+      const cleanNip = nip.replace(/\s+/g, "");
+
+      const found = appState.masterPegawai.find(p => {
+        const pCleanNip = String(p.nip || "").trim().replace(/\s+/g, "");
+        if (cleanNip && pCleanNip === cleanNip) return true;
+        if (id && String(p.id).trim() === id) return true;
+        return false;
+      });
+
       if (!found) {
         showAlertModal("Data pegawai tidak ditemukan.", "Peringatan", "warning");
         return;
@@ -3455,8 +3462,12 @@
 
       document.getElementById("modalPegawaiTitle").textContent = "Edit Data Pegawai";
       const editInput = document.getElementById("editPegawaiId");
-      editInput.value = (found.id !== undefined && found.id !== null) ? found.id : found.nip;
-      editInput.dataset.originalNip = found.nip || "";
+      const effectiveId = (found.id !== undefined && found.id !== null && String(found.id).trim() !== "") ? String(found.id).trim() : String(found.nip || "").trim();
+      editInput.value = effectiveId;
+      editInput.dataset.mode = "edit";
+      editInput.dataset.originalNip = String(found.nip || "").trim();
+      editInput.dataset.originalId = effectiveId;
+
       document.getElementById("newNip").value = found.nip || "";
       document.getElementById("newNama").value = found.nama || "";
       document.getElementById("newPangkat").value = found.pangkat_gol || "";
@@ -3470,14 +3481,19 @@
       const editInput = document.getElementById("editPegawaiId");
       if (editInput) {
         editInput.value = "";
+        editInput.dataset.mode = "add";
         delete editInput.dataset.originalNip;
+        delete editInput.dataset.originalId;
       }
     }
 
     async function submitPegawaiForm() {
       const editInput = document.getElementById("editPegawaiId");
+      const isEdit = editInput && (editInput.dataset.mode === "edit" || (editInput.value && editInput.value.trim() !== ""));
       const editId = editInput ? editInput.value.trim() : "";
       const originalNip = (editInput && editInput.dataset.originalNip) ? editInput.dataset.originalNip.trim() : "";
+      const originalId = (editInput && editInput.dataset.originalId) ? editInput.dataset.originalId.trim() : editId;
+
       const nip = document.getElementById("newNip").value.trim().replace(/\s+/g, "");
       const nama = document.getElementById("newNama").value.trim();
       const pangkat_gol = document.getElementById("newPangkat").value.trim();
@@ -3489,35 +3505,49 @@
         return;
       }
 
-      if (editId) {
+      if (isEdit) {
         // Mode Update
-        const duplicate = appState.masterPegawai.some(p => 
-          String(p.nip).trim() === nip && 
-          String(p.id) !== String(editId) && 
-          (!originalNip || String(p.nip).trim() !== originalNip)
-        );
+        const duplicate = appState.masterPegawai.some(p => {
+          const pNip = String(p.nip || "").trim().replace(/\s+/g, "");
+          if (pNip !== nip) return false;
+          const isSelf = (originalNip && pNip === originalNip.replace(/\s+/g, "")) ||
+                         (originalId && String(p.id).trim() === originalId) ||
+                         (editId && String(p.id).trim() === editId);
+          return !isSelf;
+        });
+
         if (duplicate) {
           showAlertModal(`NIP ${nip} sudah digunakan oleh pegawai lain.`, "NIP Sudah Terdaftar", "warning");
           return;
         }
 
-        const idx = appState.masterPegawai.findIndex(p => 
-          (editId && String(p.id) === String(editId)) || 
-          (originalNip && String(p.nip).trim() === originalNip)
-        );
+        let idx = appState.masterPegawai.findIndex(p => {
+          const pNip = String(p.nip || "").trim().replace(/\s+/g, "");
+          if (originalNip && pNip === originalNip.replace(/\s+/g, "")) return true;
+          if (originalId && String(p.id).trim() === originalId) return true;
+          if (editId && String(p.id).trim() === editId) return true;
+          return false;
+        });
+
         if (idx !== -1) {
+          const existingId = appState.masterPegawai[idx].id;
           appState.masterPegawai[idx] = {
             ...appState.masterPegawai[idx],
+            id: (existingId !== undefined && existingId !== null && String(existingId).trim() !== "") ? existingId : (editId || nip),
             nip, nama, pangkat_gol, jabatan, unit_kerja
           };
         }
 
         // Juga update di selectedPegawai jika sedang terpilih dalam surat tugas
-        const sIdx = appState.selectedPegawai.findIndex(p => 
-          (editId && String(p.id) === String(editId)) || 
-          (originalNip && String(p.nip).trim() === originalNip) ||
-          String(p.nip).trim() === nip
-        );
+        const sIdx = appState.selectedPegawai.findIndex(p => {
+          const pNip = String(p.nip || "").trim().replace(/\s+/g, "");
+          if (originalNip && pNip === originalNip.replace(/\s+/g, "")) return true;
+          if (originalId && String(p.id).trim() === originalId) return true;
+          if (editId && String(p.id).trim() === editId) return true;
+          if (pNip === nip) return true;
+          return false;
+        });
+
         if (sIdx !== -1) {
           appState.selectedPegawai[sIdx] = {
             ...appState.selectedPegawai[sIdx],
@@ -3527,18 +3557,26 @@
         }
 
         localStorage.setItem("SURTUG_MASTER_PEGAWAI", JSON.stringify(appState.masterPegawai));
-        renderMasterPegawaiTable();
+
+        const searchInput = document.getElementById("searchMasterPegawaiInput");
+        if (searchInput && searchInput.value.trim() !== "") {
+          filterMasterPegawaiTable(searchInput.value);
+        } else {
+          renderMasterPegawaiTable();
+        }
+
         closeAddPegawaiModal();
 
         sendBackendPost({
           action: "updatePegawai",
-          id: editId,
+          id: editId || originalId,
           original_nip: originalNip,
           nip, nama, pangkat_gol, jabatan, unit_kerja
         });
+
       } else {
         // Mode Tambah
-        const duplicate = appState.masterPegawai.some(p => String(p.nip).trim() === nip);
+        const duplicate = appState.masterPegawai.some(p => String(p.nip || "").trim().replace(/\s+/g, "") === nip);
         if (duplicate) {
           showAlertModal(`Pegawai dengan NIP ${nip} sudah terdaftar di master pegawai.`, "NIP Sudah Terdaftar", "warning");
           return;
@@ -3557,7 +3595,14 @@
         }
 
         localStorage.setItem("SURTUG_MASTER_PEGAWAI", JSON.stringify(appState.masterPegawai));
-        renderMasterPegawaiTable();
+
+        const searchInput = document.getElementById("searchMasterPegawaiInput");
+        if (searchInput && searchInput.value.trim() !== "") {
+          filterMasterPegawaiTable(searchInput.value);
+        } else {
+          renderMasterPegawaiTable();
+        }
+
         closeAddPegawaiModal();
 
         sendBackendPost({
@@ -3577,13 +3622,17 @@
     }
 
     async function deletePegawai(encodedId, encodedNip) {
-      const id = encodedId ? decodeURIComponent(encodedId) : "";
-      const nip = encodedNip ? decodeURIComponent(encodedNip) : "";
+      const id = encodedId ? decodeURIComponent(encodedId).trim() : "";
+      const nip = encodedNip ? decodeURIComponent(encodedNip).trim() : "";
+      const cleanNip = nip.replace(/\s+/g, "");
 
-      const found = appState.masterPegawai.find(p => 
-        (id && String(p.id) === String(id)) || 
-        (nip && String(p.nip).trim() === String(nip).trim())
-      );
+      const found = appState.masterPegawai.find(p => {
+        const pCleanNip = String(p.nip || "").trim().replace(/\s+/g, "");
+        if (cleanNip && pCleanNip === cleanNip) return true;
+        if (id && String(p.id).trim() === id) return true;
+        return false;
+      });
+
       const name = found ? found.nama : "pegawai ini";
       const detail = found ? `${found.nama} (NIP: ${found.nip || "-"} / ${found.jabatan || "-"})` : "";
 
@@ -3599,20 +3648,28 @@
       if (!ok) return;
 
       appState.masterPegawai = appState.masterPegawai.filter(p => {
-        const matchId = id && String(p.id) === String(id);
-        const matchNip = nip && String(p.nip).trim() === String(nip).trim();
+        const pCleanNip = String(p.nip || "").trim().replace(/\s+/g, "");
+        const matchId = id && String(p.id).trim() === id;
+        const matchNip = cleanNip && pCleanNip === cleanNip;
         return !matchId && !matchNip;
       });
 
-      // Hapus juga dari selectedPegawai jika sedang ada di daftar tugas
       appState.selectedPegawai = appState.selectedPegawai.filter(p => {
-        const matchId = id && String(p.id) === String(id);
-        const matchNip = nip && String(p.nip).trim() === String(nip).trim();
+        const pCleanNip = String(p.nip || "").trim().replace(/\s+/g, "");
+        const matchId = id && String(p.id).trim() === id;
+        const matchNip = cleanNip && pCleanNip === cleanNip;
         return !matchId && !matchNip;
       });
       
       localStorage.setItem("SURTUG_MASTER_PEGAWAI", JSON.stringify(appState.masterPegawai));
-      renderMasterPegawaiTable();
+
+      const searchInput = document.getElementById("searchMasterPegawaiInput");
+      if (searchInput && searchInput.value.trim() !== "") {
+        filterMasterPegawaiTable(searchInput.value);
+      } else {
+        renderMasterPegawaiTable();
+      }
+
       renderSelectedPegawai();
       updateModeVisuals();
 

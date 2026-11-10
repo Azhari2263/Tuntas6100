@@ -912,11 +912,13 @@ function handleGetPegawai() {
   }
 
   const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-  const list = data.map(r => {
+  const list = data.map((r, idx) => {
     const isInactive = r[6] === false || String(r[6]).toUpperCase() === "FALSE" || String(r[6]).toUpperCase() === "SALAH" || r[6] === 0 || String(r[6]) === "0";
+    const rawId = r[0];
+    const nip = String(r[1] !== undefined && r[1] !== null ? r[1] : "").trim();
     return {
-      id: r[0],
-      nip: String(r[1] !== undefined && r[1] !== null ? r[1] : "").trim(),
+      id: (rawId !== undefined && rawId !== null && String(rawId).trim() !== "") ? rawId : (nip || (idx + 1)),
+      nip: nip,
       nama: r[2],
       pangkat_gol: r[3] || "",
       jabatan: r[4] || "",
@@ -1021,15 +1023,22 @@ function handleUpdatePegawai(payload) {
     sheet.appendRow(["id_pegawai", "nip", "nama_lengkap", "pangkat_gol", "jabatan", "unit_kerja", "is_active"]);
   }
 
+  const targetOrigNip = String(payload.original_nip || "").trim().replace(/\s+/g, "");
+  const targetNip = String(payload.nip || "").trim().replace(/\s+/g, "");
+  const targetId = String(payload.id || "").trim();
+
   let foundRow = -1;
   if (sheet.getLastRow() > 1) {
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
     for (let i = 0; i < data.length; i++) {
-      const rowId = String(data[i][0]).trim();
-      const rowNip = String(data[i][1]).trim();
-      if ((payload.id && rowId === String(payload.id).trim()) ||
-          (payload.original_nip && rowNip === String(payload.original_nip).trim()) ||
-          (payload.nip && rowNip === String(payload.nip).trim())) {
+      const rowId = String(data[i][0] || "").trim();
+      const rowNip = String(data[i][1] || "").trim().replace(/\s+/g, "");
+      
+      const matchNip = (targetOrigNip && rowNip === targetOrigNip) ||
+                       (targetNip && rowNip === targetNip);
+      const matchId = (targetId && rowId !== "" && rowId === targetId);
+
+      if (matchNip || matchId) {
         foundRow = i + 2;
         break;
       }
@@ -1046,7 +1055,9 @@ function handleUpdatePegawai(payload) {
   if (payload.pangkat_gol !== undefined) sheet.getRange(foundRow, 4).setValue(payload.pangkat_gol || "");
   if (payload.jabatan !== undefined) sheet.getRange(foundRow, 5).setValue(payload.jabatan || "");
   if (payload.unit_kerja !== undefined) sheet.getRange(foundRow, 6).setValue(payload.unit_kerja || "BPS Provinsi Kalimantan Barat");
-  sheet.getRange(foundRow, 7).setValue(true);
+  if (sheet.getLastColumn() >= 7) {
+    sheet.getRange(foundRow, 7).setValue(true);
+  }
 
   return {
     status: "success",
@@ -1071,14 +1082,19 @@ function handleDeletePegawai(payload) {
     };
   }
 
+  const targetNip = String(payload.nip || "").trim().replace(/\s+/g, "");
+  const targetId = String(payload.id || "").trim();
+
   const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
   let foundRow = -1;
 
   for (let i = 0; i < data.length; i++) {
-    const rowId = String(data[i][0]).trim();
-    const rowNip = String(data[i][1]).trim();
-    if ((payload.id && rowId === String(payload.id).trim()) ||
-        (payload.nip && rowNip === String(payload.nip).trim())) {
+    const rowId = String(data[i][0] || "").trim();
+    const rowNip = String(data[i][1] || "").trim().replace(/\s+/g, "");
+    const matchNip = targetNip && rowNip === targetNip;
+    const matchId = targetId && rowId !== "" && rowId === targetId;
+
+    if (matchNip || matchId) {
       foundRow = i + 2;
       break;
     }
