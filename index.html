@@ -222,7 +222,7 @@
           <span class="tracking-wide"><span class="hidden sm:inline">Install Aplikasi</span><span class="sm:hidden">Install</span></span>
         </button>
 
-        <button type="button" id="btnPengaturanTemplate" onclick="navigateTo('#/pengaturan')" 
+        <button type="button" id="btnPengaturanTemplate" onclick="openSettingsModal()" 
                 class="hidden text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-1.5 rounded-xl border border-white/20 transition-all items-center space-x-1.5 shadow-xs"
                 title="Konfigurasi Master Template & Drive (Khusus Admin)">
           <i class="fa-solid fa-sliders text-bps-orange"></i>
@@ -260,22 +260,22 @@
     <!-- SUB-NAV / TABS (Responsive Scrollable on Mobile) -->
     <div id="sub-nav-tabs" class="bg-[#00345b] border-t border-white/10">
       <div class="w-full px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-14 flex space-x-1.5 sm:space-x-3 text-xs sm:text-sm overflow-x-auto py-1 scrollbar-none">
-        <button onclick="navigateTo('#/buat-surat')" id="tab-create" 
+        <button onclick="switchTab('create')" id="tab-create" 
                 class="px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-bps-orange text-white font-semibold flex items-center space-x-2 rounded-t-lg bg-white/10 transition-all whitespace-nowrap flex-shrink-0">
           <i class="fa-solid fa-file-circle-plus text-bps-orange text-sm"></i>
           <span>Buat Surat Tugas</span>
         </button>
-        <button onclick="navigateTo('#/arsip')" id="tab-archive" 
+        <button onclick="switchTab('archive')" id="tab-archive" 
                 class="px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap flex-shrink-0">
           <i class="fa-solid fa-folder-open text-blue-300 text-sm"></i>
           <span>Riwayat & Arsip</span>
         </button>
-        <button onclick="navigateTo('#/master-pegawai')" id="tab-pegawai" 
+        <button onclick="switchTab('pegawai')" id="tab-pegawai" 
                 class="px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap flex-shrink-0">
           <i class="fa-solid fa-users text-blue-300 text-sm"></i>
           <span>Master Pegawai</span>
         </button>
-        <button onclick="navigateTo('#/kelola-peran')" id="tab-peran" 
+        <button onclick="openModalKelolaPeran()" id="tab-peran" 
                 class="px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap flex-shrink-0"
                 title="Kelola Pilihan Peran Pegawai">
           <i class="fa-solid fa-user-tag text-purple-300 text-sm"></i>
@@ -2217,8 +2217,8 @@
       // 5. Inisialisasi PWA (Progressive Web App)
       initPwa();
 
-      // 6. Inisialisasi Sistem Routing & Autentikasi Pengguna
-      initRouting();
+      // 6. Inisialisasi Autentikasi & Tampilan Sesi Pengguna
+      initAuthView();
     });
 
     function updateLiveDateTime() {
@@ -2304,17 +2304,7 @@
     // SISTEM ROUTING & AUTENTIKASI PENGGUNA (URL & ROLE-BASED ACCESS CONTROL)
     // =========================================================================
 
-    /**
-     * Daftar Definisi Rute Aplikasi
-     */
-    const APP_ROUTES = {
-      LOGIN: "#/login",
-      BUAT_SURAT: "#/buat-surat",
-      ARSIP: "#/arsip",
-      MASTER_PEGAWAI: "#/master-pegawai",
-      KELOLA_PERAN: "#/kelola-peran",
-      PENGATURAN: "#/pengaturan"
-    };
+
 
     /**
      * Mengambil sesi pengguna yang sedang aktif (dari sessionStorage atau localStorage)
@@ -2363,7 +2353,6 @@
       try {
         sessionStorage.removeItem("TUNTAS_AUTH_USER");
         localStorage.removeItem("TUNTAS_AUTH_USER");
-        sessionStorage.removeItem("TUNTAS_RETURN_URL");
       } catch (e) {
         console.warn("Gagal menghapus auth session:", e);
       }
@@ -2466,192 +2455,79 @@
     }
 
     /**
-     * Normalisasi string hash URL ke canonical route
+     * Memeriksa hak akses peran terhadap menu / fitur
      */
-    function normalizeRoute(hash) {
-      if (!hash || hash === "#" || hash === "#/") return APP_ROUTES.BUAT_SURAT;
-      const clean = hash.split("?")[0].toLowerCase().trim();
-
-      // Rute Aliases
-      if (clean === "#/create" || clean === "#/buat") return APP_ROUTES.BUAT_SURAT;
-      if (clean === "#/archive" || clean === "#/riwayat") return APP_ROUTES.ARSIP;
-      if (clean === "#/pegawai" || clean === "#/master") return APP_ROUTES.MASTER_PEGAWAI;
-      if (clean === "#/peran" || clean === "#/pilihan-peran") return APP_ROUTES.KELOLA_PERAN;
-      if (clean === "#/settings" || clean === "#/setting") return APP_ROUTES.PENGATURAN;
-      if (clean === "#/masuk") return APP_ROUTES.LOGIN;
-
-      return clean;
-    }
-
-    /**
-     * Memeriksa apakah role pengguna berhak mengakses rute tertentu
-     */
-    function isRouteAllowedForRole(route, role) {
-      const norm = normalizeRoute(route);
-      if (norm === APP_ROUTES.LOGIN) return true;
-
-      // Role Pegawai: Hanya Buat Surat Tugas dan Riwayat & Arsip
-      if (role === "Pegawai") {
-        return norm === APP_ROUTES.BUAT_SURAT || norm === APP_ROUTES.ARSIP;
-      }
-
-      // Role Operator: Buat Surat, Arsip, Master Pegawai, dan Kelola Peran
-      if (role === "Operator") {
-        return norm === APP_ROUTES.BUAT_SURAT || norm === APP_ROUTES.ARSIP || 
-               norm === APP_ROUTES.MASTER_PEGAWAI || norm === APP_ROUTES.KELOLA_PERAN;
-      }
-
-      // Role Admin: Akses penuh ke seluruh halaman
-      if (role === "Admin") {
-        return true;
-      }
-
+    function isActionAllowedForRole(action, role) {
+      if (action === "create" || action === "archive") return true;
+      if (action === "pegawai" || action === "peran") return role === "Admin" || role === "Operator";
+      if (action === "pengaturan") return role === "Admin";
       return false;
     }
 
     /**
-     * Navigasi ke URL (route) tertentu
-     */
-    function navigateTo(route) {
-      if (window.location.hash !== route) {
-        window.location.hash = route;
-      } else {
-        handleRouteChange();
-      }
-    }
-
-    /**
-     * Kompatibilitas fungsi switchTab lama yang diarahkan ke router
+     * Berpindah antar tab utama aplikasi tanpa mengubah URL
      */
     function switchTab(tabId) {
-      if (tabId === 'create') navigateTo(APP_ROUTES.BUAT_SURAT);
-      else if (tabId === 'archive') navigateTo(APP_ROUTES.ARSIP);
-      else if (tabId === 'pegawai') navigateTo(APP_ROUTES.MASTER_PEGAWAI);
-      else navigateTo(APP_ROUTES.BUAT_SURAT);
-    }
-
-    /**
-     * Menangani perubahan rute pada aplikasi (URL Router Controller)
-     */
-    function handleRouteChange() {
-      const rawHash = window.location.hash || "";
-      const currentRoute = normalizeRoute(rawHash);
-      const currentUser = getAuthSession();
-
-      // 1. Guard Autentikasi: Jika belum login dan mengakses rute internal
-      if (!currentUser) {
-        if (currentRoute !== APP_ROUTES.LOGIN) {
-          sessionStorage.setItem("TUNTAS_RETURN_URL", rawHash || APP_ROUTES.BUAT_SURAT);
-          appState.returnUrl = rawHash || APP_ROUTES.BUAT_SURAT;
-          if (window.location.hash !== APP_ROUTES.LOGIN) {
-            window.location.hash = APP_ROUTES.LOGIN;
-            return;
-          }
-        }
-        renderViewForRoute(APP_ROUTES.LOGIN, null);
+      const user = getAuthSession();
+      if (!user) {
+        hideAllSections();
+        closeAllModals();
+        updateHeaderAndNavUI(null);
+        const loginSec = document.getElementById("section-login");
+        if (loginSec) loginSec.classList.remove("hidden");
         return;
       }
 
-      // 2. Jika sudah login tetapi mencoba mengakses rute login
-      if (currentRoute === APP_ROUTES.LOGIN) {
-        const savedReturn = sessionStorage.getItem("TUNTAS_RETURN_URL") || appState.returnUrl;
-        sessionStorage.removeItem("TUNTAS_RETURN_URL");
-        appState.returnUrl = null;
-        const target = (savedReturn && savedReturn !== APP_ROUTES.LOGIN && isRouteAllowedForRole(savedReturn, currentUser.role))
-          ? savedReturn
-          : APP_ROUTES.BUAT_SURAT;
-        window.location.hash = target;
-        return;
-      }
-
-      // 3. Guard Role & Hak Akses
-      if (!isRouteAllowedForRole(currentRoute, currentUser.role)) {
-        let msg = `Akses Ditolak: Role "${currentUser.role}" tidak memiliki izin untuk mengakses halaman tersebut.`;
-        if (currentRoute === APP_ROUTES.PENGATURAN) {
-          msg = `Akses Ditolak: Halaman Pengaturan Template & Drive hanya dapat diakses oleh Administrator.`;
-        } else if (currentRoute === APP_ROUTES.MASTER_PEGAWAI || currentRoute === APP_ROUTES.KELOLA_PERAN) {
-          msg = `Akses Ditolak: Halaman ini hanya dapat diakses oleh Administrator atau Operator.`;
+      if (!isActionAllowedForRole(tabId, user.role)) {
+        let msg = "Akses Ditolak: Anda tidak memiliki izin untuk mengakses halaman ini.";
+        if (tabId === "pegawai") {
+          msg = "Akses Ditolak: Halaman Master Pegawai hanya dapat diakses oleh Administrator atau Operator.";
         }
         showToastNotification(msg, "warning");
-        window.location.hash = APP_ROUTES.BUAT_SURAT;
         return;
       }
 
-      // 4. Normalisasi URL jika berupa alias (misal #/create -> #/buat-surat)
-      if (rawHash && rawHash !== currentRoute && ![APP_ROUTES.KELOLA_PERAN, APP_ROUTES.PENGATURAN].includes(currentRoute)) {
-        try {
-          history.replaceState(null, document.title, window.location.pathname + window.location.search + currentRoute);
-        } catch (e) {
-          window.location.hash = currentRoute;
-        }
-      }
+      // Sembunyikan semua section utama dan modal
+      hideAllSections();
+      closeAllModals();
 
-      // 5. Render tampilan antarmuka sesuai rute
-      renderViewForRoute(currentRoute, currentUser);
+      // Atur tab aktif secara visual
+      setActiveTabVisual(tabId);
+
+      // Tampilkan section sesuai tabId yang dipilih
+      if (tabId === 'create') {
+        const sec = document.getElementById("section-create");
+        if (sec) sec.classList.remove("hidden");
+      } else if (tabId === 'archive') {
+        const sec = document.getElementById("section-archive");
+        if (sec) sec.classList.remove("hidden");
+        loadArchiveData();
+      } else if (tabId === 'pegawai') {
+        const sec = document.getElementById("section-pegawai");
+        if (sec) sec.classList.remove("hidden");
+        renderMasterPegawaiTable();
+      } else if (tabId === 'peran') {
+        openModalKelolaPeran();
+      }
     }
 
     /**
-     * Menampilkan antarmuka sesuai rute yang dipilih
+     * Kompatibilitas fungsi navigasi tanpa mengubah URL
      */
-    function renderViewForRoute(route, user) {
-      updateHeaderAndNavUI(user);
-
-      if (route === APP_ROUTES.LOGIN) {
+    function navigateTo(target) {
+      if (!target) return;
+      if (target.includes("create") || target.includes("buat")) switchTab("create");
+      else if (target.includes("archive") || target.includes("arsip")) switchTab("archive");
+      else if (target.includes("pegawai")) switchTab("pegawai");
+      else if (target.includes("peran")) openModalKelolaPeran();
+      else if (target.includes("pengaturan") || target.includes("setting")) openSettingsModal();
+      else if (target.includes("login") || target.includes("masuk")) {
         hideAllSections();
         closeAllModals();
         const loginSec = document.getElementById("section-login");
-        if (loginSec) {
-          loginSec.classList.remove("hidden");
-          const returnUrl = sessionStorage.getItem("TUNTAS_RETURN_URL");
-          if (returnUrl && returnUrl !== APP_ROUTES.LOGIN) {
-            let routeName = "halaman tersebut";
-            if (returnUrl.includes("arsip")) routeName = "Riwayat & Arsip";
-            else if (returnUrl.includes("pegawai")) routeName = "Master Pegawai";
-            else if (returnUrl.includes("peran")) routeName = "Pilihan Peran";
-            else if (returnUrl.includes("pengaturan")) routeName = "Pengaturan Template";
-            showLoginAlert(`Silakan masuk terlebih dahulu untuk mengakses menu ${routeName}.`, "info");
-          }
-        }
-        return;
-      }
-
-      // Sembunyikan halaman login jika sudah login
-      const secLogin = document.getElementById("section-login");
-      if (secLogin) secLogin.classList.add("hidden");
-
-      if (route === APP_ROUTES.BUAT_SURAT) {
-        closeAllModals();
-        setActiveTabVisual("create");
-        document.getElementById("section-create").classList.remove("hidden");
-        document.getElementById("section-archive").classList.add("hidden");
-        document.getElementById("section-pegawai").classList.add("hidden");
-      } else if (route === APP_ROUTES.ARSIP) {
-        closeAllModals();
-        setActiveTabVisual("archive");
-        document.getElementById("section-create").classList.add("hidden");
-        document.getElementById("section-archive").classList.remove("hidden");
-        document.getElementById("section-pegawai").classList.add("hidden");
-        loadArchiveData();
-      } else if (route === APP_ROUTES.MASTER_PEGAWAI) {
-        closeAllModals();
-        setActiveTabVisual("pegawai");
-        document.getElementById("section-create").classList.add("hidden");
-        document.getElementById("section-archive").classList.add("hidden");
-        document.getElementById("section-pegawai").classList.remove("hidden");
-        renderMasterPegawaiTable();
-      } else if (route === APP_ROUTES.KELOLA_PERAN) {
-        // Tampilkan modal Kelola Peran di atas halaman aktif
-        document.getElementById("section-create").classList.remove("hidden");
-        document.getElementById("section-archive").classList.add("hidden");
-        document.getElementById("section-pegawai").classList.add("hidden");
-        setActiveTabVisual("peran");
-        openModalKelolaPeran(false);
-      } else if (route === APP_ROUTES.PENGATURAN) {
-        // Tampilkan modal Pengaturan Template di atas halaman aktif
-        document.getElementById("section-create").classList.remove("hidden");
-        document.getElementById("section-archive").classList.add("hidden");
-        document.getElementById("section-pegawai").classList.add("hidden");
-        openSettingsModal(false);
+        if (loginSec) loginSec.classList.remove("hidden");
+      } else {
+        switchTab("create");
       }
     }
 
@@ -2803,16 +2679,11 @@
       setAuthSession(user, rememberMe);
       showToastNotification(`Selamat datang, ${user.nama} (${user.role})!`, "success");
 
-      // Redirect ke returnUrl jika ada dan diizinkan, atau default Buat Surat
-      const savedReturn = sessionStorage.getItem("TUNTAS_RETURN_URL") || appState.returnUrl;
-      sessionStorage.removeItem("TUNTAS_RETURN_URL");
-      appState.returnUrl = null;
-
-      const target = (savedReturn && savedReturn !== APP_ROUTES.LOGIN && isRouteAllowedForRole(savedReturn, user.role))
-        ? savedReturn
-        : APP_ROUTES.BUAT_SURAT;
-
-      navigateTo(target);
+      // Tampilkan antarmuka aplikasi utama tanpa mengubah URL
+      const secLogin = document.getElementById("section-login");
+      if (secLogin) secLogin.classList.add("hidden");
+      updateHeaderAndNavUI(user);
+      switchTab("create");
     }
 
     /**
@@ -2892,8 +2763,12 @@
     function handleLogout() {
       if (confirm("Apakah Anda yakin ingin keluar dari sistem TUNTAS?")) {
         clearAuthSession();
+        hideAllSections();
+        closeAllModals();
+        updateHeaderAndNavUI(null);
+        const loginSec = document.getElementById("section-login");
+        if (loginSec) loginSec.classList.remove("hidden");
         showToastNotification("Anda telah berhasil keluar dari sistem TUNTAS.", "info");
-        navigateTo(APP_ROUTES.LOGIN);
       }
     }
 
@@ -2944,12 +2819,19 @@
     }
 
     /**
-     * Inisialisasi Event Listener Routing & Keyboard
+     * Inisialisasi Tampilan Berdasarkan Sesi Autentikasi & Modal Listeners
      */
-    function initRouting() {
-      window.addEventListener("hashchange", handleRouteChange);
+    function initAuthView() {
+      // Hapus hash dari URL jika ada, agar URL tetap bersih tanpa rute per halaman
+      if (window.location.hash) {
+        try {
+          history.replaceState(null, document.title, window.location.pathname + window.location.search);
+        } catch (e) {
+          // Abaikan jika lingkungan sandboxed
+        }
+      }
 
-      // Event listener klik backdrop modal untuk menutup modal dan kembali ke rute sebelumnya
+      // Event listener klik backdrop modal untuk menutup modal
       const modalSettings = document.getElementById("modalSettings");
       if (modalSettings) {
         modalSettings.addEventListener("click", (e) => {
@@ -2964,7 +2846,7 @@
         });
       }
 
-      // Shortcut Keyboard: Tombol Esc menutup modal aktif dan mengembalikan URL
+      // Shortcut Keyboard: Tombol Esc menutup modal aktif
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           const mPeran = document.getElementById("modalKelolaPeran");
@@ -2977,8 +2859,20 @@
         }
       });
 
-      // Jalankan rute awal saat aplikasi dimuat
-      handleRouteChange();
+      // Periksa status login
+      const currentUser = getAuthSession();
+      if (!currentUser) {
+        hideAllSections();
+        closeAllModals();
+        updateHeaderAndNavUI(null);
+        const loginSec = document.getElementById("section-login");
+        if (loginSec) loginSec.classList.remove("hidden");
+      } else {
+        const loginSec = document.getElementById("section-login");
+        if (loginSec) loginSec.classList.add("hidden");
+        updateHeaderAndNavUI(currentUser);
+        switchTab("create");
+      }
     }
 
     // =========================================================================
@@ -4554,9 +4448,10 @@
     // =========================================================================
     // MODAL PENGATURAN TEMPLATE
     // =========================================================================
-    function openSettingsModal(shouldNavigate = true) {
-      if (shouldNavigate) {
-        navigateTo(APP_ROUTES.PENGATURAN);
+    function openSettingsModal() {
+      const user = getAuthSession();
+      if (user && user.role !== "Admin") {
+        showToastNotification("Akses Ditolak: Pengaturan Template hanya dapat diakses oleh Administrator.", "warning");
         return;
       }
       document.getElementById("cfgTemplateIndividu").value = appState.templateIndividuId || "1kY2fUjCagzcCDAF4tQis5WgMDAu5uY8Bj7qxT5N_gwc";
@@ -4569,9 +4464,6 @@
 
     function closeSettingsModal() {
       document.getElementById("modalSettings").classList.add("hidden");
-      if ([APP_ROUTES.PENGATURAN, "#/settings"].includes(normalizeRoute(window.location.hash))) {
-        navigateTo(APP_ROUTES.BUAT_SURAT);
-      }
     }
 
     async function saveSettingsConfig() {
@@ -4795,9 +4687,10 @@
     /**
      * Membuka modal Kelola Pilihan Peran
      */
-    function openModalKelolaPeran(shouldNavigate = true) {
-      if (shouldNavigate) {
-        navigateTo(APP_ROUTES.KELOLA_PERAN);
+    function openModalKelolaPeran() {
+      const user = getAuthSession();
+      if (user && user.role === "Pegawai") {
+        showToastNotification("Akses Ditolak: Pilihan Peran hanya dapat diakses oleh Administrator atau Operator.", "warning");
         return;
       }
       cancelEditPeran();
@@ -4813,9 +4706,6 @@
       const modal = document.getElementById("modalKelolaPeran");
       if (modal) modal.classList.add("hidden");
       cancelEditPeran();
-      if ([APP_ROUTES.KELOLA_PERAN, "#/peran"].includes(normalizeRoute(window.location.hash))) {
-        navigateTo(APP_ROUTES.BUAT_SURAT);
-      }
     }
 
     /**
