@@ -141,6 +141,7 @@ function doPost(e) {
       case "deletePegawai":
         return jsonResponse(handleDeletePegawai(payload));
       case "importMasterPegawai":
+      case "ImporttMasterPegawai":
         return jsonResponse(handleImportMasterPegawai(payload));
 
       // Pejabat CRUD
@@ -901,7 +902,7 @@ function handleDeleteArsip(payload) {
 // =============================================================================
 
 /**
- * Mengambil master pegawai
+ * Mengambil master pegawai yang aktif
  */
 function handleGetPegawai() {
   const db = getDb();
@@ -911,15 +912,18 @@ function handleGetPegawai() {
   }
 
   const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
-  const list = data.map(r => ({
-    id: r[0],
-    nip: String(r[1]).trim(),
-    nama: r[2],
-    pangkat_gol: r[3],
-    jabatan: r[4],
-    unit_kerja: r[5],
-    is_active: r[6] === true || r[6] === "TRUE"
-  })).filter(p => p.is_active);
+  const list = data.map(r => {
+    const isInactive = r[6] === false || String(r[6]).toUpperCase() === "FALSE" || String(r[6]).toUpperCase() === "SALAH" || r[6] === 0 || String(r[6]) === "0";
+    return {
+      id: r[0],
+      nip: String(r[1] !== undefined && r[1] !== null ? r[1] : "").trim(),
+      nama: r[2],
+      pangkat_gol: r[3] || "",
+      jabatan: r[4] || "",
+      unit_kerja: r[5] || "",
+      is_active: !isInactive
+    };
+  }).filter(p => p.is_active && p.nip);
 
   return { status: "success", data: list };
 }
@@ -939,18 +943,49 @@ function handleAddPegawai(payload) {
     sheet.appendRow(["id_pegawai", "nip", "nama_lengkap", "pangkat_gol", "jabatan", "unit_kerja", "is_active"]);
   }
 
+  const nipStr = String(payload.nip).trim();
+  const namaStr = String(payload.nama).trim();
+
+  // Periksa apakah pegawai dengan NIP tersebut sudah ada
+  if (sheet.getLastRow() > 1) {
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, Math.max(7, sheet.getLastColumn())).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][1]).trim() === nipStr) {
+        // Sudah ada, perbarui data dan pastikan is_active = true
+        const rowIdx = i + 2;
+        sheet.getRange(rowIdx, 3).setValue(namaStr);
+        sheet.getRange(rowIdx, 4).setValue(payload.pangkat_gol || "");
+        sheet.getRange(rowIdx, 5).setValue(payload.jabatan || "");
+        sheet.getRange(rowIdx, 6).setValue(payload.unit_kerja || "BPS Provinsi Kalimantan Barat");
+        sheet.getRange(rowIdx, 7).setValue(true);
+        return {
+          status: "success",
+          message: "Data pegawai sudah terdaftar dan telah diperbarui.",
+          data: {
+            id: data[i][0],
+            nip: nipStr,
+            nama: namaStr,
+            pangkat_gol: payload.pangkat_gol || "",
+            jabatan: payload.jabatan || "",
+            unit_kerja: payload.unit_kerja || "BPS Provinsi Kalimantan Barat"
+          }
+        };
+      }
+    }
+  }
+
   // Hitung ID berikutnya
   let nextId = 1;
   if (sheet.getLastRow() > 1) {
     const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
     const maxId = Math.max(...ids.map(x => parseInt(x, 10) || 0));
-    nextId = maxId + 1;
+    nextId = (isNaN(maxId) ? 0 : maxId) + 1;
   }
 
   sheet.appendRow([
     nextId,
-    String(payload.nip).trim(),
-    payload.nama.trim(),
+    nipStr,
+    namaStr,
     payload.pangkat_gol || "",
     payload.jabatan || "",
     payload.unit_kerja || "BPS Provinsi Kalimantan Barat",
@@ -962,8 +997,8 @@ function handleAddPegawai(payload) {
     message: "Pegawai baru berhasil ditambahkan.",
     data: {
       id: nextId,
-      nip: String(payload.nip).trim(),
-      nama: payload.nama.trim(),
+      nip: nipStr,
+      nama: namaStr,
       pangkat_gol: payload.pangkat_gol || "",
       jabatan: payload.jabatan || "",
       unit_kerja: payload.unit_kerja || "BPS Provinsi Kalimantan Barat"
@@ -975,36 +1010,43 @@ function handleAddPegawai(payload) {
  * Mengubah data pegawai
  */
 function handleUpdatePegawai(payload) {
-  if (!payload.id && !payload.nip) {
+  if (!payload.id && !payload.nip && !payload.original_nip) {
     throw new Error("ID atau NIP pegawai diperlukan untuk pembaruan.");
   }
 
   const db = getDb();
-  const sheet = db.getSheetByName("m_pegawai");
-  if (!sheet || sheet.getLastRow() <= 1) {
-    throw new Error("Tabel pegawai belum tersedia.");
+  let sheet = db.getSheetByName("m_pegawai");
+  if (!sheet) {
+    sheet = db.insertSheet("m_pegawai");
+    sheet.appendRow(["id_pegawai", "nip", "nama_lengkap", "pangkat_gol", "jabatan", "unit_kerja", "is_active"]);
   }
 
-  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
   let foundRow = -1;
-
-  for (let i = 0; i < data.length; i++) {
-    if ((payload.id && String(data[i][0]) === String(payload.id)) ||
-        (payload.nip && String(data[i][1]).trim() === String(payload.nip).trim())) {
-      foundRow = i + 2;
-      break;
+  if (sheet.getLastRow() > 1) {
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+    for (let i = 0; i < data.length; i++) {
+      const rowId = String(data[i][0]).trim();
+      const rowNip = String(data[i][1]).trim();
+      if ((payload.id && rowId === String(payload.id).trim()) ||
+          (payload.original_nip && rowNip === String(payload.original_nip).trim()) ||
+          (payload.nip && rowNip === String(payload.nip).trim())) {
+        foundRow = i + 2;
+        break;
+      }
     }
   }
 
   if (foundRow === -1) {
-    throw new Error("Pegawai tidak ditemukan.");
+    // Upsert jika belum ada di sheet
+    return handleAddPegawai(payload);
   }
 
   if (payload.nip !== undefined) sheet.getRange(foundRow, 2).setValue(String(payload.nip).trim());
-  if (payload.nama !== undefined) sheet.getRange(foundRow, 3).setValue(payload.nama.trim());
-  if (payload.pangkat_gol !== undefined) sheet.getRange(foundRow, 4).setValue(payload.pangkat_gol);
-  if (payload.jabatan !== undefined) sheet.getRange(foundRow, 5).setValue(payload.jabatan);
-  if (payload.unit_kerja !== undefined) sheet.getRange(foundRow, 6).setValue(payload.unit_kerja);
+  if (payload.nama !== undefined) sheet.getRange(foundRow, 3).setValue(String(payload.nama).trim());
+  if (payload.pangkat_gol !== undefined) sheet.getRange(foundRow, 4).setValue(payload.pangkat_gol || "");
+  if (payload.jabatan !== undefined) sheet.getRange(foundRow, 5).setValue(payload.jabatan || "");
+  if (payload.unit_kerja !== undefined) sheet.getRange(foundRow, 6).setValue(payload.unit_kerja || "BPS Provinsi Kalimantan Barat");
+  sheet.getRange(foundRow, 7).setValue(true);
 
   return {
     status: "success",
@@ -1023,22 +1065,30 @@ function handleDeletePegawai(payload) {
   const db = getDb();
   const sheet = db.getSheetByName("m_pegawai");
   if (!sheet || sheet.getLastRow() <= 1) {
-    throw new Error("Tabel pegawai belum tersedia.");
+    return {
+      status: "success",
+      message: "Tabel pegawai belum memiliki baris data."
+    };
   }
 
   const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
   let foundRow = -1;
 
   for (let i = 0; i < data.length; i++) {
-    if ((payload.id && String(data[i][0]) === String(payload.id)) ||
-        (payload.nip && String(data[i][1]).trim() === String(payload.nip).trim())) {
+    const rowId = String(data[i][0]).trim();
+    const rowNip = String(data[i][1]).trim();
+    if ((payload.id && rowId === String(payload.id).trim()) ||
+        (payload.nip && rowNip === String(payload.nip).trim())) {
       foundRow = i + 2;
       break;
     }
   }
 
   if (foundRow === -1) {
-    throw new Error("Pegawai tidak ditemukan.");
+    return {
+      status: "success",
+      message: "Pegawai tidak ditemukan di sheet (sudah dihapus dari tampilan)."
+    };
   }
 
   sheet.deleteRow(foundRow);
