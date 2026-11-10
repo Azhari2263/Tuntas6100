@@ -3599,6 +3599,12 @@
      *    - Kepala BPS Provinsi Kalimantan Barat
      *    (secara umum jabatan struktural/nomenklatur: Staf BPS ... atau Kepala BPS ...)
      */
+        /**
+     * Menggabungkan dan memformat pencantuman Jabatan dan Satuan Kerja (Satker) dalam Surat Tugas:
+     * Seluruh jabatan tanpa terkecuali wajib menggunakan format dua baris terpisah (Enter / \n):
+     * - Baris 1: Nama Jabatan (misal: "Pranata Komputer Ahli Pertama", "Staf", "Kepala", "Pelaksana", dsb.)
+     * - Baris 2: Nama Satker (misal: "BPS Kota Singkawang", "BPS Provinsi Kalimantan Barat", dsb.)
+     */
     function formatJabatanSatker(jabatan, unitKerja) {
       let jab = (jabatan || "").trim();
       let satker = (unitKerja || "").trim();
@@ -3709,15 +3715,9 @@
 
       const merged = getMergedSingleLine(jab, satker);
 
-      // Pengecualian: jabatan yang harus satu baris bersama Satkernya
-      // (misal: "Staf BPS Provinsi Kalimantan Barat", "Staf BPS Kabupaten Sambas",
-      //  "Kepala BPS Kota Singkawang", "Kepala BPS Provinsi Kalimantan Barat")
-      const exceptionRegex = /^(?:(?:plt\.|plh\.)\s+)?(?:staf|kepala)\s+bps\b/i;
-      if (exceptionRegex.test(merged)) {
-        return merged;
-      }
-
-      // Untuk jabatan lainnya: pisahkan jabatan pada baris pertama dan Satker pada baris kedua (Enter / \n)
+      // Seluruh jabatan tanpa terkecuali wajib dua baris terpisah (Enter / \n):
+      // Baris 1: Nama Jabatan
+      // Baris 2: Nama Satker
       const escapedSatker = satker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const satkerPattern = new RegExp("(?:\\s+|\\s*\\(\\s*)" + escapedSatker + "\\s*\\)?$", "i");
       const match = satkerPattern.exec(merged);
@@ -3729,7 +3729,13 @@
         }
       }
 
-      return merged;
+      let cleanJab = jab.replace(new RegExp("\\s*" + escapedSatker + "\\s*", "gi"), "").trim();
+      cleanJab = cleanJab.replace(/\s+(?:pada|di)$/i, "").trim();
+      if (cleanJab) {
+        return cleanJab + "\n" + satker;
+      }
+
+      return jab + "\n" + satker;
     }
 
     function escapeHtml(str) {
