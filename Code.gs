@@ -508,7 +508,7 @@ function handleListSurat(limit) {
     kodeSatker: r[4],
     kodeKlasifikasi: r[5],
     tahun: r[6],
-    tanggal: r[7],
+    tanggal: formatTanggalIndonesia(r[7]),
     tempat: r[8],
     jenis: r[9],
     rujukanPejabat: r[10],
@@ -1916,12 +1916,22 @@ function jsonResponse(data) {
 }
 
 function formatTanggalIndonesia(date) {
-  const bulan = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-  ];
-  const d = date.getDate();
-  const m = bulan[date.getMonth()];
-  const y = date.getFullYear();
-  return d + " " + m + " " + y;
+  if (!date) return "";
+  if (Object.prototype.toString.call(date) === '[object Date]') {
+    const bulan = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+    const d = parseInt(Utilities.formatDate(date, "Asia/Pontianak", "d"), 10);
+    const m = parseInt(Utilities.formatDate(date, "Asia/Pontianak", "M"), 10) - 1;
+    const y = Utilities.formatDate(date, "Asia/Pontianak", "yyyy");
+    return d + " " + bulan[m] + " " + y;
+  }
+  if (typeof date === "string" && date.includes("T")) {
+    const parsed = new Date(date);
+    if (!isNaN(parsed.getTime())) {
+      return formatTanggalIndonesia(parsed);
+    }
+  }
+  return String(date);
 }

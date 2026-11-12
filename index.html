@@ -1984,7 +1984,17 @@
       appState.pejabatList = cachedPejabat ? JSON.parse(cachedPejabat) : [...DEFAULT_PEJABAT];
       appState.dasarHukumList = cachedHukum ? JSON.parse(cachedHukum) : [...DEFAULT_DASAR_HUKUM];
       appState.peranList = cachedPeran ? JSON.parse(cachedPeran) : [...DEFAULT_PERAN_LIST];
-      if (cachedArchive) appState.archiveList = JSON.parse(cachedArchive);
+      if (cachedArchive) {
+        try {
+          const parsed = JSON.parse(cachedArchive);
+          appState.archiveList = Array.isArray(parsed) ? parsed.map(item => ({
+            ...item,
+            tanggal: formatTanggalIndo(item.tanggal)
+          })) : [];
+        } catch (e) {
+          appState.archiveList = [];
+        }
+      }
       renderPeranDatalist();
 
       // 3. Render Awal Antarmuka
@@ -2749,14 +2759,74 @@
     // =========================================================================
     // PENOMORAN & TANGGAL
     // =========================================================================
+    /**
+     * Memformat tanggal ke dalam format teks Bahasa Indonesia (contoh: 9 November 2026)
+     */
+    function formatTanggalIndo(rawDate) {
+      if (!rawDate || rawDate === "-" || rawDate === "null" || rawDate === "undefined") return "-";
+      
+      const str = String(rawDate).trim();
+      if (!str) return "-";
+
+      const monthsIndo = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+      ];
+
+      // Jika sudah berupa format teks Indonesia (misal: "9 November 2026" atau "20 Mei 2026")
+      const monthsRegex = new RegExp(`^(\\d{1,2})\\s+(${monthsIndo.join("|")})\\s+(\\d{4})$`, "i");
+      if (monthsRegex.test(str)) {
+        return str;
+      }
+
+      // Format YYYY-MM-DD
+      const ymdMatch = str.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})$/);
+      if (ymdMatch) {
+        const y = parseInt(ymdMatch[1], 10);
+        const m = parseInt(ymdMatch[2], 10) - 1;
+        const d = parseInt(ymdMatch[3], 10);
+        if (m >= 0 && m < 12) {
+          return `${d} ${monthsIndo[m]} ${y}`;
+        }
+      }
+
+      // Format DD/MM/YYYY atau DD-MM-YYYY
+      const dmyMatch = str.match(/^(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})$/);
+      if (dmyMatch) {
+        const d = parseInt(dmyMatch[1], 10);
+        const m = parseInt(dmyMatch[2], 10) - 1;
+        const y = parseInt(dmyMatch[3], 10);
+        if (m >= 0 && m < 12) {
+          return `${d} ${monthsIndo[m]} ${y}`;
+        }
+      }
+
+      // Format ISO 8601 atau Date String lainnya (misal: 2026-11-08T17:00:00.000Z)
+      const parsed = new Date(str);
+      if (!isNaN(parsed.getTime())) {
+        try {
+          const formatter = new Intl.DateTimeFormat("id-ID", {
+            timeZone: "Asia/Pontianak",
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+          });
+          return formatter.format(parsed);
+        } catch (e) {
+          const d = parsed.getDate();
+          const m = parsed.getMonth();
+          const y = parsed.getFullYear();
+          return `${d} ${monthsIndo[m]} ${y}`;
+        }
+      }
+
+      return str;
+    }
+
     function updateFormattedDate() {
       const val = document.getElementById("tanggalPenetapanInput").value;
       if (!val) return;
-      const parts = val.split("-");
-      const date = new Date(parts[0], parts[1]-1, parts[2]);
-      const months = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-      const formatted = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-      document.getElementById("tanggalFormattedPreview").textContent = formatted;
+      document.getElementById("tanggalFormattedPreview").textContent = formatTanggalIndo(val);
     }
 
     function toggleCustomNomor() {
@@ -2960,7 +3030,7 @@
                 id: result.data.idSurtug || Utilities_uuid(),
                 nomorSurat: result.data.nomorSurat,
                 noAgenda: result.data.noAgenda,
-                tanggal: payload.tanggalPenetapan,
+                tanggal: formatTanggalIndo(payload.tanggalPenetapan),
                 jenis: result.data.jenisPenugasan || (payload.pegawaiList.length > 1 ? "KOLEKTIF" : "TUNGGAL"),
                 tujuan: payload.tujuanTugas,
                 totalPersonil: payload.pegawaiList.length,
@@ -3110,7 +3180,10 @@
         const response = await fetch(`${appState.scriptUrl}?action=listSurat`);
         const res = await response.json();
         if (res.status === "success" && res.data && res.data.length > 0) {
-          appState.archiveList = res.data;
+          appState.archiveList = res.data.map(item => ({
+            ...item,
+            tanggal: formatTanggalIndo(item.tanggal)
+          }));
           localStorage.setItem("SURTUG_ARCHIVE_LIST", JSON.stringify(appState.archiveList));
           renderArchiveRows(appState.archiveList, 1);
         } else if (appState.archiveList && appState.archiveList.length > 0) {
@@ -3163,7 +3236,7 @@
         <tr class="hover:bg-slate-50/80 transition-colors">
           <td class="p-3.5 text-center font-bold text-bps-blue font-mono">${item.noAgenda || '-'}</td>
           <td class="p-3.5 font-bold font-mono text-slate-900">${item.nomorSurat}</td>
-          <td class="p-3.5 text-slate-600">${item.tanggal || '-'}</td>
+          <td class="p-3.5 text-slate-600 whitespace-nowrap font-medium">${formatTanggalIndo(item.tanggal)}</td>
           <td class="p-3.5 text-center">
             <span class="${item.jenis === 'TUNGGAL' || item.jenis === 'INDIVIDUAL' ? 'bg-blue-50 text-bps-blue border border-blue-200' : 'bg-amber-50 text-bps-orange border border-amber-200'} px-2.5 py-0.5 rounded-full font-bold text-[10px]">
               ${item.jenis}
@@ -3213,6 +3286,7 @@
         return (item.nomorSurat && item.nomorSurat.toLowerCase().includes(q)) ||
                (item.tujuan && item.tujuan.toLowerCase().includes(q)) ||
                (item.tanggal && item.tanggal.toLowerCase().includes(q)) ||
+               (formatTanggalIndo(item.tanggal).toLowerCase().includes(q)) ||
                (item.noAgenda && String(item.noAgenda).includes(q));
       });
       renderArchiveRows(filtered, 1);
@@ -3240,7 +3314,7 @@
       document.getElementById("editArsipId").value = found.id || found.nomorSurat;
       document.getElementById("arsipNomorSurat").value = found.nomorSurat || "";
       document.getElementById("arsipNoAgenda").value = found.noAgenda || "";
-      document.getElementById("arsipTanggal").value = found.tanggal || "";
+      document.getElementById("arsipTanggal").value = formatTanggalIndo(found.tanggal) || "";
       document.getElementById("arsipJenis").value = found.jenis || "TUNGGAL";
       document.getElementById("arsipTujuan").value = found.tujuan || "";
       document.getElementById("arsipTotalPersonil").value = found.totalPersonil || 1;
@@ -3257,7 +3331,7 @@
       const editId = document.getElementById("editArsipId").value;
       const nomorSurat = document.getElementById("arsipNomorSurat").value.trim();
       const noAgenda = document.getElementById("arsipNoAgenda").value.trim();
-      const tanggal = document.getElementById("arsipTanggal").value.trim();
+      const tanggal = formatTanggalIndo(document.getElementById("arsipTanggal").value.trim());
       const jenis = document.getElementById("arsipJenis").value;
       const tujuan = document.getElementById("arsipTujuan").value.trim();
       const totalPersonil = parseInt(document.getElementById("arsipTotalPersonil").value, 10) || 1;
