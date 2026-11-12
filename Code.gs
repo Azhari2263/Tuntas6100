@@ -449,6 +449,7 @@ function handleCreateSuratTugas(payload) {
 
   // Simpan personil secara batch (jauh lebih cepat untuk jumlah pegawai besar)
   if (payload.pegawaiList && payload.pegawaiList.length > 0) {
+    const isSingle = payload.pegawaiList.length === 1;
     const personilRows = payload.pegawaiList.map((p, index) => [
       Utilities.getUuid(),
       idSurtug,
@@ -456,7 +457,7 @@ function handleCreateSuratTugas(payload) {
       p.nama,
       p.nip,
       p.pangkat_gol,
-      formatJabatanSatker(p.jabatan, p.unit_kerja),
+      formatJabatanSatker(p.jabatan, p.unit_kerja, !isSingle),
       p.peran || "Peserta",
       index + 1
     ]);
@@ -1749,18 +1750,22 @@ function handleDeletePeran(payload) {
  */
 /**
  * Menggabungkan dan memformat pencantuman Jabatan dan Satuan Kerja (Satker) dalam Surat Tugas:
- * Seluruh jabatan tanpa terkecuali wajib menggunakan format dua baris terpisah (Enter / \n):
- * - Baris 1: Nama Jabatan (misal: "Pranata Komputer Ahli Pertama", "Staf", "Kepala", "Pelaksana", dsb.)
- * - Baris 2: Nama Satker (misal: "BPS Kota Singkawang", "BPS Provinsi Kalimantan Barat", dsb.)
+ * - isTwoLines = true (Hanya berlaku pada tabel surat tugas kolektif):
+ *   Baris 1: Nama Jabatan (misal: "Pranata Komputer Ahli Pertama", "Staf", "Kepala", "Pelaksana", dsb.)
+ *   Baris 2: Nama Satker (misal: "BPS Kota Singkawang", "BPS Provinsi Kalimantan Barat", dsb.)
+ * - isTwoLines = false (Surat tugas individu):
+ *   Format sama seperti sebelumnya, tidak dibuat harus dua baris (misal: "Staf BPS Provinsi Kalimantan Barat")
  */
-function formatJabatanSatker(jabatan, unitKerja) {
+function formatJabatanSatker(jabatan, unitKerja, isTwoLines) {
   let jab = (jabatan || "").trim();
   let satker = (unitKerja || "").trim();
-  if (!satker) return jab;
+  if (!satker) return !isTwoLines ? jab.replace(/\r?\n/g, " ") : jab;
   if (!jab) return satker;
 
-  // Jika sudah terpisah multi-baris, kembalikan langsung
-  if (jab.indexOf("\n") !== -1) {
+  // Jika untuk surat tugas individu, hilangkan newline bawaan jika ada
+  if (!isTwoLines) {
+    jab = jab.replace(/\r?\n/g, " ");
+  } else if (jab.indexOf("\n") !== -1) {
     return jab;
   }
 
@@ -1863,7 +1868,12 @@ function formatJabatanSatker(jabatan, unitKerja) {
 
   const merged = getMergedSingleLine(jab, satker);
 
-  // Seluruh jabatan tanpa terkecuali wajib dua baris terpisah (Enter / \n):
+  // Jika untuk surat tugas individu, format sama seperti sebelumnya (satu baris, tidak dibuat harus dua baris)
+  if (!isTwoLines) {
+    return merged;
+  }
+
+  // Format dua baris hanya berlaku pada tabel (surat tugas kolektif):
   // Baris 1: Nama Jabatan
   // Baris 2: Nama Satker
   const escapedSatker = satker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
