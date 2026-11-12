@@ -2654,6 +2654,7 @@
         const countEl = document.getElementById("hukumCount");
         const checkedCount = appState.dasarHukumList.filter(h => h.checked).length;
         countEl.textContent = `${checkedCount} Poin`;
+        localStorage.setItem("SURTUG_DASAR_HUKUM", JSON.stringify(appState.dasarHukumList));
       }
     }
 
@@ -2986,6 +2987,13 @@
         rujukanPerihal: document.getElementById("rujukanPerihal").value,
         includeMenimbangB: document.getElementById("includeMenimbangB").checked,
         dasarHukumList: appState.dasarHukumList
+          .map((h, i) => {
+            const cb = document.getElementById(`hukum_${i}`);
+            return {
+              ...h,
+              checked: cb ? cb.checked : (h.checked !== false)
+            };
+          })
           .filter(h => h.checked)
           .map((h, idx) => ({
             no_urut: idx + 1,

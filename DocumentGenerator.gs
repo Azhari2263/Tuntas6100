@@ -768,9 +768,18 @@ function handleMenimbangClauseB(body, includeMenimbangB) {
  * Menangani konsiderans Mengingat (Dasar Hukum Dinamis)
  */
 function handleMengingatClause(body, dasarHukumList) {
-  if (!dasarHukumList || !Array.isArray(dasarHukumList) || dasarHukumList.length === 0) return;
+  let list = dasarHukumList;
+  if (typeof list === "string") {
+    try { list = JSON.parse(list); } catch (e) {}
+  }
+  if (!list || !Array.isArray(list) || list.length === 0) return;
 
-  const fullMengingatText = dasarHukumList.map((h, i) => (i + 1) + ". " + h.isi).join("\n");
+  const textLines = list.map((h, i) => {
+    const cleanIsi = (h.isi || "").trim().replace(/^\d+[\.\)]\s*/, "");
+    return (i + 1) + ". " + cleanIsi;
+  });
+
+  const fullMengingatText = textLines.join("\n");
 
   // 1. Tangani jika di template terdapat tag placeholder <<Mengingat>>
   body.replaceText("<<Mengingat>>", fullMengingatText);
@@ -778,7 +787,7 @@ function handleMengingatClause(body, dasarHukumList) {
   body.replaceText("\\[MENGINGAT\\]", fullMengingatText);
   body.replaceText("\\{\\{MENGINGAT\\}\\}", fullMengingatText);
 
-  // 2. Tangani tabel konsiderans bawaan template Google Docs (jika tidak menggunakan tag)
+  // 2. Tangani tabel konsiderans bawaan template Google Docs
   try {
     const tables = body.getTables();
     for (let i = 0; i < tables.length; i++) {
@@ -790,22 +799,27 @@ function handleMengingatClause(body, dasarHukumList) {
           if (labelText.toLowerCase().indexOf("mengingat") !== -1) {
             const contentCell = row.getCell(2);
             
-            // Hapus semua child lama kecuali paragraf pertama
-            while (contentCell.getNumChildren() > 1) {
-              contentCell.removeChild(contentCell.getChild(contentCell.getNumChildren() - 1));
-            }
+            // Set text baris pertama secara langsung (otomatis membersihkan child lama baik ListItem maupun Paragraph)
+            contentCell.setText(textLines[0]);
             
-            // Isi paragraf pertama dengan butir 1
-            const firstP = contentCell.getChild(0).asParagraph();
-            firstP.setText("1. " + dasarHukumList[0].isi)
-                  .setFontFamily("Bookman Old Style").setFontSize(11)
-                  .setLineSpacing(1.15).setSpacingAfter(dasarHukumList.length === 1 ? 4 : 2);
-
-            // Tambahkan paragraf berikutnya
-            for (let k = 1; k < dasarHukumList.length; k++) {
-              const p = contentCell.appendParagraph((k + 1) + ". " + dasarHukumList[k].isi);
-              p.setFontFamily("Bookman Old Style").setFontSize(11)
-               .setLineSpacing(1.15).setSpacingAfter(k === dasarHukumList.length - 1 ? 4 : 2);
+            // Format paragraf pertama
+            const p0 = contentCell.getChild(0).asParagraph();
+            p0.setFontFamily("Bookman Old Style")
+              .setFontSize(11)
+              .setBold(false)
+              .setLineSpacing(1.15)
+              .setSpacingBefore(0)
+              .setSpacingAfter(textLines.length === 1 ? 4 : 2);
+            
+            // Tambahkan baris-baris berikutnya secara berurutan
+            for (let k = 1; k < textLines.length; k++) {
+              const p = contentCell.appendParagraph(textLines[k]);
+              p.setFontFamily("Bookman Old Style")
+               .setFontSize(11)
+               .setBold(false)
+               .setLineSpacing(1.15)
+               .setSpacingBefore(0)
+               .setSpacingAfter(k === textLines.length - 1 ? 4 : 2);
             }
             return;
           }
@@ -1172,7 +1186,10 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
 
   let mengingatText = "";
   if (payload.dasarHukumList && Array.isArray(payload.dasarHukumList) && payload.dasarHukumList.length > 0) {
-    mengingatText = payload.dasarHukumList.map((h, i) => (i + 1) + ". " + h.isi).join("\n");
+    mengingatText = payload.dasarHukumList.map((h, i) => {
+      const cleanIsi = (h.isi || "").trim().replace(/^\d+[\.\)]\s*/, "");
+      return (i + 1) + ". " + cleanIsi;
+    }).join("\n");
   } else {
     mengingatText = "1. Undang-Undang Nomor 16 Tahun 1997 tentang Statistik;\n" +
                     "2. Peraturan Pemerintah Nomor 51 Tahun 1999 tentang Penyelenggaraan Statistik;\n" +
