@@ -2636,8 +2636,8 @@
             <input type="checkbox" id="hukum_${i}" ${h.checked ? 'checked' : ''} onchange="toggleHukumCheck(${i}, this.checked)" class="mt-0.5 rounded border-slate-300 text-bps-blue focus:ring-bps-blue/20">
             <span class="leading-relaxed text-slate-700 text-xs">${h.no_urut || (i+1)}. ${h.isi}</span>
           </label>
-          <div class="flex items-center space-x-1 opacity-70 hover:opacity-100 transition-opacity flex-shrink-0 pt-0.5">
-            <button type="button" onclick="openEditDasarHukumModal(${h.id})" title="Edit Narasi Dasar Hukum" class="w-6 h-6 rounded flex items-center justify-center text-slate-500 hover:text-bps-blue hover:bg-blue-50 transition-colors">
+          <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 pt-0.5">
+            <button type="button" onclick="openEditDasarHukumModal(${h.id})" title="Edit Dasar Hukum" class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-bps-blue hover:bg-blue-50 transition-colors">
               <i class="fa-solid fa-pen text-[10px]"></i>
             </button>
             <button type="button" onclick="deleteDasarHukum(${h.id})" title="Hapus Dasar Hukum" class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
@@ -2654,7 +2654,6 @@
         const countEl = document.getElementById("hukumCount");
         const checkedCount = appState.dasarHukumList.filter(h => h.checked).length;
         countEl.textContent = `${checkedCount} Poin`;
-        localStorage.setItem("SURTUG_DASAR_HUKUM", JSON.stringify(appState.dasarHukumList));
       }
     }
 
@@ -2986,19 +2985,6 @@
         rujukanNomor: document.getElementById("rujukanNomor").value,
         rujukanPerihal: document.getElementById("rujukanPerihal").value,
         includeMenimbangB: document.getElementById("includeMenimbangB").checked,
-        dasarHukumList: appState.dasarHukumList
-          .map((h, i) => {
-            const cb = document.getElementById(`hukum_${i}`);
-            return {
-              ...h,
-              checked: cb ? cb.checked : (h.checked !== false)
-            };
-          })
-          .filter(h => h.checked)
-          .map((h, idx) => ({
-            no_urut: idx + 1,
-            isi: h.isi
-          })),
         tujuanTugas: document.getElementById("tujuanTugas").value,
         tglKeg: document.getElementById("tglKeg") ? document.getElementById("tglKeg").value.trim() : "",
         pejabatNama: document.getElementById("pejabatNama").value,

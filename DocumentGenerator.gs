@@ -81,9 +81,6 @@ function generateSuratTugasDocument(payload, nomorData) {
   // Tangani Konsiderans Menimbang b (opsional toggle)
   handleMenimbangClauseB(body, payload.includeMenimbangB);
 
-  // Tangani Konsiderans Mengingat (Dasar Hukum Dinamis)
-  handleMengingatClause(body, payload.dasarHukumList);
-
   // Tangani Pejabat Penandatangan
   handleSignatoryBlock(body, payload);
 
@@ -765,73 +762,6 @@ function handleMenimbangClauseB(body, includeMenimbangB) {
 }
 
 /**
- * Menangani konsiderans Mengingat (Dasar Hukum Dinamis)
- */
-function handleMengingatClause(body, dasarHukumList) {
-  let list = dasarHukumList;
-  if (typeof list === "string") {
-    try { list = JSON.parse(list); } catch (e) {}
-  }
-  if (!list || !Array.isArray(list) || list.length === 0) return;
-
-  const textLines = list.map((h, i) => {
-    const cleanIsi = (h.isi || "").trim().replace(/^\d+[\.\)]\s*/, "");
-    return (i + 1) + ". " + cleanIsi;
-  });
-
-  const fullMengingatText = textLines.join("\n");
-
-  // 1. Tangani jika di template terdapat tag placeholder <<Mengingat>>
-  body.replaceText("<<Mengingat>>", fullMengingatText);
-  body.replaceText("<<mengingat>>", fullMengingatText);
-  body.replaceText("\\[MENGINGAT\\]", fullMengingatText);
-  body.replaceText("\\{\\{MENGINGAT\\}\\}", fullMengingatText);
-
-  // 2. Tangani tabel konsiderans bawaan template Google Docs
-  try {
-    const tables = body.getTables();
-    for (let i = 0; i < tables.length; i++) {
-      const t = tables[i];
-      for (let r = 0; r < t.getNumRows(); r++) {
-        const row = t.getRow(r);
-        if (row.getNumCells() >= 3) {
-          const labelText = row.getCell(0).getText().trim();
-          if (labelText.toLowerCase().indexOf("mengingat") !== -1) {
-            const contentCell = row.getCell(2);
-            
-            // Set text baris pertama secara langsung (otomatis membersihkan child lama baik ListItem maupun Paragraph)
-            contentCell.setText(textLines[0]);
-            
-            // Format paragraf pertama
-            const p0 = contentCell.getChild(0).asParagraph();
-            p0.setFontFamily("Bookman Old Style")
-              .setFontSize(11)
-              .setBold(false)
-              .setLineSpacing(1.15)
-              .setSpacingBefore(0)
-              .setSpacingAfter(textLines.length === 1 ? 4 : 2);
-            
-            // Tambahkan baris-baris berikutnya secara berurutan
-            for (let k = 1; k < textLines.length; k++) {
-              const p = contentCell.appendParagraph(textLines[k]);
-              p.setFontFamily("Bookman Old Style")
-               .setFontSize(11)
-               .setBold(false)
-               .setLineSpacing(1.15)
-               .setSpacingBefore(0)
-               .setSpacingAfter(k === textLines.length - 1 ? 4 : 2);
-            }
-            return;
-          }
-        }
-      }
-    }
-  } catch (e) {
-    Logger.log("Peringatan handleMengingatClause: " + e.message);
-  }
-}
-
-/**
  * Menangani nama pejabat dan jabatan penandatangan
  */
 function handleSignatoryBlock(body, payload) {
@@ -1184,19 +1114,11 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
                       ", maka dipandang perlu menyesuaikan dengan jadwal kegiatan tersebut;\n" +
                       "b. bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;";
 
-  let mengingatText = "";
-  if (payload.dasarHukumList && Array.isArray(payload.dasarHukumList) && payload.dasarHukumList.length > 0) {
-    mengingatText = payload.dasarHukumList.map((h, i) => {
-      const cleanIsi = (h.isi || "").trim().replace(/^\d+[\.\)]\s*/, "");
-      return (i + 1) + ". " + cleanIsi;
-    }).join("\n");
-  } else {
-    mengingatText = "1. Undang-Undang Nomor 16 Tahun 1997 tentang Statistik;\n" +
-                    "2. Peraturan Pemerintah Nomor 51 Tahun 1999 tentang Penyelenggaraan Statistik;\n" +
-                    "3. Peraturan Pemerintah Nomor 45 Tahun 2013 tentang Tata Cara Pelaksanaan Anggaran Pendapatan dan Belanja Negara sebagaimana telah diubah dengan Peraturan Pemerintah 50 Tahun 2018;\n" +
-                    "4. Peraturan Presiden Republik Indonesia Nomor 86 Tahun 2007 tentang Badan Pusat Statistik (Lembaran Negara Republik Indonesia Tahun 2007 Nomor 139), sebagaimana telah diubah dengan Peraturan Presiden Nomor 1 Tahun 2025 (Lembaran Negara Republik Indonesia Tahun 2025 Nomor 4);\n" +
-                    "5. Peraturan Badan Pusat Statistik Nomor 3 Tahun 2026 tentang Organisasi dan Tata Kerja Badan Pusat Statistik Provinsi dan Badan Pusat Statistik Kabupaten/Kota (Berita Negara Republik Indonesia Tahun 2026 Nomor 331);";
-  }
+  const mengingatText = "1. Undang-Undang Nomor 16 Tahun 1997 tentang Statistik;\n" +
+                        "2. Peraturan Pemerintah Nomor 51 Tahun 1999 tentang Penyelenggaraan Statistik;\n" +
+                        "3. Peraturan Pemerintah Nomor 45 Tahun 2013 tentang Tata Cara Pelaksanaan APBN sebagaimana diubah PP 50/2018;\n" +
+                        "4. Peraturan Presiden Nomor 86 Tahun 2007 jo Perpres Nomor 1 Tahun 2025 tentang BPS;\n" +
+                        "5. Peraturan Badan Pusat Statistik Nomor 3 Tahun 2026 tentang Organisasi dan Tata Kerja BPS Provinsi dan BPS Kabupaten/Kota.";
 
   const tKonsiderans = body.appendTable([
     ["Menimbang", ":", menimbangText],
