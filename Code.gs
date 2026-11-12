@@ -1762,16 +1762,9 @@ function formatJabatanSatker(jabatan, unitKerja, isTwoLines) {
   if (!satker) return !isTwoLines ? jab.replace(/\r?\n/g, " ") : jab;
   if (!jab) return satker;
 
-  // Jika untuk surat tugas individu, hilangkan newline bawaan jika ada
-  if (!isTwoLines) {
-    jab = jab.replace(/\r?\n/g, " ");
-  } else if (jab.indexOf("\n") !== -1) {
-    return jab;
-  }
-
-  // Normalisasi spasi berlebih
-  jab = jab.replace(/[ \t]+/g, " ");
-  satker = satker.replace(/[ \t]+/g, " ");
+  // Normalisasi karakter newline dan spasi berlebih
+  jab = jab.replace(/\r?\n/g, " ").replace(/[ \t]+/g, " ").trim();
+  satker = satker.replace(/[ \t]+/g, " ").trim();
 
   // Fungsi internal untuk menghasilkan penggabungan satu baris tanpa duplikasi nama instansi
   function getMergedSingleLine(j, s) {
@@ -1868,32 +1861,45 @@ function formatJabatanSatker(jabatan, unitKerja, isTwoLines) {
 
   const merged = getMergedSingleLine(jab, satker);
 
-  // Jika untuk surat tugas individu, format sama seperti sebelumnya (satu baris, tidak dibuat harus dua baris)
-  if (!isTwoLines) {
-    return merged;
+  // Fungsi internal untuk memisahkan menjadi dua baris: Baris 1 Jabatan, Baris 2 Satker
+  function splitToTwoLines() {
+    const escapedSatker = satker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const satkerPattern = new RegExp("(?:\\s+|\\s*\\(\\s*)" + escapedSatker + "\\s*\\)?$", "i");
+    const match = satkerPattern.exec(merged);
+    if (match) {
+      let jabPart = merged.substring(0, match.index).trim();
+      jabPart = jabPart.replace(/\s+(?:pada|di)$/i, "").trim();
+      if (jabPart) {
+        return jabPart + "\n" + satker;
+      }
+    }
+
+    let cleanJab = jab.replace(new RegExp("\\s*" + escapedSatker + "\\s*", "gi"), "").trim();
+    cleanJab = cleanJab.replace(/\s+(?:pada|di)$/i, "").trim();
+    if (cleanJab) {
+      return cleanJab + "\n" + satker;
+    }
+
+    return jab + "\n" + satker;
   }
 
-  // Format dua baris hanya berlaku pada tabel (surat tugas kolektif):
+  // Jika untuk surat tugas individu:
+  if (!isTwoLines) {
+    // Pengecualian khusus: jabatan Staf atau Kepala BPS tetap 1 baris
+    // Atau jika panjang total merged <= 38 karakter, muat dalam 1 baris tanpa terpotong
+    const singleLineExceptionRegex = /^(?:(?:plt\.|plh\.)\s+)?(?:staf|kepala)\s+bps\b/i;
+    if (singleLineExceptionRegex.test(merged) || merged.length <= 38) {
+      return merged;
+    }
+    // Untuk jabatan panjang (> 38 karakter) seperti JF Ahli Pertama/Muda/Madya:
+    // dibuat format 2 baris agar nama jabatan dan satker terpisah rapi, tidak terpotong di tepi margin
+    return splitToTwoLines();
+  }
+
+  // Format dua baris pada tabel (surat tugas kolektif):
   // Baris 1: Nama Jabatan
   // Baris 2: Nama Satker
-  const escapedSatker = satker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const satkerPattern = new RegExp("(?:\\s+|\\s*\\(\\s*)" + escapedSatker + "\\s*\\)?$", "i");
-  const match = satkerPattern.exec(merged);
-  if (match) {
-    let jabPart = merged.substring(0, match.index).trim();
-    jabPart = jabPart.replace(/\s+(?:pada|di)$/i, "").trim();
-    if (jabPart) {
-      return jabPart + "\n" + satker;
-    }
-  }
-
-  let cleanJab = jab.replace(new RegExp("\\s*" + escapedSatker + "\\s*", "gi"), "").trim();
-  cleanJab = cleanJab.replace(/\s+(?:pada|di)$/i, "").trim();
-  if (cleanJab) {
-    return cleanJab + "\n" + satker;
-  }
-
-  return jab + "\n" + satker;
+  return splitToTwoLines();
 }
 
 // =============================================================================
