@@ -144,27 +144,23 @@
       background: #94a3b8;
     }
 
-    /* Styling Pratinjau Dokumen F4 Kedinasan Presisi Resmi BPS */
+    /* Styling Pratinjau Dokumen F4 Kedinasan */
     .doc-page {
       background: white;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
       width: 100%;
-      max-width: 800px;
-      min-height: 1100px;
+      max-width: 820px;
       margin: 0 auto;
-      padding: 42px 52px 42px 58px;
-      font-family: 'Bookman Old Style', 'Merriweather', Georgia, serif;
-      font-size: 12.5px;
-      line-height: 1.42;
+      padding: 45px 55px;
+      font-family: 'Bookman Old Style', 'Merriweather', serif;
+      font-size: 13px;
+      line-height: 1.5;
       color: #111;
       border: 1px solid #e2e8f0;
       border-radius: 2px;
-      box-sizing: border-box;
     }
     .doc-page.landscape {
-      max-width: 980px;
-      min-height: 720px;
-      padding: 38px 48px;
+      max-width: 960px;
     }
 
     /* Utilitas scrollbar tersembunyi untuk navigasi tab mobile */
@@ -180,61 +176,12 @@
       .doc-page {
         padding: 30px 24px;
         font-size: 12px;
-        min-height: auto;
       }
     }
     @media (max-width: 640px) {
       .doc-page {
         padding: 20px 14px;
         font-size: 11px;
-        min-height: auto;
-      }
-    }
-
-    /* Gaya Cetak Presisi Naskah Dinas F4 */
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #modalPreview, #modalPreview * {
-        visibility: visible;
-      }
-      #modalPreview {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: transparent !important;
-        backdrop-filter: none !important;
-        overflow: visible !important;
-      }
-      #modalPreview > div {
-        box-shadow: none !important;
-        border: none !important;
-        max-width: 100% !important;
-        width: 100% !important;
-        background: transparent !important;
-        padding: 0 !important;
-      }
-      #modalPreview .border-b,
-      #modalPreview .border-t {
-        display: none !important;
-      }
-      .doc-page {
-        box-shadow: none !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 auto !important;
-        max-width: 100% !important;
-        width: 100% !important;
-        page-break-after: always;
-        break-after: page;
-      }
-      @page {
-        size: 215mm 330mm; /* Standar Ukuran Kertas F4 / Folio Resmi */
-        margin: 18mm 18mm 18mm 22mm;
       }
     }
   </style>
@@ -540,36 +487,6 @@
                   <input type="text" id="tglKeg" placeholder="Contoh: 24 s.d. 26 November 2026" 
                          class="w-full text-sm bg-slate-50/50 hover:bg-white border border-slate-200/90 rounded-xl px-3 py-2.5 focus:bg-white focus:ring-4 focus:ring-bps-blue/10 focus:border-bps-blue focus:outline-none transition-all placeholder:text-slate-400 font-sans" />
                   <p class="text-[11px] text-slate-400 mt-1">Mengisi placeholder <code class="bg-slate-100 px-1 py-0.5 rounded text-bps-blue font-mono font-semibold">&lt;&lt;tglkeg&gt;&gt;</code> pada naskah surat tugas.</p>
-                </div>
-              </div>
-
-              <!-- LIVE PREVIEW URAIAN TUGAS & KEGIATAN (DIKTUM "UNTUK") -->
-              <div class="mt-4 pt-3.5 border-t border-slate-100">
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
-                      <i class="fa-solid fa-eye"></i>
-                    </span>
-                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Preview Uraian Tugas & Kegiatan</span>
-                  </div>
-                  <span class="text-[11px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium flex items-center gap-1.5 shadow-xs">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Diperbarui Otomatis</span>
-                  </span>
-                </div>
-
-                <div class="bg-gradient-to-br from-slate-50 to-emerald-50/20 border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-xs">
-                  <div class="flex items-start text-xs sm:text-sm font-serif text-slate-800 leading-relaxed font-['Bookman_Old_Style','Merriweather',serif]">
-                    <span class="w-16 sm:w-20 font-semibold text-slate-700 flex-shrink-0">Untuk</span>
-                    <span class="w-4 font-semibold text-slate-700 flex-shrink-0">:</span>
-                    <div id="livePreviewUntukText" class="flex-grow text-justify text-slate-900 font-normal leading-relaxed">
-                      <!-- Terisi otomatis secara realtime -->
-                    </div>
-                  </div>
-                  <div class="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
-                    <span id="livePreviewModeBadge" class="font-medium text-bps-blue">Mode: Penugasan Individu</span>
-                    <span class="italic text-slate-400">Format resmi naskah dinas</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -961,16 +878,9 @@
             <p class="text-[11px] text-slate-400">Simulasi tampilan tata letak cetak dokumen naskah dinas resmi</p>
           </div>
         </div>
-        <div class="flex items-center space-x-2">
-          <button type="button" onclick="printLivePreview()" 
-                  class="px-3.5 py-1.5 bg-slate-100 hover:bg-bps-blue hover:text-white text-slate-700 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs border border-slate-200">
-            <i class="fa-solid fa-print"></i>
-            <span>Cetak / PDF</span>
-          </button>
-          <button onclick="closeLivePreviewModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
-            <i class="fa-solid fa-xmark text-lg"></i>
-          </button>
-        </div>
+        <button onclick="closeLivePreviewModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
       </div>
 
       <!-- Preview Body -->
@@ -978,67 +888,66 @@
         <!-- SIMULASI HALAMAN 1 (PORTRAIT F4) -->
         <div class="doc-page">
           <!-- Kop BPS Resmi -->
-          <div class="text-center pb-2.5">
+          <div class="text-center pb-3">
             <div class="w-14 h-11 mx-auto mb-1 flex items-center justify-center">
               <img src="img/logo BPS.png" alt="Logo BPS" class="h-10 w-auto object-contain">
             </div>
-            <p class="font-sans font-bold text-[13px] tracking-wide text-slate-900 leading-tight">BADAN PUSAT STATISTIK</p>
+            <p class="font-sans font-bold italic text-[13px] tracking-wide text-slate-900 leading-tight">BADAN PUSAT STATISTIK</p>
             <p class="font-sans font-bold italic text-[13px] tracking-wide text-slate-900 leading-tight">PROVINSI KALIMANTAN BARAT</p>
           </div>
 
           <!-- Judul -->
-          <div class="text-center my-3">
-            <p class="font-bold tracking-wider text-sm font-['Bookman_Old_Style','Merriweather',serif]">SURAT TUGAS</p>
-            <p class="text-xs font-['Bookman_Old_Style','Merriweather',serif] tracking-normal">NOMOR <span id="prevNomorSurat">B-xxx/61513/KP.650/2026</span></p>
+          <div class="text-center my-4">
+            <p class="font-bold tracking-wider text-sm">SURAT TUGAS</p>
+            <p class="text-xs">NOMOR : <span id="prevNomorSurat">B-xxx/61513/KP.650/2026</span></p>
           </div>
 
           <!-- Menimbang & Mengingat -->
-          <div class="my-3 text-xs space-y-2">
-            <div class="flex items-start">
-              <span class="w-24 font-normal text-slate-800 flex-shrink-0">Menimbang</span>
-              <span class="w-4 font-normal text-slate-800 flex-shrink-0">:</span>
-              <div class="flex-grow space-y-1 text-justify leading-relaxed" id="prevMenimbang">
+          <div class="my-4 text-xs space-y-2.5">
+            <div class="flex">
+              <span class="w-24 flex-shrink-0">Menimbang</span>
+              <span class="w-4">:</span>
+              <div class="flex-grow space-y-1.5" id="prevMenimbang">
               </div>
             </div>
-            <div class="flex items-start">
-              <span class="w-24 font-normal text-slate-800 flex-shrink-0">Mengingat</span>
-              <span class="w-4 font-normal text-slate-800 flex-shrink-0">:</span>
-              <div class="flex-grow space-y-1 text-justify leading-relaxed" id="prevMengingat">
+            <div class="flex">
+              <span class="w-24 flex-shrink-0">Mengingat</span>
+              <span class="w-4">:</span>
+              <div class="flex-grow space-y-1" id="prevMengingat">
               </div>
             </div>
           </div>
 
           <!-- Diktum Memberi Tugas -->
-          <div class="text-center my-2.5 text-xs font-normal">
+          <div class="text-center my-3 text-xs font-semibold">
             Memberi Tugas:
           </div>
 
           <!-- Kepada -->
-          <div class="my-2.5 text-xs flex items-start">
-            <span class="w-24 font-normal text-slate-800 flex-shrink-0">Kepada</span>
-            <span class="w-4 font-normal text-slate-800 flex-shrink-0">:</span>
+          <div class="my-3 text-xs flex">
+            <span class="w-24 flex-shrink-0">Kepada</span>
+            <span class="w-4">:</span>
             <div class="flex-grow" id="prevKepadaBlock">
             </div>
           </div>
 
           <!-- Untuk -->
-          <div class="my-2.5 text-xs flex items-start">
-            <span class="w-24 font-normal text-slate-800 flex-shrink-0">Untuk</span>
-            <span class="w-4 font-normal text-slate-800 flex-shrink-0">:</span>
-            <div class="flex-grow text-justify leading-relaxed text-slate-900" id="prevUntuk">
+          <div class="my-3 text-xs flex">
+            <span class="w-24 flex-shrink-0">Untuk</span>
+            <span class="w-4">:</span>
+            <div class="flex-grow text-justify leading-relaxed" id="prevUntuk">
             </div>
           </div>
 
           <!-- Titi Mangsa & Tanda Tangan -->
-          <div class="mt-6 flex justify-end text-xs">
+          <div class="mt-8 flex justify-end text-xs">
             <div class="w-64 text-center space-y-1">
               <p><span id="prevTempat">Pontianak</span>, <span id="prevTanggal">20 Mei 2026</span></p>
-              <p id="prevJabatanBlock" class="leading-snug">Kepala Badan Pusat Statistik<br>Provinsi Kalimantan Barat,</p>
-              <div class="h-14 flex items-center justify-center text-slate-300 italic text-[10px]">
+              <p>Kepala Badan Pusat Statistik<br>Provinsi Kalimantan Barat,</p>
+              <div class="h-16 flex items-center justify-center text-slate-300 italic text-[10px]">
                 [Tanda Tangan & Cap Dinas Resmi]
               </div>
-              <p id="prevPejabat" class="font-normal text-slate-900">Muh Saichudin</p>
-              <p id="prevNipPejabat" class="text-[11px] text-slate-600 hidden"></p>
+              <p id="prevPejabat" class="font-semibold">Muh Saichudin</p>
             </div>
           </div>
         </div>
@@ -2102,19 +2011,6 @@
       renderSelectedPegawai(1);
       updateModeVisuals();
 
-      // Pasang Event Listener Live Preview Uraian Tugas & Kegiatan secara Real-time
-      const elTujuan = document.getElementById("tujuanTugas");
-      if (elTujuan) {
-        elTujuan.addEventListener("input", updateLivePreviewUraian);
-        elTujuan.addEventListener("change", updateLivePreviewUraian);
-      }
-      const elTglKeg = document.getElementById("tglKeg");
-      if (elTglKeg) {
-        elTglKeg.addEventListener("input", updateLivePreviewUraian);
-        elTglKeg.addEventListener("change", updateLivePreviewUraian);
-      }
-      updateLivePreviewUraian();
-
       // 4. Sinkronisasi Data Terbaru dari Backend Google Apps Script di Latar Belakang
       initDataFromAppsScript();
 
@@ -2268,7 +2164,6 @@
       if (appState.selectedPegawai[index]) {
         appState.selectedPegawai[index].peran = peran;
         saveTempSelectedPegawai();
-        updateLivePreviewUraian();
       }
     }
 
@@ -2287,7 +2182,6 @@
         appState.selectedPegawai[idx].peran = val;
         appState.selectedPegawai[idx].isManualPeran = false;
         saveTempSelectedPegawai();
-        updateLivePreviewUraian();
       }
     }
 
@@ -2299,7 +2193,6 @@
       }
       saveTempSelectedPegawai();
       renderSelectedPegawai();
-      updateLivePreviewUraian();
       if (isManual) {
         setTimeout(() => {
           const input = document.getElementById(`peranInput_${idx}`);
@@ -2507,7 +2400,6 @@
           badgeTpl.classList.add("hidden");
         }
       }
-      updateLivePreviewUraian();
     }
 
     // =========================================================================
@@ -2575,7 +2467,6 @@
         field.value = "Supervisi dan Pendataan Lapangan Kegiatan Survei Sosial Ekonomi Nasional (Susenas) Tahun 2026 di Kabupaten Mempawah";
         if (tglField) tglField.value = "1 s.d. 15 Maret 2026";
       }
-      updateLivePreviewUraian();
     }
 
     // =========================================================================
@@ -2936,7 +2827,6 @@
       const val = document.getElementById("tanggalPenetapanInput").value;
       if (!val) return;
       document.getElementById("tanggalFormattedPreview").textContent = formatTanggalIndo(val);
-      updateLivePreviewUraian();
     }
 
     function toggleCustomNomor() {
@@ -2953,58 +2843,8 @@
     }
 
     // =========================================================================
-    // LIVE PREVIEW URAIAN TUGAS & KEGIATAN (KARTU 3)
+    // LIVE PREVIEW MODAL
     // =========================================================================
-    function updateLivePreviewUraian() {
-      const tujuanElem = document.getElementById("tujuanTugas");
-      const tglKegElem = document.getElementById("tglKeg");
-      const previewDiv = document.getElementById("livePreviewUntukText");
-      const badgeMode = document.getElementById("livePreviewModeBadge");
-      if (!previewDiv) return;
-
-      const rawTujuan = tujuanElem ? tujuanElem.value.trim() : "";
-      let cleanTujuan = rawTujuan.replace(/^Mengikuti\s+(Kegiatan\s+)?/i, "").trim();
-
-      const rawTglKeg = tglKegElem ? tglKegElem.value.trim() : "";
-      const tglFallback = (document.getElementById("tanggalFormattedPreview") && document.getElementById("tanggalFormattedPreview").textContent) ? document.getElementById("tanggalFormattedPreview").textContent.trim() : "20 Mei 2026";
-      const displayTgl = rawTglKeg || tglFallback;
-
-      const isSingle = (typeof appState !== "undefined" && appState.selectedPegawai) ? (appState.selectedPegawai.length <= 1) : true;
-      let peran = "Peserta";
-      if (typeof appState !== "undefined" && appState.selectedPegawai && appState.selectedPegawai[0] && appState.selectedPegawai[0].peran) {
-        peran = appState.selectedPegawai[0].peran;
-      }
-
-      if (badgeMode) {
-        if (isSingle) {
-          badgeMode.innerHTML = `<i class="fa-solid fa-user text-bps-blue mr-1"></i>Penugasan Individu (Peran: <strong>${escapeHtml(peran)}</strong>)`;
-        } else {
-          badgeMode.innerHTML = `<i class="fa-solid fa-users text-amber-600 mr-1"></i>Penugasan Kolektif (${appState.selectedPegawai.length} Pegawai - peran di lembar lampiran)`;
-        }
-      }
-
-      const formattedTujuan = cleanTujuan 
-        ? escapeHtml(cleanTujuan) 
-        : `<span class="text-slate-400 italic font-sans bg-slate-100/90 px-1.5 py-0.5 rounded border border-dashed border-slate-300 font-normal">[Nama / Uraian Kegiatan]</span>`;
-      const formattedTgl = rawTglKeg 
-        ? escapeHtml(rawTglKeg) 
-        : `<span class="text-slate-400 italic font-sans bg-slate-100/90 px-1.5 py-0.5 rounded border border-dashed border-slate-300 font-normal">${escapeHtml(displayTgl)}</span>`;
-      const formattedPeran = escapeHtml(peran);
-
-      if (isSingle) {
-        previewDiv.innerHTML = `Mengikuti Kegiatan ${formattedTujuan} pada tanggal ${formattedTgl} sebagai ${formattedPeran}.`;
-      } else {
-        previewDiv.innerHTML = `Mengikuti Kegiatan ${formattedTujuan} pada tanggal ${formattedTgl}`;
-      }
-    }
-
-    // =========================================================================
-    // LIVE PREVIEW MODAL (DOKUMEN SURAT TUGAS RESMI)
-    // =========================================================================
-    function printLivePreview() {
-      window.print();
-    }
-
     function openLivePreviewModal() {
       if (appState.selectedPegawai.length === 0) {
         alert("Silakan pilih minimal 1 orang pegawai yang ditugaskan terlebih dahulu.");
@@ -3012,9 +2852,8 @@
       }
 
       // 1. Ambil Nilai Form
-      const rawNomor = appState.isCustomNomor && document.getElementById("customNomorSurat").value ? 
-                       document.getElementById("customNomorSurat").value : appState.previewNomor;
-      const cleanNomor = rawNomor.replace(/^NOMOR\s*:?\s*/i, "").trim();
+      const nomor = appState.isCustomNomor && document.getElementById("customNomorSurat").value ? 
+                    document.getElementById("customNomorSurat").value : appState.previewNomor;
       const tempat = document.getElementById("tempatPenetapan").value || "Pontianak";
       const tanggal = document.getElementById("tanggalFormattedPreview").textContent || "20 Mei 2026";
       const rujukanPejabat = document.getElementById("rujukanPejabat").value || "Pejabat Rujukan";
@@ -3023,52 +2862,24 @@
       const includeB = document.getElementById("includeMenimbangB").checked;
       const tujuan = document.getElementById("tujuanTugas").value || "(Uraian tugas belum diisi)";
       const pejabatNama = document.getElementById("pejabatNama").value || "Muh Saichudin";
-      const pejabatJabatan = document.getElementById("pejabatJabatan") ? document.getElementById("pejabatJabatan").value : "Kepala Badan Pusat Statistik\nProvinsi Kalimantan Barat,";
-      const pejabatNipVal = (document.getElementById("pejabatNip") && document.getElementById("pejabatNip").value) ? document.getElementById("pejabatNip").value.trim() : "";
 
       // 2. Set Nilai di Pratinjau
-      document.getElementById("prevNomorSurat").textContent = cleanNomor;
+      document.getElementById("prevNomorSurat").textContent = nomor;
       document.getElementById("prevTempat").textContent = tempat;
       document.getElementById("prevTanggal").textContent = tanggal;
       document.getElementById("prevPejabat").textContent = pejabatNama;
 
-      const jabElem = document.getElementById("prevJabatanBlock");
-      if (jabElem) {
-        jabElem.innerHTML = escapeHtml(pejabatJabatan).replace(/\n/g, "<br>");
-      }
-
-      const nipPejabatElem = document.getElementById("prevNipPejabat");
-      if (nipPejabatElem) {
-        if (pejabatNipVal) {
-          nipPejabatElem.textContent = "NIP. " + pejabatNipVal;
-          nipPejabatElem.classList.remove("hidden");
-        } else {
-          nipPejabatElem.classList.add("hidden");
-        }
-      }
-
       // Menimbang
-      let menimbangHtml = `
-        <div class="flex items-start">
-          <span class="w-4 flex-shrink-0 font-normal">a.</span>
-          <span class="text-justify leading-relaxed font-normal">bahwa merujuk surat dari ${escapeHtml(rujukanPejabat)} nomor ${escapeHtml(rujukanNomor)} hal ${escapeHtml(rujukanHal)}, maka dipandang perlu menyesuaikan dengan jadwal kegiatan tersebut;</span>
-        </div>`;
+      let menimbangHtml = `<p>a. bahwa merujuk surat dari ${rujukanPejabat} nomor ${rujukanNomor} hal ${rujukanHal}, maka dipandang perlu menyesuaikan dengan jadwal kegiatan tersebut;</p>`;
       if (includeB) {
-        menimbangHtml += `
-        <div class="flex items-start mt-1">
-          <span class="w-4 flex-shrink-0 font-normal">b.</span>
-          <span class="text-justify leading-relaxed font-normal">bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;</span>
-        </div>`;
+        menimbangHtml += `<p>b. bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;</p>`;
       }
       document.getElementById("prevMenimbang").innerHTML = menimbangHtml;
 
       // Mengingat (Hanya yang dicentang)
       const checkedHukum = appState.dasarHukumList.filter(h => h.checked);
       document.getElementById("prevMengingat").innerHTML = checkedHukum.map((h, i) => `
-        <div class="flex items-start">
-          <span class="w-4 flex-shrink-0 font-normal">${i+1}.</span>
-          <span class="text-justify leading-relaxed font-normal">${escapeHtml(h.isi)}</span>
-        </div>
+        <p>${i+1}. ${h.isi}</p>
       `).join("");
 
       // Kepada Block & Diktum Untuk (Tunggal vs Kolektif)
@@ -3084,10 +2895,10 @@
         const peran = p.peran || "Peserta";
         kepadaDiv.innerHTML = `
           <div class="space-y-1">
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">Nama</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950">${escapeHtml(p.nama)}</span></div>
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">NIP</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950 font-mono text-[11px]">${escapeHtml(p.nip)}</span></div>
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">Pangkat/Gol</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950">${escapeHtml(p.pangkat_gol || '-')}</span></div>
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">Jabatan</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950 whitespace-pre-line leading-relaxed text-justify">${escapeHtml(formatJabatanSatker(p.jabatan, p.unit_kerja, false)) || '-'}</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Nama</span><span class="w-4">:</span><span class="font-semibold">${p.nama}</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">NIP</span><span class="w-4">:</span><span>${p.nip}</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Pangkat/Gol</span><span class="w-4">:</span><span>${p.pangkat_gol || '-'}</span></div>
+            <div class="flex items-start"><span class="w-24 flex-shrink-0">Jabatan</span><span class="w-4">:</span><span>${escapeHtml(formatJabatanSatker(p.jabatan, p.unit_kerja, false)) || '-'}</span></div>
           </div>
         `;
         document.getElementById("prevUntuk").textContent = `Mengikuti Kegiatan ${cleanTujuan} pada tanggal ${tglKegVal} sebagai ${peran}.`;
@@ -3098,17 +2909,17 @@
       } else {
         kepadaDiv.innerHTML = `
           <div class="space-y-1">
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">Nama</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950">(terlampir)</span></div>
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">NIP</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950">(terlampir)</span></div>
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">Pangkat/Gol</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950">(terlampir)</span></div>
-            <div class="flex items-start"><span class="w-24 flex-shrink-0 font-normal text-slate-800">Jabatan</span><span class="w-4 flex-shrink-0 font-normal text-slate-800">:</span><span class="font-normal text-slate-950">(terlampir)</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Nama</span><span class="w-4">:</span><span>(terlampir)</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">NIP</span><span class="w-4">:</span><span>(terlampir)</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Pangkat/Gol</span><span class="w-4">:</span><span>(terlampir)</span></div>
+            <div class="flex"><span class="w-24 flex-shrink-0">Jabatan</span><span class="w-4">:</span><span>(terlampir)</span></div>
           </div>
         `;
         document.getElementById("prevUntuk").textContent = `Mengikuti Kegiatan ${cleanTujuan} pada tanggal ${tglKegVal}`;
 
         // Tampilkan Pratinjau Lampiran
         document.getElementById("prevLampiranWrapper").classList.remove("hidden");
-        document.getElementById("prevLampNomor").textContent = cleanNomor;
+        document.getElementById("prevLampNomor").textContent = nomor;
         document.getElementById("prevLampTanggal").textContent = tanggal;
         document.getElementById("prevLampTanggal2").textContent = tanggal;
         document.getElementById("prevLampTempat").textContent = tempat;
@@ -4018,9 +3829,16 @@
       if (!satker) return !isTwoLines ? jab.replace(/\r?\n/g, " ") : jab;
       if (!jab) return satker;
 
-      // Normalisasi karakter newline dan spasi berlebih
-      jab = jab.replace(/\r?\n/g, " ").replace(/[ \t]+/g, " ").trim();
-      satker = satker.replace(/[ \t]+/g, " ").trim();
+      // Jika untuk surat tugas individu, hilangkan newline bawaan jika ada
+      if (!isTwoLines) {
+        jab = jab.replace(/\r?\n/g, " ");
+      } else if (jab.indexOf("\n") !== -1) {
+        return jab;
+      }
+
+      // Normalisasi spasi berlebih
+      jab = jab.replace(/[ \t]+/g, " ");
+      satker = satker.replace(/[ \t]+/g, " ");
 
       // Fungsi internal untuk menghasilkan penggabungan satu baris tanpa duplikasi nama instansi
       function getMergedSingleLine(j, s) {
@@ -4117,45 +3935,32 @@
 
       const merged = getMergedSingleLine(jab, satker);
 
-      // Fungsi internal untuk memisahkan menjadi dua baris: Baris 1 Jabatan, Baris 2 Satker
-      function splitToTwoLines() {
-        const escapedSatker = satker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const satkerPattern = new RegExp("(?:\\s+|\\s*\\(\\s*)" + escapedSatker + "\\s*\\)?$", "i");
-        const match = satkerPattern.exec(merged);
-        if (match) {
-          let jabPart = merged.substring(0, match.index).trim();
-          jabPart = jabPart.replace(/\s+(?:pada|di)$/i, "").trim();
-          if (jabPart) {
-            return jabPart + "\n" + satker;
-          }
-        }
-
-        let cleanJab = jab.replace(new RegExp("\\s*" + escapedSatker + "\\s*", "gi"), "").trim();
-        cleanJab = cleanJab.replace(/\s+(?:pada|di)$/i, "").trim();
-        if (cleanJab) {
-          return cleanJab + "\n" + satker;
-        }
-
-        return jab + "\n" + satker;
-      }
-
-      // Jika untuk surat tugas individu:
+      // Jika untuk surat tugas individu, format sama seperti sebelumnya (satu baris, tidak dibuat harus dua baris)
       if (!isTwoLines) {
-        // Pengecualian khusus: jabatan Staf atau Kepala BPS tetap 1 baris
-        // Atau jika panjang total merged <= 38 karakter, muat dalam 1 baris tanpa terpotong
-        const singleLineExceptionRegex = /^(?:(?:plt\.|plh\.)\s+)?(?:staf|kepala)\s+bps\b/i;
-        if (singleLineExceptionRegex.test(merged) || merged.length <= 38) {
-          return merged;
-        }
-        // Untuk jabatan panjang (> 38 karakter) seperti JF Ahli Pertama/Muda/Madya:
-        // dibuat format 2 baris agar nama jabatan dan satker terpisah rapi, tidak terpotong di tepi margin
-        return splitToTwoLines();
+        return merged;
       }
 
-      // Format dua baris pada tabel (surat tugas kolektif):
+      // Format dua baris hanya berlaku pada tabel (surat tugas kolektif):
       // Baris 1: Nama Jabatan
       // Baris 2: Nama Satker
-      return splitToTwoLines();
+      const escapedSatker = satker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const satkerPattern = new RegExp("(?:\\s+|\\s*\\(\\s*)" + escapedSatker + "\\s*\\)?$", "i");
+      const match = satkerPattern.exec(merged);
+      if (match) {
+        let jabPart = merged.substring(0, match.index).trim();
+        jabPart = jabPart.replace(/\s+(?:pada|di)$/i, "").trim();
+        if (jabPart) {
+          return jabPart + "\n" + satker;
+        }
+      }
+
+      let cleanJab = jab.replace(new RegExp("\\s*" + escapedSatker + "\\s*", "gi"), "").trim();
+      cleanJab = cleanJab.replace(/\s+(?:pada|di)$/i, "").trim();
+      if (cleanJab) {
+        return cleanJab + "\n" + satker;
+      }
+
+      return jab + "\n" + satker;
     }
 
     function escapeHtml(str) {
