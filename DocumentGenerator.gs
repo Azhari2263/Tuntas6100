@@ -84,6 +84,9 @@ function generateSuratTugasDocument(payload, nomorData) {
   // Tangani Pejabat Penandatangan
   handleSignatoryBlock(body, payload);
 
+  // Optimasi Tata Letak, Margin, Spasi & Tipografi Naskah Dinas Resmi (Cegah Luapan Halaman ke-2)
+  optimizeDocumentTypographyAndLayout(body, isSingle, payload);
+
   // Bersihkan seluruh trailing empty paragraphs dan PageBreak berlebih di akhir dokumen
   // baik pada surat tugas tunggal maupun kolektif agar tidak memunculkan halaman kosong tambahan
   cleanTrailingEmptyParagraphs(body);
@@ -855,22 +858,22 @@ function handleSignatoryBlock(body, payload) {
         indFirst = pDate.getIndentFirstLine();
         indEnd = pDate.getIndentEnd();
 
-        // Pastikan titi mangsa diposisikan CENTER dan menggunakan font Bookman Old Style 12
+        // Pastikan titi mangsa diposisikan CENTER dan menggunakan font Bookman Old Style 11.5
         pDate.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        pDate.setFontFamily("Bookman Old Style").setFontSize(12);
+        pDate.setFontFamily("Bookman Old Style").setFontSize(11.5);
         pDate.setBold(false).setItalic(false);
-        pDate.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+        pDate.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.12);
       }
 
       // Baris 1 Jabatan: "Kepala Badan Pusat Statistik"
       pJab.setText(line1);
-      pJab.setFontFamily("Bookman Old Style").setFontSize(12);
+      pJab.setFontFamily("Bookman Old Style").setFontSize(11.5);
       pJab.setBold(false).setItalic(false);
       pJab.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
       if (indStart !== null && indStart !== undefined) pJab.setIndentStart(indStart);
       if (indFirst !== null && indFirst !== undefined) pJab.setIndentFirstLine(indFirst);
       if (indEnd !== null && indEnd !== undefined) pJab.setIndentEnd(indEnd);
-      pJab.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+      pJab.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.12);
 
       // Baris 2 Jabatan: "Provinsi Kalimantan Barat,"
       let pJab2 = null;
@@ -882,13 +885,13 @@ function handleSignatoryBlock(body, payload) {
         }
 
         if (pJab2) {
-          pJab2.setFontFamily("Bookman Old Style").setFontSize(12);
+          pJab2.setFontFamily("Bookman Old Style").setFontSize(11.5);
           pJab2.setBold(false).setItalic(false);
           pJab2.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
           if (indStart !== null && indStart !== undefined) pJab2.setIndentStart(indStart);
           if (indFirst !== null && indFirst !== undefined) pJab2.setIndentFirstLine(indFirst);
           if (indEnd !== null && indEnd !== undefined) pJab2.setIndentEnd(indEnd);
-          pJab2.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+          pJab2.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.12);
         }
       }
 
@@ -925,8 +928,8 @@ function handleSignatoryBlock(body, payload) {
         }
       }
 
-      // Pastikan ada ruang tanda tangan standar (minimal 2 paragraf kosong berukuran 12pt Bookman Old Style)
-      // persis seperti pada template surat tugas resmi BPS Kalbar
+      // Pastikan ada ruang tanda tangan standar (maksimal 2 paragraf kosong berukuran kompak 9pt)
+      // persis proporsional untuk stempel dan tanda tangan tanpa memicu luapan halaman ke-2
       while (emptyParagraphs.length < 2 && pNama) {
         const namaIdx = parent.getChildIndex(pNama);
         let newEmpty = null;
@@ -943,28 +946,39 @@ function handleSignatoryBlock(body, payload) {
         }
       }
 
-      // Format setiap baris ruang tanda tangan dengan Bookman Old Style 12pt line spacing 1.15
+      // Jika ada lebih dari 2 paragraf kosong, hapus kelebihannya agar tidak membuang ruang vertikal
+      while (emptyParagraphs.length > 2) {
+        const excessP = emptyParagraphs.pop();
+        try {
+          parent.removeChild(excessP);
+        } catch (eRem) {
+          try { excessP.clear(); } catch (e) {}
+          excessP.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+        }
+      }
+
+      // Format setiap baris ruang tanda tangan dengan font 9pt kompak line spacing 1.0
       emptyParagraphs.forEach(ep => {
         try { ep.clear(); } catch (e) {}
-        ep.setFontFamily("Bookman Old Style").setFontSize(12);
+        ep.setFontFamily("Bookman Old Style").setFontSize(9);
         ep.setBold(false).setItalic(false);
         ep.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
         if (indStart !== null && indStart !== undefined) ep.setIndentStart(indStart);
         if (indFirst !== null && indFirst !== undefined) ep.setIndentFirstLine(indFirst);
         if (indEnd !== null && indEnd !== undefined) ep.setIndentEnd(indEnd);
-        ep.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+        ep.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
       });
 
       // Format nama penandatangan
       if (pNama) {
         pNama.setText(nama);
-        pNama.setFontFamily("Bookman Old Style").setFontSize(12);
+        pNama.setFontFamily("Bookman Old Style").setFontSize(11.5);
         pNama.setBold(false).setItalic(false);
         pNama.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
         if (indStart !== null && indStart !== undefined) pNama.setIndentStart(indStart);
         if (indFirst !== null && indFirst !== undefined) pNama.setIndentFirstLine(indFirst);
         if (indEnd !== null && indEnd !== undefined) pNama.setIndentEnd(indEnd);
-        pNama.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+        pNama.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.12);
 
         // Cek paragraf NIP jika ada tepat di bawah nama
         const pNamaIdx = parent.getChildIndex(pNama);
@@ -976,13 +990,13 @@ function handleSignatoryBlock(body, payload) {
             if (nipText.indexOf("NIP") !== -1 || nipText.indexOf("[NIP_PEJABAT]") !== -1 || nipText.indexOf("{{NIP_PEJABAT}}") !== -1) {
               if (nip) {
                 nipP.setText("NIP. " + nip);
-                nipP.setFontFamily("Bookman Old Style").setFontSize(12);
+                nipP.setFontFamily("Bookman Old Style").setFontSize(11);
                 nipP.setBold(false).setItalic(false);
                 nipP.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
                 if (indStart !== null && indStart !== undefined) nipP.setIndentStart(indStart);
                 if (indFirst !== null && indFirst !== undefined) nipP.setIndentFirstLine(indFirst);
                 if (indEnd !== null && indEnd !== undefined) nipP.setIndentEnd(indEnd);
-                nipP.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+                nipP.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.12);
               } else {
                 try {
                   parent.removeChild(nipChild);
@@ -1063,6 +1077,153 @@ function cleanUpStrayBold(body) {
 }
 
 /**
+ * Mengoptimalkan tata letak, margin, spasi, perataan teks (justify), dan tipografi
+ * agar tampilan naskah dinas Surat Tugas rapi, proporsional, dan presisi tepat 1 halaman (mode tunggal).
+ */
+function optimizeDocumentTypographyAndLayout(body, isSingle, payload) {
+  if (!body) return;
+
+  try {
+    // 1. Terapkan Margin Standar F4 Naskah Dinas BPS:
+    // Top: 1.5 cm (42.5 pt), Bottom: 1.5 cm (42.5 pt), Left: 2.0 cm (56.7 pt), Right: 1.8 cm (51 pt)
+    body.setMarginTop(42.5);
+    body.setMarginBottom(42.5);
+    body.setMarginLeft(56.7);
+    body.setMarginRight(51.0);
+  } catch (eMargin) {
+    Logger.log("Peringatan setMargin: " + eMargin);
+  }
+
+  // 2. Format Kop Surat & Judul Naskah Sesuai Standar Resmi
+  try {
+    const paragraphs = body.getParagraphs();
+    for (let pIdx = 0; pIdx < Math.min(15, paragraphs.length); pIdx++) {
+      const p = paragraphs[pIdx];
+      const txt = p.getText().trim();
+
+      if (txt === "BADAN PUSAT STATISTIK") {
+        p.setFontFamily("Arial").setFontSize(11.5).setBold(true).setItalic(false)
+         .setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+         .setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+      } else if (txt === "PROVINSI KALIMANTAN BARAT") {
+        p.setFontFamily("Arial").setFontSize(11.5).setBold(true).setItalic(true)
+         .setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+         .setSpacingBefore(0).setSpacingAfter(4).setLineSpacing(1.0);
+      } else if (txt === "SURAT TUGAS") {
+        p.setFontFamily("Bookman Old Style").setFontSize(12).setBold(true).setItalic(false)
+         .setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+         .setSpacingBefore(2).setSpacingAfter(1).setLineSpacing(1.0);
+      } else if (txt.startsWith("NOMOR")) {
+        // Normalisasi format nomor surat (tanpa titik dua ganda: "NOMOR B-xxx")
+        let normNomor = txt.replace(/^NOMOR\s*:\s*/i, "NOMOR ");
+        if (normNomor !== txt) {
+          p.setText(normNomor);
+        }
+        p.setFontFamily("Bookman Old Style").setFontSize(11.5).setBold(false).setItalic(false)
+         .setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+         .setSpacingBefore(0).setSpacingAfter(6).setLineSpacing(1.0);
+      } else if (txt === "Memberi Tugas:") {
+        p.setFontFamily("Bookman Old Style").setFontSize(11.5).setBold(false).setItalic(false)
+         .setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+         .setSpacingBefore(4).setSpacingAfter(4).setLineSpacing(1.0);
+      }
+    }
+  } catch (eKop) {
+    Logger.log("Peringatan format kop/judul: " + eKop);
+  }
+
+  // 3. Format dan Rampingkan Seluruh Tabel Halaman Utama (Konsiderans, Kepada, Untuk)
+  try {
+    const tables = body.getTables();
+    for (let tIdx = 0; tIdx < tables.length; tIdx++) {
+      const table = tables[tIdx];
+      const tText = getTableText(table);
+
+      // Lewati tabel lampiran daftar nama pegawai (halaman 2 kolektif)
+      const isLampiranTable = (!isSingle && tIdx > 0 && table.getNumRows() > 4 && tText.indexOf("NIP") !== -1 && tText.indexOf("Peran") !== -1);
+      if (isLampiranTable) continue;
+
+      table.setBorderWidth(0);
+
+      const numRows = table.getNumRows();
+      for (let r = 0; r < numRows; r++) {
+        const row = table.getRow(r);
+        const numCells = row.getNumCells();
+
+        for (let c = 0; c < numCells; c++) {
+          const cell = row.getCell(c);
+          cell.setPaddingTop(1.5).setPaddingBottom(1.5).setPaddingLeft(2.0).setPaddingRight(2.0);
+          cell.setVerticalAlignment(DocumentApp.VerticalAlignment.TOP);
+
+          // Bersihkan trailing empty paragraphs dalam sel tabel (khususnya sisa template Word pada Kepada)
+          let numC = cell.getNumChildren();
+          while (numC > 1) {
+            const lastChild = cell.getChild(numC - 1);
+            if (lastChild.getType() === DocumentApp.ElementType.PARAGRAPH) {
+              const lastP = lastChild.asParagraph();
+              if (lastP.getText().trim() === "") {
+                try {
+                  cell.removeChild(lastChild);
+                  numC = cell.getNumChildren();
+                  continue;
+                } catch (eRem) {
+                  break;
+                }
+              }
+            }
+            break;
+          }
+
+          // Format paragraf dalam sel: font Bookman Old Style 11pt, spasi 0, line spacing 1.12
+          for (let pIdx = 0; pIdx < cell.getNumChildren(); pIdx++) {
+            const child = cell.getChild(pIdx);
+            if (child.getType() === DocumentApp.ElementType.PARAGRAPH) {
+              const p = child.asParagraph();
+              p.setFontFamily("Bookman Old Style").setFontSize(11);
+              p.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.12);
+
+              // Terapkan Justify untuk isi teks Menimbang, Mengingat, dan Untuk
+              if (tText.indexOf("Menimbang") !== -1 || tText.indexOf("Mengingat") !== -1 || tText.indexOf("Untuk") !== -1) {
+                if (c >= 2) {
+                  p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (eTable) {
+    Logger.log("Peringatan format tabel utama: " + eTable);
+  }
+
+  // 4. Bersihkan Paragraf Kosong Antar-Elemen Body (Mencegah Jarak Vertikal Berlebih)
+  try {
+    const totalChildren = body.getNumChildren();
+    for (let i = totalChildren - 1; i >= 0; i--) {
+      const elem = body.getChild(i);
+      if (elem.getType() === DocumentApp.ElementType.PARAGRAPH) {
+        const p = elem.asParagraph();
+        if (p.getText().trim() === "") {
+          const prev = (i > 0) ? body.getChild(i - 1) : null;
+          if (prev && prev.getType() === DocumentApp.ElementType.TABLE) {
+            p.setFontSize(2).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+          } else if (prev && prev.getType() === DocumentApp.ElementType.PARAGRAPH && prev.asParagraph().getText().trim() === "") {
+            try {
+              body.removeChild(elem);
+            } catch (eRemDup) {}
+          } else {
+            p.setFontSize(3).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+          }
+        }
+      }
+    }
+  } catch (eBody) {
+    Logger.log("Peringatan rampingkan paragraf body: " + eBody);
+  }
+}
+
+/**
  * ENGINE PRESISI: Membuat Dokumen Baru Standar F4 dengan Ukuran Kolom & Margin Akurat
  */
 function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
@@ -1073,11 +1234,11 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
 
   const body = doc.getBody();
 
-  // Ukuran Margin F4 / Folio Presisi: Top 2.0cm (56.7pt), Bottom 2.0cm (56.7pt), Left 2.5cm (70.8pt), Right 2.0cm (56.7pt)
-  body.setMarginTop(56.7);
-  body.setMarginBottom(56.7);
-  body.setMarginLeft(70.8);
-  body.setMarginRight(56.7);
+  // Ukuran Margin F4 / Folio Presisi: Top 1.5cm (42.5pt), Bottom 1.5cm (42.5pt), Left 2.0cm (56.7pt), Right 1.8cm (51.0pt)
+  body.setMarginTop(42.5);
+  body.setMarginBottom(42.5);
+  body.setMarginLeft(56.7);
+  body.setMarginRight(51.0);
 
   // 1. KOP SURAT
   try {
@@ -1092,21 +1253,22 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
   }
 
   const pKop1 = body.appendParagraph("BADAN PUSAT STATISTIK");
-  pKop1.setFontFamily("Arial").setFontSize(12).setBold(true).setItalic(true)
+  pKop1.setFontFamily("Arial").setFontSize(11.5).setBold(true).setItalic(false)
        .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingAfter(0).setLineSpacing(1.0);
 
   const pKop2 = body.appendParagraph("PROVINSI KALIMANTAN BARAT");
-  pKop2.setFontFamily("Arial").setFontSize(12).setBold(true).setItalic(true)
-       .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingAfter(6).setLineSpacing(1.0);
+  pKop2.setFontFamily("Arial").setFontSize(11.5).setBold(true).setItalic(true)
+       .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingAfter(4).setLineSpacing(1.0);
 
   // 2. JUDUL SURAT TUGAS
   const pJudul = body.appendParagraph("SURAT TUGAS");
   pJudul.setFontFamily("Bookman Old Style").setFontSize(12).setBold(true)
-        .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingAfter(2).setLineSpacing(1.0);
+        .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingBefore(2).setSpacingAfter(1).setLineSpacing(1.0);
 
-  const pNomor = body.appendParagraph("NOMOR : " + nomorData.nomorSurat);
-  pNomor.setFontFamily("Bookman Old Style").setFontSize(12)
-        .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingAfter(8).setLineSpacing(1.0);
+  const cleanNoSurat = (nomorData.nomorSurat || "").replace(/^NOMOR\s*:?\s*/i, "");
+  const pNomor = body.appendParagraph("NOMOR " + cleanNoSurat);
+  pNomor.setFontFamily("Bookman Old Style").setFontSize(11.5)
+        .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingBefore(0).setSpacingAfter(6).setLineSpacing(1.0);
 
   // 3. TABEL KONSIDERANS
   let menimbangText = "a. bahwa merujuk surat dari " + (payload.rujukanPejabat || "") + " nomor " + 
@@ -1124,13 +1286,12 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
     ["Menimbang", ":", menimbangText],
     ["Mengingat", ":", mengingatText]
   ]);
-  tKonsiderans.setBorderWidth(0);
-  formatBorderlessTable(tKonsiderans, [95, 15, 370]);
+  formatBorderlessTable(tKonsiderans, [80, 12, 395], 2);
 
   // 4. DIKTUM MEMBERI TUGAS
   const pMemberi = body.appendParagraph("Memberi Tugas:");
-  pMemberi.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false)
-          .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingBefore(6).setSpacingAfter(6);
+  pMemberi.setFontFamily("Bookman Old Style").setFontSize(11.5).setBold(false)
+          .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingBefore(4).setSpacingAfter(4).setLineSpacing(1.0);
 
   const isSingle = payload.pegawaiList.length === 1;
 
@@ -1143,8 +1304,7 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
       ["", "", "Pangkat/Gol", ":", p.pangkat_gol || ""],
       ["", "", "Jabatan", ":", formatJabatanSatker(p.jabatan, p.unit_kerja, false)]
     ]);
-    tKepada.setBorderWidth(0);
-    formatBorderlessTable(tKepada, [95, 15, 85, 15, 270]);
+    formatBorderlessTable(tKepada, [80, 12, 80, 12, 303]);
   } else {
     const tKepada = body.appendTable([
       ["Kepada", ":", "Nama", ":", "(terlampir)"],
@@ -1152,16 +1312,28 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
       ["", "", "Pangkat/Gol", ":", "(terlampir)"],
       ["", "", "Jabatan", ":", "(terlampir)"]
     ]);
-    tKepada.setBorderWidth(0);
-    formatBorderlessTable(tKepada, [95, 15, 85, 15, 270]);
+    formatBorderlessTable(tKepada, [80, 12, 80, 12, 303]);
   }
 
   // 6. UNTUK
+  let rawTujuan = payload.tujuanTugas ? payload.tujuanTugas.trim() : "";
+  let cleanTujuan = rawTujuan.replace(/^Mengikuti\s+(Kegiatan\s+)?/i, "").trim();
+  if (!cleanTujuan) cleanTujuan = rawTujuan;
+  const tglKeg = payload.tglKeg || payload.tanggalKegiatan || payload.tanggalPenetapan || formatTanggalIndonesia(new Date());
+
+  let untukText = "";
+  if (isSingle) {
+    const p = payload.pegawaiList[0];
+    const peran = (p && p.peran) ? p.peran : "Peserta";
+    untukText = "Mengikuti Kegiatan " + cleanTujuan + " pada tanggal " + tglKeg + " sebagai " + peran + ".";
+  } else {
+    untukText = "Mengikuti Kegiatan " + cleanTujuan + " pada tanggal " + tglKeg;
+  }
+
   const tUntuk = body.appendTable([
-    ["Untuk", ":", payload.tujuanTugas || ""]
+    ["Untuk", ":", untukText]
   ]);
-  tUntuk.setBorderWidth(0);
-  formatBorderlessTable(tUntuk, [95, 15, 370]);
+  formatBorderlessTable(tUntuk, [80, 12, 395], 2);
 
   // 7. BLOK TITI MANGSA & TANDA TANGAN (HALAMAN UTAMA) - Struktur Rapi & Anti-Terpotong
   const ttdJabatan = payload.pejabatJabatan || "Kepala Badan Pusat Statistik\nProvinsi Kalimantan Barat,";
@@ -1169,7 +1341,7 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
   const ttdData = [
     ["", (payload.tempatPenetapan || "Pontianak") + ", " + (payload.tanggalPenetapan || formatTanggalIndonesia(new Date()))],
     ["", ttdJabatan],
-    ["", "\n\n\n"],
+    ["", "\n\n"],
     ["", ttdNama]
   ];
   if (payload.pejabatNip) {
@@ -1177,8 +1349,7 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
   }
 
   const ttdTable = body.appendTable(ttdData);
-  ttdTable.setBorderWidth(0);
-  formatBorderlessTable(ttdTable, [240, 244]);
+  formatBorderlessTable(ttdTable, [240, 247]);
   for (let r = 0; r < ttdTable.getNumRows(); r++) {
     const cell = ttdTable.getRow(r).getCell(1);
     for (let cIdx = 0; cIdx < cell.getNumChildren(); cIdx++) {
@@ -1233,7 +1404,7 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
             pElem.setBold(true);
             pElem.asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
           } else {
-            pElem.setBold(false); // Data pegawai regular/tidak tebal
+            pElem.setBold(false);
             if (c === 0 || c === 2 || c === 3 || c === 5) {
               pElem.asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
             } else {
@@ -1249,7 +1420,7 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
     const ttdLampData = [
       ["", (payload.tempatPenetapan || "Pontianak") + ", " + (payload.tanggalPenetapan || formatTanggalIndonesia(new Date()))],
       ["", ttdJabatan],
-      ["", "\n\n\n"],
+      ["", "\n\n"],
       ["", ttdNama]
     ];
     if (payload.pejabatNip) {
@@ -1257,7 +1428,6 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
     }
 
     const ttdLampTable = body.appendTable(ttdLampData);
-    ttdLampTable.setBorderWidth(0);
     formatBorderlessTable(ttdLampTable, [564, 244]);
     for (let r = 0; r < ttdLampTable.getNumRows(); r++) {
       const cell = ttdLampTable.getRow(r).getCell(1);
@@ -1276,9 +1446,9 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
 }
 
 /**
- * Helper memformat tabel tanpa garis dengan lebar kolom dan padding rapat
+ * Helper memformat tabel tanpa garis dengan lebar kolom, padding rapat, dan perataan
  */
-function formatBorderlessTable(table, colWidths) {
+function formatBorderlessTable(table, colWidths, justifyColIndex) {
   table.setBorderWidth(0);
   for (let r = 0; r < table.getNumRows(); r++) {
     const row = table.getRow(r);
@@ -1287,12 +1457,17 @@ function formatBorderlessTable(table, colWidths) {
       if (c < colWidths.length) {
         cell.setWidth(colWidths[c]);
       }
-      cell.setPaddingTop(1.5).setPaddingBottom(1.5).setPaddingLeft(2).setPaddingRight(2);
+      cell.setPaddingTop(1.5).setPaddingBottom(1.5).setPaddingLeft(2.0).setPaddingRight(2.0);
+      cell.setVerticalAlignment(DocumentApp.VerticalAlignment.TOP);
       for (let pIdx = 0; pIdx < cell.getNumChildren(); pIdx++) {
         const child = cell.getChild(pIdx);
         if (child.getType() === DocumentApp.ElementType.PARAGRAPH) {
-          child.asParagraph().setFontFamily("Bookman Old Style").setFontSize(11)
-               .setSpacingAfter(0).setLineSpacing(1.15);
+          const p = child.asParagraph();
+          p.setFontFamily("Bookman Old Style").setFontSize(11)
+           .setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.12);
+          if (justifyColIndex !== undefined && c >= justifyColIndex) {
+            p.setAlignment(DocumentApp.HorizontalAlignment.JUSTIFY);
+          }
         }
       }
     }
