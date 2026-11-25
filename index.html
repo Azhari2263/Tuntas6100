@@ -89,6 +89,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- DOCX Preview -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js"></script>
   <!-- SheetJS (Excel & CSV Parsing & Export) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Google Fonts: Inter & Merriweather (Document) -->
@@ -181,6 +184,14 @@
       font-size: 13.5px;
       line-height: 1.45;
       color: #000000;
+    }
+    #panduanContent .docx-wrapper {
+      padding: 1.5rem 0.75rem;
+      background: #e2e8f0;
+    }
+    #panduanContent .docx {
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
     }
 
     /* Utilitas scrollbar tersembunyi untuk navigasi tab mobile */
@@ -298,6 +309,11 @@
                 title="Kelola Pilihan Peran Pegawai">
           <i class="fa-solid fa-user-tag text-purple-300 text-sm"></i>
           <span>Pilihan Peran</span>
+        </button>
+        <button onclick="switchTab('panduan')" id="tab-panduan"
+                class="px-3.5 sm:px-4 py-2 sm:py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap flex-shrink-0">
+          <i class="fa-solid fa-book-open text-blue-300 text-sm"></i>
+          <span>Panduan</span>
         </button>
       </div>
     </div>
@@ -847,6 +863,40 @@
         </div>
       </div>
     </div>
+
+    <!-- TAB 4: PANDUAN PENGGUNAAN -->
+    <section id="section-panduan" class="hidden space-y-4">
+      <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-card border border-slate-200/80">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="font-bold text-slate-800 text-base sm:text-lg flex items-center gap-2.5 text-bps-blue">
+              <i class="fa-solid fa-book-open text-bps-orange"></i>
+              <span>Buku Panduan Penggunaan Aplikasi TUNTAS6100</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Baca panduan penggunaan aplikasi atau unduh dokumen lengkapnya.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <a href="Buku_Panduan_Penggunaan_Aplikasi_TUNTAS_BPS_Kalbar.docx" target="_blank" rel="noopener noreferrer"
+               class="bg-white hover:bg-bps-lightblue border border-slate-300 hover:border-bps-blue text-bps-blue px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>Buka Buku</span>
+            </a>
+            <a href="Buku_Panduan_Penggunaan_Aplikasi_TUNTAS_BPS_Kalbar.docx" download
+               class="bg-bps-blue hover:bg-bps-darkblue text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all whitespace-nowrap">
+              <i class="fa-solid fa-download"></i>
+              <span>Unduh Buku</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-200/70 rounded-2xl shadow-card border border-slate-200/80 overflow-x-auto p-2 sm:p-4">
+        <div id="panduanStatus" class="text-sm text-slate-500 text-center py-8" role="status">
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat buku panduan...
+        </div>
+        <div id="panduanContent" class="hidden"></div>
+      </div>
+    </section>
 
   </main>
 
@@ -2184,8 +2234,65 @@
     // =========================================================================
     // LOGIKA TAB & NAVIGASI
     // =========================================================================
+    let panduanPreviewLoaded = false;
+
+    async function loadPanduanPreview() {
+      if (panduanPreviewLoaded) return;
+
+      const status = document.getElementById("panduanStatus");
+      const content = document.getElementById("panduanContent");
+      try {
+        if (!window.docx || typeof window.docx.renderAsync !== "function") {
+          throw new Error("Pustaka pratinjau dokumen tidak tersedia.");
+        }
+        const response = await fetch("Buku_Panduan_Penggunaan_Aplikasi_TUNTAS_BPS_Kalbar.docx");
+        if (!response.ok) throw new Error(`Berkas panduan gagal dimuat (${response.status}).`);
+
+        const zip = await window.JSZip.loadAsync(await response.arrayBuffer());
+        const documentXml = zip.file("word/document.xml");
+        if (!documentXml) throw new Error("Isi dokumen Word tidak ditemukan.");
+        const xml = await documentXml.async("string");
+        let previousParagraphHasPageBreak = false;
+        const normalizedXml = xml.replace(/<w:p\b[\s\S]*?<\/w:p>/g, paragraph => {
+          // Avoid rendering Word's saved page marker twice after a manual page break.
+          const normalizedParagraph = previousParagraphHasPageBreak
+            ? paragraph.replace(/<w:lastRenderedPageBreak\b[^>]*\/>/g, "")
+            : paragraph;
+          previousParagraphHasPageBreak = /<w:br\b[^>]*\bw:type=["']page["'][^>]*\/>/.test(paragraph);
+          return normalizedParagraph;
+        });
+        zip.file("word/document.xml", normalizedXml);
+        const documentData = await zip.generateAsync({ type: "arraybuffer" });
+        await window.docx.renderAsync(
+          documentData,
+          content,
+          document.head,
+          { breakPages: true, ignoreLastRenderedPageBreak: false }
+        );
+        const pages = Array.from(content.querySelectorAll(".docx"));
+        pages.forEach((page, index) => {
+          const footer = Array.from(page.querySelectorAll("footer"))
+            .find(element => element.textContent.includes("Halaman"));
+          if (!footer) return;
+
+          const pageNumbers = Array.from(footer.querySelectorAll("span"))
+            .filter(element => /^\s*\d+\s*$/.test(element.textContent));
+          if (pageNumbers.length >= 2) {
+            pageNumbers[0].textContent = String(index + 1);
+            pageNumbers[1].textContent = String(pages.length);
+          }
+        });
+        content.classList.remove("hidden");
+        status.classList.add("hidden");
+        panduanPreviewLoaded = true;
+      } catch (error) {
+        console.error("Gagal memuat pratinjau buku panduan:", error);
+        status.innerHTML = '<i class="fa-solid fa-circle-exclamation text-amber-500 mr-2"></i>Pratinjau buku tidak dapat dimuat. Silakan buka atau unduh berkas melalui tombol di atas.';
+      }
+    }
+
     function switchTab(tabId) {
-      ['create', 'archive', 'pegawai'].forEach(t => {
+      ['create', 'archive', 'pegawai', 'panduan'].forEach(t => {
         document.getElementById(`section-${t}`).classList.add("hidden");
         document.getElementById(`tab-${t}`).className = "px-4 py-2.5 border-b-2 border-transparent text-blue-200 hover:text-white hover:bg-white/5 font-medium flex items-center space-x-2 rounded-t-lg transition-all whitespace-nowrap";
       });
@@ -2197,6 +2304,8 @@
         loadArchiveData();
       } else if (tabId === 'pegawai') {
         renderMasterPegawaiTable();
+      } else if (tabId === 'panduan') {
+        loadPanduanPreview();
       }
     }
 
