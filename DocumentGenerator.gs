@@ -84,6 +84,16 @@ function generateSuratTugasDocument(payload, nomorData) {
   // Tangani Pejabat Penandatangan
   handleSignatoryBlock(body, payload);
 
+  // Perkecil margin bawah agar area tanda tangan yang lebih tinggi tetap muat rapi
+  try {
+    if (body.getMarginBottom() > 42) {
+      body.setMarginBottom(42);
+    }
+  } catch (eMargin) {}
+
+  // Rapikan spasi/tab berlebih pada naskah (Menimbang, Nomor Surat, Untuk)
+  normalizeNarrativeWhitespace(body);
+
   // Bersihkan seluruh trailing empty paragraphs dan PageBreak berlebih di akhir dokumen
   // baik pada surat tugas tunggal maupun kolektif agar tidak memunculkan halaman kosong tambahan
   cleanTrailingEmptyParagraphs(body);
@@ -91,14 +101,15 @@ function generateSuratTugasDocument(payload, nomorData) {
   // Simpan dan tutup dokumen Google Docs
   doc.saveAndClose();
 
-  // Bersihkan Section Break sisa/berlebih via Docs API agar dokumen tepat 1 halaman (tunggal) atau 2 halaman (kolektif)
-  cleanExcessSectionBreaksViaApi(newDocFile.getId(), isSingle);
+  // Finalisasi tata letak via Docs API:
+  // 1) Hapus Section Break / Page Break / paragraf kosong sisa agar tidak ada halaman kosong
+  // 2) Kunci blok tanda tangan (keepWithNext & keepLinesTogether) agar tidak pernah terpisah lintas halaman
+  finalizeDocumentLayoutViaApi(newDocFile.getId(), isSingle, payload);
 
-  // Perbarui referensi berkas agar PDF mengambil versi paling bersih terkini
+  // 6. Pastikan isi Halaman 1 (dari SURAT TUGAS s.d. TTD) muat utuh dalam 1 halaman
+  //    (jika meluap, otomatis perkecil ukuran font bertahap 11 -> 10 -> 9 -> 8 pt), lalu ekspor PDF
+  const pdfBlob = ensurePageOneFitsAndExportPdf(newDocFile.getId(), isSingle, pdfTitle);
   newDocFile = DriveApp.getFileById(newDocFile.getId());
-
-  // 6. Ekspor ke Berkas Resmi PDF
-  const pdfBlob = newDocFile.getAs("application/pdf").setName(pdfTitle);
   const pdfFile = targetFolder.createFile(pdfBlob);
 
   // Berikan hak akses tampilan publik/domain
@@ -219,7 +230,7 @@ function getOrCreateSubFolder(parentFolder, subFolderName) {
  */
 function populateDocumentVariables(body, payload, nomorData) {
   // Nomor Surat Tugas
-  const noSurat = nomorData.nomorSurat || "";
+  const noSurat = (nomorData.nomorSurat || "").trim();
   body.replaceText("<<No\\s*Surtug>>", noSurat);
   body.replaceText("<<no\\s*surtug>>", noSurat);
   body.replaceText("\\[NO_SURAT_TUGAS\\]", noSurat);
@@ -227,8 +238,8 @@ function populateDocumentVariables(body, payload, nomorData) {
   body.replaceText("\\{\\{NOMOR_SURAT\\}\\}", noSurat);
 
   // Titi Mangsa (Tempat & Tanggal Penetapan)
-  const tempat = payload.tempatPenetapan || "Pontianak";
-  const tanggal = payload.tanggalPenetapan || formatTanggalIndonesia(new Date());
+  const tempat = (payload.tempatPenetapan || "Pontianak").trim();
+  const tanggal = (payload.tanggalPenetapan || formatTanggalIndonesia(new Date())).trim();
   body.replaceText("<<Tempat\\s*Pengesahan>>", tempat);
   body.replaceText("<<tempat\\s*pengesahan>>", tempat);
   body.replaceText("<<Tgl\\s*pengesahan>>", tanggal);
@@ -239,9 +250,9 @@ function populateDocumentVariables(body, payload, nomorData) {
   body.replaceText("\\{\\{TANGGAL_PENETAPAN\\}\\}", tanggal);
 
   // Konsiderans Rujukan
-  const ttdRujukan = payload.rujukanPejabat || "";
-  const noRujukan = payload.rujukanNomor || "";
-  const halRujukan = payload.rujukanPerihal || "";
+  const ttdRujukan = (payload.rujukanPejabat || "").trim().replace(/\s+/g, " ");
+  const noRujukan = (payload.rujukanNomor || "").trim().replace(/\s+/g, " ");
+  const halRujukan = (payload.rujukanPerihal || "").trim().replace(/\s+/g, " ");
   body.replaceText("<<ttdsuratrujukan>>", ttdRujukan);
   body.replaceText("<<nosuratrujukan>>", noRujukan);
   body.replaceText("<<halsrtrujukan>>", halRujukan);
@@ -252,15 +263,20 @@ function populateDocumentVariables(body, payload, nomorData) {
   body.replaceText("\\{\\{NO_SURAT_RUJUKAN\\}\\}", noRujukan);
   body.replaceText("\\{\\{HAL_SURAT_RUJUKAN\\}\\}", halRujukan);
 
-  // Rapikan spasi berlebih setelah kata "nomor" pada template
-  body.replaceText("nomor\\s{2,}", "nomor ");
+  // Rapikan spasi/tab berlebih setelah kata "Nomor" / "nomor" / "NOMOR" pada template (case-sensitive di RE2)
+  body.replaceText("Nomor[ \\t\u00A0]{2,}", "Nomor ");
+  body.replaceText("nomor[ \\t\u00A0]{2,}", "nomor ");
+  body.replaceText("NOMOR[ \\t\u00A0]{2,}", "NOMOR ");
 
   // Uraian Kegiatan "Untuk" & Tanggal Kegiatan
-  let rawTujuan = payload.tujuanTugas ? payload.tujuanTugas.trim() : "";
-  let cleanTujuan = rawTujuan.replace(/^Mengikuti\s+(Kegiatan\s+)?/i, "").trim();
-  if (!cleanTujuan) cleanTujuan = rawTujuan;
+  let rawTujuan = payload.tujuanTugas ? payload.tujuanTugas.trim().replace(/\s+/g, " ") : "";
+  let cleanTujuan = rawTujuan
+    .replace(/^Mengikuti\s+(Kegiatan\s+)?/i, "")
+    .replace(/\.+$/, "")
+    .trim();
+  if (!cleanTujuan) cleanTujuan = rawTujuan.replace(/\.+$/, "").trim();
 
-  const tglKeg = payload.tglKeg || payload.tanggalKegiatan || "";
+  const tglKeg = (payload.tglKeg || payload.tanggalKegiatan || "").trim().replace(/\s+/g, " ");
 
   body.replaceText("<<Untuk>>", cleanTujuan);
   body.replaceText("<<untuk>>", cleanTujuan);
@@ -268,9 +284,9 @@ function populateDocumentVariables(body, payload, nomorData) {
   body.replaceText("\\[TUJUAN\\]", rawTujuan);
   body.replaceText("\\{\\{TUJUAN\\}\\}", rawTujuan);
 
-  if (tglKeg && tglKeg.trim() !== "") {
-    body.replaceText("<<tglkeg>>", tglKeg.trim());
-    body.replaceText("<<tgl_keg>>", tglKeg.trim());
+  if (tglKeg !== "") {
+    body.replaceText("<<tglkeg>>", tglKeg);
+    body.replaceText("<<tgl_keg>>", tglKeg);
   } else {
     // Fallback: gunakan tanggal penetapan agar tidak meninggalkan placeholder literal
     body.replaceText("<<tglkeg>>", tanggal);
@@ -452,55 +468,67 @@ function applyCollectivePersonLayout(body, pegawaiList, payload) {
   }
 
   // Rapikan spasi paragraf kosong di sekitar tabel lampiran agar halaman 2 tidak meluap ke halaman 3
-  try {
-    const tableIdx = body.getChildIndex(lampiranTable);
-
-    // 1. Rapikan paragraf kosong di atas tabel (antara "Tanggal:..." dan tabel)
-    // Di template ada 3 paragraf kosong, cukup sisakan 1 paragraf ringkas (6 pt)
-    let aboveEmptyCount = 0;
-    for (let u = tableIdx - 1; u >= 0; u--) {
-      const el = body.getChild(u);
-      if (el.getType() === DocumentApp.ElementType.PARAGRAPH) {
-        const p = el.asParagraph();
-        if (p.getText().trim() === "") {
-          aboveEmptyCount++;
-          if (aboveEmptyCount > 1) {
-            try { p.clear(); } catch (e) {}
-            p.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+  if (lampiranTable) {
+    try {
+      // 1. Rapikan paragraf kosong di atas tabel (antara "Tanggal:..." dan tabel)
+      // Hapus paragraf kosong berlebih, sisakan maksimal 1 paragraf ringkas (6 pt)
+      let tableIdx = body.getChildIndex(lampiranTable);
+      const aboveEmptyEls = [];
+      for (let u = tableIdx - 1; u >= 0; u--) {
+        const el = body.getChild(u);
+        if (el.getType() === DocumentApp.ElementType.PARAGRAPH) {
+          const p = el.asParagraph();
+          if (p.getText().trim() === "") {
+            aboveEmptyEls.push(p);
           } else {
-            p.setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+            break;
           }
         } else {
-          break; // Berhenti ketika menemukan teks (misal Tanggal)
+          break;
         }
-      } else {
-        break;
       }
-    }
+      for (let i = 0; i < aboveEmptyEls.length; i++) {
+        if (i === 0) {
+          try { aboveEmptyEls[i].clear(); } catch (e) {}
+          aboveEmptyEls[i].setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+        } else {
+          try { body.removeChild(aboveEmptyEls[i]); } catch (eRem) {
+            try { aboveEmptyEls[i].clear(); } catch (e) {}
+            aboveEmptyEls[i].setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+          }
+        }
+      }
 
-    // 2. Rapikan paragraf kosong di bawah tabel (antara tabel dan titi mangsa tanda tangan)
-    // Di template ada 2 paragraf kosong, cukup sisakan 1 paragraf ringkas (6 pt)
-    let belowEmptyCount = 0;
-    for (let d = tableIdx + 1; d < body.getNumChildren(); d++) {
-      const el = body.getChild(d);
-      if (el.getType() === DocumentApp.ElementType.PARAGRAPH) {
-        const p = el.asParagraph();
-        if (p.getText().trim() === "") {
-          belowEmptyCount++;
-          if (belowEmptyCount > 1) {
-            try { p.clear(); } catch (e) {}
-            p.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+      // 2. Rapikan paragraf kosong di bawah tabel (antara tabel dan titi mangsa tanda tangan)
+      // Hapus paragraf kosong berlebih, sisakan maksimal 1 paragraf ringkas (6 pt)
+      tableIdx = body.getChildIndex(lampiranTable);
+      const belowEmptyEls = [];
+      for (let d = tableIdx + 1; d < body.getNumChildren(); d++) {
+        const el = body.getChild(d);
+        if (el.getType() === DocumentApp.ElementType.PARAGRAPH) {
+          const p = el.asParagraph();
+          if (p.getText().trim() === "") {
+            belowEmptyEls.push(p);
           } else {
-            p.setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+            break;
           }
         } else {
-          break; // Berhenti ketika menemukan titi mangsa (Pontianak, ...)
+          break;
         }
-      } else {
-        break;
       }
-    }
-  } catch (eSp) {}
+      for (let i = belowEmptyEls.length - 1; i >= 0; i--) {
+        if (i === 0) {
+          try { belowEmptyEls[i].clear(); } catch (e) {}
+          belowEmptyEls[i].setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+        } else {
+          try { body.removeChild(belowEmptyEls[i]); } catch (eRem) {
+            try { belowEmptyEls[i].clear(); } catch (e) {}
+            belowEmptyEls[i].setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+          }
+        }
+      }
+    } catch (eSp) {}
+  }
 }
 
 /**
@@ -513,7 +541,7 @@ function fillLampiranRow(row, idx, p, headerRow, colWidths) {
 
   // Seragamkan tinggi cell per baris agar rapi & hemat ruang
   try {
-    row.setMinimumHeight(22);
+    row.setMinimumHeight(20);
   } catch (eH) {}
 
   for (let c = 0; c < numCells; c++) {
@@ -667,30 +695,56 @@ function cleanTrailingEmptyParagraphs(body) {
     }
   }
 
+  // Bersihkan PageBreak berlebih yang terselip di dalam paragraf konten terakhir
+  if (lastContentIdx >= 0 && lastContentIdx < body.getNumChildren()) {
+    const lastContentEl = body.getChild(lastContentIdx);
+    if (lastContentEl.getType() === DocumentApp.ElementType.PARAGRAPH) {
+      const pLastContent = lastContentEl.asParagraph();
+      for (let c = pLastContent.getNumChildren() - 1; c >= 0; c--) {
+        if (pLastContent.getChild(c).getType() === DocumentApp.ElementType.PAGE_BREAK) {
+          try { pLastContent.removeChild(pLastContent.getChild(c)); } catch (ePb) {}
+        }
+      }
+    }
+  }
+
   // Jika tidak ditemukan konten atau elemen konten berada di akhir dokumen,
   // maka tidak ada trailing empty paragraph yang perlu dihapus. Spasi tanda tangan tetap 100% aman.
   if (lastContentIdx === -1 || lastContentIdx >= body.getNumChildren() - 1) {
     return;
   }
 
+  const lastContentIsParagraph = body.getChild(lastContentIdx).getType() === DocumentApp.ElementType.PARAGRAPH;
+
   // 2. Hapus elemen kosong yang HANYA berada SETELAH lastContentIdx (dari belakang ke depan)
-  while (body.getNumChildren() > lastContentIdx + 2) {
-    const candidateIdx = body.getNumChildren() - 2;
+  // Jika lastContentIdx adalah PARAGRAPH (misal nama pejabat penandatangan), hapus SEMUA elemen kosong sesudahnya
+  // agar tidak ada paragraf kosong sisa yang jatuh ke halaman baru (halaman kosong ekstra).
+  const targetRemainingAfterLast = lastContentIsParagraph ? 0 : 1;
+  while (body.getNumChildren() > lastContentIdx + 1 + targetRemainingAfterLast) {
+    const candidateIdx = lastContentIsParagraph ? (body.getNumChildren() - 1) : (body.getNumChildren() - 2);
     if (candidateIdx <= lastContentIdx) break;
     try {
       body.removeChild(body.getChild(candidateIdx));
     } catch (eRem) {
+      // Fallback: jika elemen terakhir tidak bisa dihapus langsung, coba hapus elemen sebelum terakhir
+      if (candidateIdx === body.getNumChildren() - 1 && candidateIdx - 1 > lastContentIdx) {
+        try {
+          body.removeChild(body.getChild(candidateIdx - 1));
+          continue;
+        } catch (eRem2) {}
+      }
       break;
     }
   }
 
-  // 3. Elemen struktural terakhir (yang berada setelah lastContentIdx) diatur ke 1pt agar tidak memicu halaman baru
+  // 3. Jika masih tersisa elemen struktural setelah lastContentIdx (misal karena lastContentIdx berupa TABLE),
+  // atur ke 1pt rapat agar tidak memicu halaman baru
   if (body.getNumChildren() > lastContentIdx + 1) {
     const lastEl = body.getChild(body.getNumChildren() - 1);
     if (lastEl.getType() === DocumentApp.ElementType.PARAGRAPH) {
       const pLast = lastEl.asParagraph();
       try { pLast.clear(); } catch (e) {}
-      pLast.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+      pLast.setFontSize(1).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(0.5);
     }
   }
 }
@@ -925,9 +979,8 @@ function handleSignatoryBlock(body, payload) {
         }
       }
 
-      // Pastikan ada ruang tanda tangan standar (minimal 2 paragraf kosong berukuran 12pt Bookman Old Style)
-      // persis seperti pada template surat tugas resmi BPS Kalbar
-      while (emptyParagraphs.length < 2 && pNama) {
+      // Pastikan ruang tanda tangan cukup tinggi (4 paragraf kosong berukuran 12pt Bookman Old Style)
+      while (emptyParagraphs.length < 4 && pNama) {
         const namaIdx = parent.getChildIndex(pNama);
         let newEmpty = null;
         if (parent.getType() === DocumentApp.ElementType.BODY_SECTION) {
@@ -939,6 +992,14 @@ function handleSignatoryBlock(body, payload) {
           try { newEmpty.clear(); } catch (e) {}
           emptyParagraphs.push(newEmpty);
         } else {
+          break;
+        }
+      }
+      while (emptyParagraphs.length > 4) {
+        const extraEp = emptyParagraphs.pop();
+        try {
+          parent.removeChild(extraEp);
+        } catch (eRemEp) {
           break;
         }
       }
@@ -1063,6 +1124,73 @@ function cleanUpStrayBold(body) {
 }
 
 /**
+ * Menormalisasi spasi/tab/non-breaking space berlebih pada narasi surat:
+ * - Menimbang (terutama jarak antara "Nomor"/"nomor" dengan nomor surat rujukan)
+ * - Untuk (termasuk merapikan spasi sebelum tanda titik)
+ * - Baris judul NOMOR surat
+ * Tidak menyentuh tabulasi pada blok Lampiran (Nomor\t: ... / Tanggal\t: ...).
+ */
+function normalizeNarrativeWhitespace(body) {
+  if (!body) return;
+
+  try {
+    // 1. Rapikan spasi berlebih pada baris judul "NOMOR  ..."
+    const topParagraphs = body.getParagraphs();
+    for (let i = 0; i < topParagraphs.length; i++) {
+      const p = topParagraphs[i];
+      const txt = p.getText();
+      if (/^\s*NOMOR\b/.test(txt)) {
+        p.replaceText("\\t+", " ");
+        p.replaceText("[ \u00A0]{2,}", " ");
+      }
+    }
+  } catch (errTop) {
+    Logger.log("Peringatan normalizeNarrativeWhitespace judul: " + errTop);
+  }
+
+  try {
+    // 2. Rapikan spasi/tab berlebih pada isi sel tabel Menimbang & Untuk
+    const tables = body.getTables();
+    for (let tIdx = 0; tIdx < tables.length; tIdx++) {
+      const t = tables[tIdx];
+      const tText = getTableText(t);
+      const isMenimbangTable = tText.indexOf("Menimbang") !== -1 || tText.indexOf("merujuk surat dari") !== -1;
+      const isUntukTable = tText.indexOf("Untuk") !== -1 && tText.indexOf("Mengikuti Kegiatan") !== -1;
+
+      if (!isMenimbangTable && !isUntukTable) continue;
+
+      for (let r = 0; r < t.getNumRows(); r++) {
+        const row = t.getRow(r);
+        for (let c = 0; c < row.getNumCells(); c++) {
+          const cell = row.getCell(c);
+          const cellText = cell.getText().trim();
+          // Proses sel isi narasi (bukan sel label "Menimbang", "Mengingat", "Untuk", atau ":")
+          if (cellText === "" || cellText === ":" || cellText === "Menimbang" || cellText === "Mengingat" || cellText === "Untuk") {
+            continue;
+          }
+          for (let pIdx = 0; pIdx < cell.getNumChildren(); pIdx++) {
+            const child = cell.getChild(pIdx);
+            if (child.getType() === DocumentApp.ElementType.PARAGRAPH || child.getType() === DocumentApp.ElementType.LIST_ITEM) {
+              const pElem = child.getType() === DocumentApp.ElementType.PARAGRAPH ? child.asParagraph() : child.asListItem();
+              const pTxt = pElem.getText();
+              if (!pTxt || !pTxt.trim()) continue;
+              // Ubah tab & spasi unicode menjadi spasi tunggal, lalu rapikan spasi ganda dan spasi sebelum tanda baca
+              pElem.replaceText("[\\t\u00A0\u2000-\u200B]+", " ");
+              pElem.replaceText(" {2,}", " ");
+              pElem.replaceText(" \\.", ".");
+              pElem.replaceText(" ,", ",");
+              pElem.replaceText(" ;", ";");
+            }
+          }
+        }
+      }
+    }
+  } catch (errTbl) {
+    Logger.log("Peringatan normalizeNarrativeWhitespace tabel: " + errTbl);
+  }
+}
+
+/**
  * ENGINE PRESISI: Membuat Dokumen Baru Standar F4 dengan Ukuran Kolom & Margin Akurat
  */
 function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
@@ -1073,9 +1201,9 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
 
   const body = doc.getBody();
 
-  // Ukuran Margin F4 / Folio Presisi: Top 2.0cm (56.7pt), Bottom 2.0cm (56.7pt), Left 2.5cm (70.8pt), Right 2.0cm (56.7pt)
+  // Ukuran Margin F4 / Folio Presisi: Top 2.0cm (56.7pt), Bottom 1.5cm (42pt), Left 2.5cm (70.8pt), Right 2.0cm (56.7pt)
   body.setMarginTop(56.7);
-  body.setMarginBottom(56.7);
+  body.setMarginBottom(42);
   body.setMarginLeft(70.8);
   body.setMarginRight(56.7);
 
@@ -1104,13 +1232,16 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
   pJudul.setFontFamily("Bookman Old Style").setFontSize(12).setBold(true)
         .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingAfter(2).setLineSpacing(1.0);
 
-  const pNomor = body.appendParagraph("NOMOR : " + nomorData.nomorSurat);
+  const pNomor = body.appendParagraph("NOMOR " + (nomorData.nomorSurat || "").trim());
   pNomor.setFontFamily("Bookman Old Style").setFontSize(12)
         .setAlignment(DocumentApp.HorizontalAlignment.CENTER).setSpacingAfter(8).setLineSpacing(1.0);
 
   // 3. TABEL KONSIDERANS
-  let menimbangText = "a. bahwa merujuk surat dari " + (payload.rujukanPejabat || "") + " nomor " + 
-                      (payload.rujukanNomor || "") + " hal " + (payload.rujukanPerihal || "") + 
+  const rujPej = (payload.rujukanPejabat || "").trim().replace(/\s+/g, " ");
+  const rujNo = (payload.rujukanNomor || "").trim().replace(/\s+/g, " ");
+  const rujHal = (payload.rujukanPerihal || "").trim().replace(/\s+/g, " ");
+  let menimbangText = "a. bahwa merujuk surat dari " + rujPej + " nomor " +
+                      rujNo + " hal " + rujHal +
                       ", maka dipandang perlu menyesuaikan dengan jadwal kegiatan tersebut;\n" +
                       "b. bahwa untuk pelaksanaannya perlu dikeluarkan Surat Tugas Kepala BPS Provinsi Kalimantan Barat;";
 
@@ -1156,45 +1287,58 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
     formatBorderlessTable(tKepada, [95, 15, 85, 15, 270]);
   }
 
-  // 6. UNTUK
+  // 6. UNTUK (Konsisten dengan template resmi & Live Preview)
+  const rawTujuanScratch = (payload.tujuanTugas || "").trim().replace(/\s+/g, " ");
+  let cleanTujuanScratch = rawTujuanScratch.replace(/^Mengikuti\s+(Kegiatan\s+)?/i, "").replace(/\.+$/, "").trim();
+  if (!cleanTujuanScratch) cleanTujuanScratch = rawTujuanScratch.replace(/\.+$/, "").trim();
+  const tglScratch = (payload.tglKeg || payload.tanggalKegiatan || "").trim() || (payload.tanggalPenetapan || formatTanggalIndonesia(new Date()));
+  const untukScratchText = isSingle
+    ? "Mengikuti Kegiatan " + cleanTujuanScratch + " pada tanggal " + tglScratch + " sebagai " + ((payload.pegawaiList[0] && payload.pegawaiList[0].peran) || "Peserta") + "."
+    : "Mengikuti Kegiatan " + cleanTujuanScratch + " pada tanggal " + tglScratch;
+
   const tUntuk = body.appendTable([
-    ["Untuk", ":", payload.tujuanTugas || ""]
+    ["Untuk", ":", untukScratchText]
   ]);
   tUntuk.setBorderWidth(0);
   formatBorderlessTable(tUntuk, [95, 15, 370]);
 
-  // 7. BLOK TITI MANGSA & TANDA TANGAN (HALAMAN UTAMA) - Struktur Rapi & Anti-Terpotong
-  const ttdJabatan = payload.pejabatJabatan || "Kepala Badan Pusat Statistik\nProvinsi Kalimantan Barat,";
-  const ttdNama = payload.pejabatNama || "Muh Saichudin";
-  const ttdData = [
-    ["", (payload.tempatPenetapan || "Pontianak") + ", " + (payload.tanggalPenetapan || formatTanggalIndonesia(new Date()))],
-    ["", ttdJabatan],
-    ["", "\n\n\n"],
-    ["", ttdNama]
-  ];
-  if (payload.pejabatNip) {
-    ttdData.push(["", "NIP. " + payload.pejabatNip]);
-  }
+  // 7. BLOK TITI MANGSA & TANDA TANGAN (HALAMAN UTAMA) - Struktur Rapi & Utuh
+  const ttdTempat = (payload.tempatPenetapan || "Pontianak").trim();
+  const ttdTanggal = (payload.tanggalPenetapan || formatTanggalIndonesia(new Date())).trim();
+  const ttdJabatan = (payload.pejabatJabatan || "Kepala Badan Pusat Statistik\nProvinsi Kalimantan Barat,").trim();
+  const ttdNama = (payload.pejabatNama || "Muh Saichudin").trim();
+  const ttdNip = payload.pejabatNip ? payload.pejabatNip.trim() : "";
 
-  const ttdTable = body.appendTable(ttdData);
-  ttdTable.setBorderWidth(0);
-  formatBorderlessTable(ttdTable, [240, 244]);
-  for (let r = 0; r < ttdTable.getNumRows(); r++) {
-    const cell = ttdTable.getRow(r).getCell(1);
-    for (let cIdx = 0; cIdx < cell.getNumChildren(); cIdx++) {
-      const p = cell.getChild(cIdx);
-      if (p.getType() === DocumentApp.ElementType.PARAGRAPH) {
-        p.asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        p.asParagraph().setBold(false);
-      }
-    }
+  const pSpTtd1 = body.appendParagraph(" ");
+  try { pSpTtd1.clear(); } catch (e) {}
+  pSpTtd1.setFontSize(8).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
+
+  const pDate1 = body.appendParagraph(ttdTempat + ", " + ttdTanggal);
+  pDate1.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+        .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+  const pJab1 = body.appendParagraph(ttdJabatan);
+  pJab1.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+       .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+  for (let s = 0; s < 4; s++) {
+    const pBlank = body.appendParagraph(" ");
+    try { pBlank.clear(); } catch (e) {}
+    pBlank.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+          .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+  }
+  const pNama1 = body.appendParagraph(ttdNama);
+  pNama1.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+        .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+  if (ttdNip) {
+    const pNip1 = body.appendParagraph("NIP. " + ttdNip);
+    pNip1.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+         .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
   }
 
   // 8. JIKA KOLEKTIF: BUAT HALAMAN LAMPIRAN
   if (!isSingle) {
     body.appendPageBreak();
 
-    const pLampHeader = body.appendParagraph("Lampiran\nNomor\t: " + nomorData.nomorSurat + "\nTanggal\t: " + (payload.tanggalPenetapan || formatTanggalIndonesia(new Date())) + "\n");
+    const pLampHeader = body.appendParagraph("Lampiran\nNomor\t: " + (nomorData.nomorSurat || "").trim() + "\nTanggal\t: " + ttdTanggal);
     pLampHeader.setFontFamily("Bookman Old Style").setFontSize(11).setSpacingAfter(8);
 
     const lampData = [
@@ -1218,14 +1362,14 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
     const lampColWidths = [35, 185, 155, 115, 223, 95];
     for (let r = 0; r < tLampiran.getNumRows(); r++) {
       const row = tLampiran.getRow(r);
-      row.setMinimumHeight(r === 0 ? 24 : 28);
+      row.setMinimumHeight(r === 0 ? 24 : 22);
       for (let c = 0; c < row.getNumCells(); c++) {
         const cell = row.getCell(c);
         cell.setVerticalAlignment(DocumentApp.VerticalAlignment.CENTER);
         if (c < lampColWidths.length) {
           cell.setWidth(lampColWidths[c]);
         }
-        cell.setPaddingTop(3).setPaddingBottom(3).setPaddingLeft(4).setPaddingRight(4);
+        cell.setPaddingTop(2).setPaddingBottom(2).setPaddingLeft(4).setPaddingRight(4);
         const pElem = cell.getChild(0);
         if (pElem && pElem.getType() === DocumentApp.ElementType.PARAGRAPH) {
           pElem.setFontFamily("Bookman Old Style").setFontSize(10).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
@@ -1246,28 +1390,27 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
 
     const pSp = body.appendParagraph(" ");
     try { pSp.clear(); } catch (e) {}
-    const ttdLampData = [
-      ["", (payload.tempatPenetapan || "Pontianak") + ", " + (payload.tanggalPenetapan || formatTanggalIndonesia(new Date()))],
-      ["", ttdJabatan],
-      ["", "\n\n\n"],
-      ["", ttdNama]
-    ];
-    if (payload.pejabatNip) {
-      ttdLampData.push(["", "NIP. " + payload.pejabatNip]);
-    }
+    pSp.setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
 
-    const ttdLampTable = body.appendTable(ttdLampData);
-    ttdLampTable.setBorderWidth(0);
-    formatBorderlessTable(ttdLampTable, [564, 244]);
-    for (let r = 0; r < ttdLampTable.getNumRows(); r++) {
-      const cell = ttdLampTable.getRow(r).getCell(1);
-      for (let cIdx = 0; cIdx < cell.getNumChildren(); cIdx++) {
-        const p = cell.getChild(cIdx);
-        if (p.getType() === DocumentApp.ElementType.PARAGRAPH) {
-          p.asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          p.asParagraph().setBold(false);
-        }
-      }
+    const pDate2 = body.appendParagraph(ttdTempat + ", " + ttdTanggal);
+    pDate2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+          .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    const pJab2 = body.appendParagraph(ttdJabatan);
+    pJab2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+         .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    for (let s = 0; s < 4; s++) {
+      const pBlank2 = body.appendParagraph(" ");
+      try { pBlank2.clear(); } catch (e) {}
+      pBlank2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+             .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    }
+    const pNama2 = body.appendParagraph(ttdNama);
+    pNama2.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+          .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    if (ttdNip) {
+      const pNip2 = body.appendParagraph("NIP. " + ttdNip);
+      pNip2.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+           .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
     }
   }
 
@@ -1300,58 +1443,35 @@ function formatBorderlessTable(table, colWidths) {
 }
 
 /**
- * Menghapus Section Break pada dokumen via Docs API (hanya untuk mode tunggal/1 orang)
- * agar dokumen Google Docs dan PDF bersih menjadi tepat 1 halaman tanpa halaman kosong di belakangnya.
+ * Finalisasi tata letak dokumen melalui Google Docs API:
+ * 1) Menghapus Section Break berlebih, Page Break trailing, dan paragraf kosong trailing
+ *    agar dokumen bersih tanpa halaman kosong tambahan.
+ * 2) Menerapkan keepWithNext & keepLinesTogether pada seluruh paragraf blok tanda tangan
+ *    (titi mangsa, jabatan, ruang tanda tangan, nama pejabat, opsional NIP) agar blok tanda tangan
+ *    TIDAK PERNAH terpisah lintas halaman.
  */
-function cleanExcessSectionBreaksViaApi(docId, isSingle) {
+function finalizeDocumentLayoutViaApi(docId, isSingle, payload) {
   if (!docId) return;
   try {
     const token = ScriptApp.getOAuthToken();
     const getUrl = "https://docs.googleapis.com/v1/documents/" + docId;
-    const res = UrlFetchApp.fetch(getUrl, {
-      method: "get",
-      headers: {
-        "Authorization": "Bearer " + token
-      },
-      muteHttpExceptions: true
-    });
+    const updateUrl = "https://docs.googleapis.com/v1/documents/" + docId + ":batchUpdate";
 
-    if (res.getResponseCode() !== 200) {
-      Logger.log("Docs API GET catatan: " + res.getContentText());
-      return;
-    }
-
-    const docData = JSON.parse(res.getContentText());
-    const content = docData.body && docData.body.content ? docData.body.content : [];
-    
-    // Kumpulkan seluruh elemen sectionBreak
-    const sectionBreaks = [];
-    for (let i = 0; i < content.length; i++) {
-      const el = content[i];
-      if (el.sectionBreak && el.startIndex !== undefined && el.endIndex !== undefined) {
-        sectionBreaks.push(el);
-      }
-    }
-
-    const requests = [];
-    // Mode tunggal: keepCount = 0 (hapus semua)
-    // Mode kolektif: keepCount = 1 (pertahankan hanya 1 section break untuk halaman lampiran)
-    const keepCount = isSingle ? 0 : 1;
-
-    for (let s = sectionBreaks.length - 1; s >= keepCount; s--) {
-      const sb = sectionBreaks[s];
-      requests.push({
-        deleteContentRange: {
-          range: {
-            startIndex: sb.startIndex,
-            endIndex: sb.endIndex
-          }
-        }
+    function fetchDocData() {
+      const res = UrlFetchApp.fetch(getUrl, {
+        method: "get",
+        headers: { "Authorization": "Bearer " + token },
+        muteHttpExceptions: true
       });
+      if (res.getResponseCode() !== 200) {
+        Logger.log("Docs API GET catatan: " + res.getContentText());
+        return null;
+      }
+      return JSON.parse(res.getContentText());
     }
 
-    if (requests.length > 0) {
-      const updateUrl = "https://docs.googleapis.com/v1/documents/" + docId + ":batchUpdate";
+    function sendBatchUpdate(requests, label) {
+      if (!requests || requests.length === 0) return true;
       const updateRes = UrlFetchApp.fetch(updateUrl, {
         method: "post",
         headers: {
@@ -1361,15 +1481,436 @@ function cleanExcessSectionBreaksViaApi(docId, isSingle) {
         payload: JSON.stringify({ requests: requests }),
         muteHttpExceptions: true
       });
-      Logger.log("Docs API BatchUpdate sectionBreaks status: " + updateRes.getResponseCode());
+      Logger.log("Docs API BatchUpdate (" + label + ") status: " + updateRes.getResponseCode());
+      return updateRes.getResponseCode() === 200;
+    }
+
+    function getParaText(el) {
+      if (!el || !el.paragraph || !el.paragraph.elements) return "";
+      let txt = "";
+      for (let i = 0; i < el.paragraph.elements.length; i++) {
+        const pe = el.paragraph.elements[i];
+        if (pe.textRun && pe.textRun.content) {
+          txt += pe.textRun.content;
+        }
+      }
+      return txt.replace(/\n$/, "");
+    }
+
+    function paraHasVisualContent(el) {
+      if (!el || !el.paragraph || !el.paragraph.elements) return false;
+      for (let i = 0; i < el.paragraph.elements.length; i++) {
+        const pe = el.paragraph.elements[i];
+        if (pe.inlineObjectElement || pe.horizontalRule || pe.equation) return true;
+      }
+      return false;
+    }
+
+    let docData = fetchDocData();
+    if (!docData) return;
+
+    // -------------------------------------------------------------------------
+    // PASS 1A: Hapus Section Break berlebih (hanya startIndex > 0; jangan sentuh content[0])
+    // -------------------------------------------------------------------------
+    let content = docData.body && docData.body.content ? docData.body.content : [];
+    const sectionBreaks = [];
+    for (let i = 0; i < content.length; i++) {
+      const el = content[i];
+      if (el.sectionBreak && el.startIndex !== undefined && el.startIndex > 0 && el.endIndex !== undefined) {
+        sectionBreaks.push(el);
+      }
+    }
+
+    const sbRequests = [];
+    // Mode tunggal: keepCount = 0 (hapus semua section break tambahan)
+    // Mode kolektif: keepCount = 1 (pertahankan hanya 1 section break untuk transisi Portrait -> Landscape Lampiran)
+    const keepCount = isSingle ? 0 : 1;
+    for (let s = sectionBreaks.length - 1; s >= keepCount; s--) {
+      const sb = sectionBreaks[s];
+      sbRequests.push({
+        deleteContentRange: {
+          range: { startIndex: sb.startIndex, endIndex: sb.endIndex }
+        }
+      });
+    }
+
+    if (sbRequests.length > 0) {
+      sendBatchUpdate(sbRequests, "sectionBreaks");
+      docData = fetchDocData();
+      if (!docData) return;
+      content = docData.body && docData.body.content ? docData.body.content : [];
+    }
+
+    // -------------------------------------------------------------------------
+    // PASS 1B: Hapus paragraf kosong / Page Break sisa di paling akhir dokumen
+    // agar tidak menimbulkan halaman kosong tambahan (mis. halaman 3 kosong)
+    // -------------------------------------------------------------------------
+    if (content.length > 1) {
+      const docEndIndex = content[content.length - 1].endIndex;
+      let lastRealIdx = -1;
+
+      for (let i = content.length - 1; i >= 0; i--) {
+        const el = content[i];
+        if (el.table) {
+          lastRealIdx = i;
+          break;
+        }
+        if (el.paragraph) {
+          if (getParaText(el).trim() !== "" || paraHasVisualContent(el)) {
+            lastRealIdx = i;
+            break;
+          }
+        }
+      }
+
+      if (lastRealIdx !== -1 && lastRealIdx < content.length - 1) {
+        const lastRealEl = content[lastRealIdx];
+        // Pastikan di belakang lastRealEl tidak ada sectionBreak yang diperlukan
+        let hasSectionBreakAfter = false;
+        for (let j = lastRealIdx + 1; j < content.length; j++) {
+          if (content[j].sectionBreak) {
+            hasSectionBreakAfter = true;
+            break;
+          }
+        }
+
+        if (!hasSectionBreakAfter && lastRealEl.paragraph && lastRealEl.endIndex && docEndIndex && lastRealEl.endIndex < docEndIndex) {
+          const trimRequests = [
+            {
+              deleteContentRange: {
+                range: {
+                  startIndex: lastRealEl.endIndex - 1,
+                  endIndex: docEndIndex - 1
+                }
+              }
+            }
+          ];
+
+          // Pulihkan paragraphStyle milik paragraf konten terakhir (alignment, indent, spacing)
+          const origStyle = lastRealEl.paragraph.paragraphStyle || {};
+          const restoredStyle = {};
+          const restoredFields = [];
+          const copyKeys = ["alignment", "indentFirstLine", "indentStart", "indentEnd", "spaceAbove", "spaceBelow", "lineSpacing"];
+          for (let k = 0; k < copyKeys.length; k++) {
+            const key = copyKeys[k];
+            if (origStyle[key] !== undefined) {
+              restoredStyle[key] = origStyle[key];
+              restoredFields.push(key);
+            }
+          }
+          if (restoredFields.length > 0 && lastRealEl.startIndex !== undefined) {
+            trimRequests.push({
+              updateParagraphStyle: {
+                range: {
+                  startIndex: lastRealEl.startIndex,
+                  endIndex: lastRealEl.endIndex
+                },
+                paragraphStyle: restoredStyle,
+                fields: restoredFields.join(",")
+              }
+            });
+          }
+
+          sendBatchUpdate(trimRequests, "trimTrailingEmpty");
+          docData = fetchDocData();
+          if (!docData) return;
+          content = docData.body && docData.body.content ? docData.body.content : [];
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // PASS 2: Kunci seluruh blok tanda tangan (keepWithNext & keepLinesTogether)
+    // agar tidak pernah terpisah di batas halaman
+    // -------------------------------------------------------------------------
+    const pejabatNama = (payload && payload.pejabatNama ? payload.pejabatNama.trim() : "Muh Saichudin").toLowerCase();
+    const pejabatJabatan = (payload && payload.pejabatJabatan ? payload.pejabatJabatan.trim() : "Kepala Badan Pusat Statistik").toLowerCase();
+    const tempat = (payload && payload.tempatPenetapan ? payload.tempatPenetapan.trim() : "Pontianak").toLowerCase();
+    const firstJabToken = pejabatJabatan.split(/\s+/)[0] || "kepala";
+
+    const keepRequests = [];
+
+    function processSignatureBlocksInList(elList) {
+      if (!elList || elList.length === 0) return;
+
+      for (let i = 0; i < elList.length; i++) {
+        const el = elList[i];
+
+        // Telusuri juga sel-sel di dalam tabel jika ada
+        if (el.table && el.table.tableRows) {
+          for (let r = 0; r < el.table.tableRows.length; r++) {
+            const row = el.table.tableRows[r];
+            if (!row.tableCells) continue;
+            for (let c = 0; c < row.tableCells.length; c++) {
+              processSignatureBlocksInList(row.tableCells[c].content);
+            }
+          }
+          continue;
+        }
+
+        if (!el.paragraph) continue;
+        const txt = getParaText(el).trim();
+        const txtLower = txt.toLowerCase();
+
+        // Identifikasi baris titi mangsa (mis. "Pontianak, 16 November 2026")
+        const isDateLine = (tempat && txtLower.indexOf(tempat + ",") === 0) ||
+                           /^[a-z\s]+,\s*\d{1,2}\s+[a-z]+\s+\d{4}$/i.test(txt);
+        if (!isDateLine) continue;
+
+        // Pastikan diikuti oleh baris jabatan penandatangan di elemen berikutnya
+        if (i + 1 >= elList.length || !elList[i + 1].paragraph) continue;
+        const nextTxtLower = getParaText(elList[i + 1]).trim().toLowerCase();
+        const isJabNext = nextTxtLower.indexOf("kepala badan pusat statistik") !== -1 ||
+                          nextTxtLower.indexOf("plt.") === 0 ||
+                          nextTxtLower.indexOf("plh.") === 0 ||
+                          nextTxtLower.indexOf("a.n.") === 0 ||
+                          (firstJabToken && nextTxtLower.indexOf(firstJabToken) !== -1);
+        if (!isJabNext) continue;
+
+        // Kumpulkan seluruh paragraf milik blok tanda tangan ini hingga nama pejabat (+ NIP opsional)
+        const sigBlock = [el];
+        let foundName = false;
+        let j = i + 1;
+        while (j < elList.length && sigBlock.length < 12) {
+          const cand = elList[j];
+          if (!cand.paragraph) break;
+          const candTxt = getParaText(cand).trim();
+          const candLower = candTxt.toLowerCase();
+          if (candLower.indexOf("lampiran") === 0) break;
+
+          sigBlock.push(cand);
+
+          if (foundName) {
+            // Hanya sertakan baris setelah nama jika berupa NIP
+            if (candLower.indexOf("nip") === 0) {
+              j++;
+              break;
+            } else {
+              sigBlock.pop();
+              break;
+            }
+          }
+
+          if (candTxt !== "" && (
+              (pejabatNama && candLower.indexOf(pejabatNama) !== -1) ||
+              candLower.indexOf("muh saichudin") !== -1
+          )) {
+            foundName = true;
+          }
+
+          j++;
+        }
+
+        // Jika nama belum terdeteksi dengan pencocokan eksplisit, tetap kunci minimal date + jabatan + spacer + baris non-kosong pertama setelah spacer
+        if (sigBlock.length >= 2) {
+          for (let k = 0; k < sigBlock.length; k++) {
+            const sp = sigBlock[k];
+            if (sp.startIndex === undefined || sp.endIndex === undefined) continue;
+            const isLastInBlock = (k === sigBlock.length - 1);
+            keepRequests.push({
+              updateParagraphStyle: {
+                range: {
+                  startIndex: sp.startIndex,
+                  endIndex: sp.endIndex
+                },
+                paragraphStyle: {
+                  keepWithNext: !isLastInBlock,
+                  keepLinesTogether: true
+                },
+                fields: "keepWithNext,keepLinesTogether"
+              }
+            });
+          }
+          i = j - 1;
+        }
+      }
+    }
+
+    processSignatureBlocksInList(content);
+
+    if (keepRequests.length > 0) {
+      sendBatchUpdate(keepRequests, "keepSignatureTogether");
     }
   } catch (err) {
-    Logger.log("Peringatan cleanExcessSectionBreaksViaApi: " + err);
+    Logger.log("Peringatan finalizeDocumentLayoutViaApi: " + err);
   }
 }
 
+function cleanExcessSectionBreaksViaApi(docId, isSingle) {
+  finalizeDocumentLayoutViaApi(docId, isSingle, null);
+}
+
 function removeSectionBreaksViaApi(docId) {
-  cleanExcessSectionBreaksViaApi(docId, true);
+  finalizeDocumentLayoutViaApi(docId, true, null);
+}
+
+/**
+ * Menghitung jumlah halaman aktual dari PDF Blob hasil ekspor Google Docs.
+ */
+function countPdfPages(pdfBlob) {
+  try {
+    const pdfStr = pdfBlob.getDataAsString("ISO-8859-1");
+    const counts = [];
+
+    const reForward = /\/Type\s*\/Pages\b[^<>]{0,300}?\/Count\s+(\d+)/g;
+    let m;
+    while ((m = reForward.exec(pdfStr)) !== null) {
+      const n = parseInt(m[1], 10);
+      if (!isNaN(n) && n > 0) counts.push(n);
+    }
+
+    const reReverse = /\/Count\s+(\d+)[^<>]{0,300}?\/Type\s*\/Pages\b/g;
+    while ((m = reReverse.exec(pdfStr)) !== null) {
+      const n = parseInt(m[1], 10);
+      if (!isNaN(n) && n > 0) counts.push(n);
+    }
+
+    if (counts.length > 0) {
+      return Math.max.apply(null, counts);
+    }
+
+    const pageMatches = pdfStr.match(/\/Type\s*\/Page\b(?![sS])/g);
+    if (pageMatches && pageMatches.length > 0) {
+      return pageMatches.length;
+    }
+  } catch (errCount) {
+    Logger.log("Peringatan countPdfPages: " + errCount);
+  }
+  return 1;
+}
+
+/**
+ * Mengubah ukuran font HANYA pada bagian Halaman 1 mulai dari judul "SURAT TUGAS"
+ * hingga blok tanda tangan (TTD) Halaman 1.
+ * TIDAK menyentuh Kop Surat / Logo BPS di atas "SURAT TUGAS" dan TIDAK menyentuh halaman Lampiran.
+ */
+function applyPageOneFontSize(body, fontSize) {
+  if (!body || !fontSize) return;
+  const numChildren = body.getNumChildren();
+  let inRange = false;
+
+  function applyFontRecursive(el) {
+    if (!el) return;
+    const type = el.getType();
+    if (type === DocumentApp.ElementType.PARAGRAPH) {
+      const p = el.asParagraph();
+      p.setFontSize(fontSize);
+      if (p.getText().length > 0) {
+        p.editAsText().setFontSize(fontSize);
+      }
+    } else if (type === DocumentApp.ElementType.LIST_ITEM) {
+      const li = el.asListItem();
+      li.setFontSize(fontSize);
+      if (li.getText().length > 0) {
+        li.editAsText().setFontSize(fontSize);
+      }
+    } else if (type === DocumentApp.ElementType.TABLE) {
+      const tbl = el.asTable();
+      for (let r = 0; r < tbl.getNumRows(); r++) {
+        const row = tbl.getRow(r);
+        for (let c = 0; c < row.getNumCells(); c++) {
+          const cell = row.getCell(c);
+          for (let pIdx = 0; pIdx < cell.getNumChildren(); pIdx++) {
+            applyFontRecursive(cell.getChild(pIdx));
+          }
+        }
+      }
+    }
+  }
+
+  for (let i = 0; i < numChildren; i++) {
+    const child = body.getChild(i);
+    const cType = child.getType();
+    const txt = getElementText(child).trim();
+
+    if (!inRange) {
+      if (cType === DocumentApp.ElementType.PARAGRAPH && txt.toUpperCase() === "SURAT TUGAS") {
+        inRange = true;
+      } else {
+        continue;
+      }
+    } else {
+      // Berhenti sebelum memasuki halaman Lampiran (Kolektif)
+      if (txt.indexOf("Lampiran") === 0) {
+        break;
+      }
+    }
+
+    applyFontRecursive(child);
+  }
+}
+
+/**
+ * Mengekspor PDF sekaligus memastikan Halaman 1 (dari "SURAT TUGAS" s.d. TTD) muat utuh dalam 1 halaman.
+ * Jika pada ukuran font bawaan (12pt) masih meluap ke halaman berikutnya, ukuran font dari
+ * "SURAT TUGAS" hingga TTD otomatis diperkecil bertahap (11 -> 10 -> 9 -> 8 pt) hingga muat 1 halaman.
+ */
+function ensurePageOneFitsAndExportPdf(docId, isSingle, pdfTitle) {
+  let file = DriveApp.getFileById(docId);
+  let pdfBlob = file.getAs("application/pdf").setName(pdfTitle);
+  let actualPages = countPdfPages(pdfBlob);
+
+  const fontSteps = [11, 10, 9, 8];
+
+  if (isSingle) {
+    // Mode Individu: seluruh surat (termasuk blok TTD) WAJIB muat dalam 1 halaman
+    if (actualPages > 1) {
+      for (let idx = 0; idx < fontSteps.length; idx++) {
+        const size = fontSteps[idx];
+        const doc = DocumentApp.openById(docId);
+        applyPageOneFontSize(doc.getBody(), size);
+        doc.saveAndClose();
+
+        file = DriveApp.getFileById(docId);
+        pdfBlob = file.getAs("application/pdf").setName(pdfTitle);
+        actualPages = countPdfPages(pdfBlob);
+        Logger.log("Auto-fit Halaman 1 (Individu) fontSize=" + size + "pt -> " + actualPages + " halaman");
+        if (actualPages <= 1) {
+          break;
+        }
+      }
+    }
+  } else {
+    // Mode Kolektif: jika total halaman > 2, uji apakah Halaman 1 (sebelum Lampiran) yang meluap
+    if (actualPages > 2) {
+      const basePages = actualPages;
+      let fitted = false;
+
+      for (let idx = 0; idx < fontSteps.length; idx++) {
+        const size = fontSteps[idx];
+        const doc = DocumentApp.openById(docId);
+        applyPageOneFontSize(doc.getBody(), size);
+        doc.saveAndClose();
+
+        file = DriveApp.getFileById(docId);
+        const testBlob = file.getAs("application/pdf").setName(pdfTitle);
+        const testPages = countPdfPages(testBlob);
+        Logger.log("Auto-fit Halaman 1 (Kolektif) fontSize=" + size + "pt -> " + testPages + " halaman (awal=" + basePages + ")");
+
+        if (testPages < basePages) {
+          pdfBlob = testBlob;
+          actualPages = testPages;
+          fitted = true;
+          if (actualPages <= 2) {
+            break;
+          }
+        } else if (idx === 0) {
+          // Pengurangan ke 11pt tidak mengurangi jumlah halaman: berarti Halaman 1 sudah 1 halaman
+          // dan halaman tambahan berasal dari tabel Lampiran yang panjang -> kembalikan ke 12pt
+          const docRestore = DocumentApp.openById(docId);
+          applyPageOneFontSize(docRestore.getBody(), 12);
+          docRestore.saveAndClose();
+          file = DriveApp.getFileById(docId);
+          pdfBlob = file.getAs("application/pdf").setName(pdfTitle);
+          break;
+        } else if (fitted) {
+          break;
+        }
+      }
+    }
+  }
+
+  return pdfBlob;
 }
 
 
