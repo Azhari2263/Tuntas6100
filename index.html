@@ -658,7 +658,7 @@
               </div>
             </div>
 
-            <!-- KARTU 6: DASAR HUKUM (MENGINGAT) DENGAN CRUD -->
+            <!-- KARTU 6: DASAR HUKUM (MENGINGAT) -->
             <div class="bg-white rounded-2xl shadow-card hover:shadow-card-hover border border-slate-200/80 p-4 sm:p-5 transition-all">
               <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5 flex-wrap gap-2">
                 <div class="flex items-center space-x-2">
@@ -669,16 +669,21 @@
                 </div>
                 <div class="flex items-center space-x-1.5">
                   <span id="hukumCount" class="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">5 Poin</span>
-                  <button type="button" onclick="openAddDasarHukumModal()" title="Tambah Dasar Hukum Baru" 
-                          class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors">
+                  <button type="button" disabled title="Untuk Sementara Fitur Ini Belum Bisa Diedit / Ditambah" 
+                          class="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-lg text-xs font-semibold flex items-center space-x-1 cursor-not-allowed opacity-70">
                     <i class="fa-solid fa-plus text-[10px]"></i>
                     <span class="text-[10px]">Tambah</span>
                   </button>
                 </div>
               </div>
-              <p class="text-[11px] text-slate-500 mb-3">Payung hukum kedinasan BPS Kalbar yang tersimpan di sistem.</p>
+              <p class="text-[11px] text-slate-500 mb-2.5">Payung hukum kedinasan BPS Kalbar yang tersimpan di sistem.</p>
+
+              <div class="mb-3 px-3 py-2 rounded-xl bg-amber-50/90 border border-amber-200/80 text-[11px] text-amber-800 font-medium flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-amber-500 flex-shrink-0"></i>
+                <span>Untuk Sementara Fitur Ini Belum Bisa Diedit / Ditambah</span>
+              </div>
               
-              <div id="dasarHukumList" class="space-y-1.5 max-h-56 overflow-y-auto text-xs text-slate-700 pr-1">
+              <div id="dasarHukumList" class="space-y-1.5 max-h-56 overflow-y-auto text-xs text-slate-700 pr-1 opacity-75">
                 <!-- Checkboxes dasar hukum diisi JS -->
               </div>
             </div>
@@ -2832,51 +2837,28 @@
       }
 
       container.innerHTML = appState.dasarHukumList.map((h, i) => `
-        <div class="group flex items-start justify-between p-1.5 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-200/60">
-          <label class="flex items-start space-x-2.5 cursor-pointer select-none flex-grow pr-2">
-            <input type="checkbox" id="hukum_${i}" ${h.checked ? 'checked' : ''} onchange="toggleHukumCheck(${i}, this.checked)" class="mt-0.5 rounded border-slate-300 text-bps-blue focus:ring-bps-blue/20">
-            <span class="leading-relaxed text-slate-700 text-xs">${h.no_urut || (i+1)}. ${h.isi}</span>
+        <div class="flex items-start justify-between p-1.5 rounded-lg border border-transparent">
+          <label class="flex items-start space-x-2.5 cursor-not-allowed select-none flex-grow pr-2" title="Untuk Sementara Fitur Ini Belum Bisa Diedit / Ditambahkan">
+            <input type="checkbox" id="hukum_${i}" ${h.checked ? 'checked' : ''} disabled class="mt-0.5 rounded border-slate-300 text-bps-blue cursor-not-allowed">
+            <span class="leading-relaxed text-slate-600 text-xs">${h.no_urut || (i+1)}. ${h.isi}</span>
           </label>
-          <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 pt-0.5">
-            <button type="button" onclick="openEditDasarHukumModal(${h.id})" title="Edit Dasar Hukum" class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-bps-blue hover:bg-blue-50 transition-colors">
-              <i class="fa-solid fa-pen text-[10px]"></i>
-            </button>
-            <button type="button" onclick="deleteDasarHukum(${h.id})" title="Hapus Dasar Hukum" class="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
-              <i class="fa-solid fa-trash-can text-[10px]"></i>
-            </button>
-          </div>
         </div>
       `).join("");
     }
 
     function toggleHukumCheck(idx, isChecked) {
-      if (appState.dasarHukumList[idx]) {
-        appState.dasarHukumList[idx].checked = isChecked;
-        const countEl = document.getElementById("hukumCount");
-        const checkedCount = appState.dasarHukumList.filter(h => h.checked).length;
-        countEl.textContent = `${checkedCount} Poin`;
-      }
+      // Untuk sementara fitur edit Dasar Hukum dinonaktifkan
+      return;
     }
 
     function openAddDasarHukumModal() {
-      document.getElementById("modalDasarHukumTitle").textContent = "Tambah Dasar Hukum";
-      document.getElementById("editDasarHukumId").value = "";
-      document.getElementById("dasarHukumUrut").value = appState.dasarHukumList.length + 1;
-      document.getElementById("dasarHukumIsi").value = "";
-      document.getElementById("dasarHukumDefault").checked = true;
-      document.getElementById("modalDasarHukum").classList.remove("hidden");
+      // Untuk sementara fitur tambah Dasar Hukum dinonaktifkan
+      return;
     }
 
     function openEditDasarHukumModal(id) {
-      const found = appState.dasarHukumList.find(h => String(h.id) === String(id));
-      if (!found) return;
-
-      document.getElementById("modalDasarHukumTitle").textContent = "Edit Dasar Hukum";
-      document.getElementById("editDasarHukumId").value = found.id;
-      document.getElementById("dasarHukumUrut").value = found.no_urut || 1;
-      document.getElementById("dasarHukumIsi").value = found.isi;
-      document.getElementById("dasarHukumDefault").checked = found.is_default !== undefined ? found.is_default : true;
-      document.getElementById("modalDasarHukum").classList.remove("hidden");
+      // Untuk sementara fitur edit Dasar Hukum dinonaktifkan
+      return;
     }
 
     function closeDasarHukumModal() {
