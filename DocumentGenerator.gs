@@ -899,20 +899,28 @@ function handleSignatoryBlock(body, payload) {
         }
       }
 
-      // Ambil format margin dan inden dari titi mangsa (sebagai anchor perataan tengah)
-      let indStart = null;
-      let indFirst = null;
-      let indEnd = null;
+      // Tentukan posisi inden kiri yang seragam di sisi kanan halaman
+      // Halaman 1 Portrait: ~305pt; Halaman 2 Landscape (Lampiran): ~620pt
+      let rawInd = 0;
+      if (pDate) {
+        const dStart = pDate.getIndentStart() || 0;
+        const dFirst = pDate.getIndentFirstLine() || 0;
+        rawInd = Math.max(dStart, dFirst);
+      } else {
+        const jStart = pJab.getIndentStart() || 0;
+        const jFirst = pJab.getIndentFirstLine() || 0;
+        rawInd = Math.max(jStart, jFirst);
+      }
+      const isTableCell = parent.getType() === DocumentApp.ElementType.TABLE_CELL;
+      const sigIndent = isTableCell ? 0 : (rawInd >= 300 ? 620 : 305);
+      const sigIndentEnd = isTableCell ? 0 : -25;
 
       if (pDate) {
-        indStart = pDate.getIndentStart();
-        indFirst = pDate.getIndentFirstLine();
-        indEnd = pDate.getIndentEnd();
-
-        // Pastikan titi mangsa diposisikan CENTER dan menggunakan font Bookman Old Style 12
-        pDate.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        // Pastikan titi mangsa diposisikan rata kiri (LEFT) sejajar dengan blok tanda tangan
+        pDate.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
         pDate.setFontFamily("Bookman Old Style").setFontSize(12);
         pDate.setBold(false).setItalic(false);
+        pDate.setIndentStart(sigIndent).setIndentFirstLine(sigIndent).setIndentEnd(sigIndentEnd);
         pDate.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
       }
 
@@ -920,10 +928,8 @@ function handleSignatoryBlock(body, payload) {
       pJab.setText(line1);
       pJab.setFontFamily("Bookman Old Style").setFontSize(12);
       pJab.setBold(false).setItalic(false);
-      pJab.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-      if (indStart !== null && indStart !== undefined) pJab.setIndentStart(indStart);
-      if (indFirst !== null && indFirst !== undefined) pJab.setIndentFirstLine(indFirst);
-      if (indEnd !== null && indEnd !== undefined) pJab.setIndentEnd(indEnd);
+      pJab.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+      pJab.setIndentStart(sigIndent).setIndentFirstLine(sigIndent).setIndentEnd(sigIndentEnd);
       pJab.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
 
       // Baris 2 Jabatan: "Provinsi Kalimantan Barat,"
@@ -938,10 +944,8 @@ function handleSignatoryBlock(body, payload) {
         if (pJab2) {
           pJab2.setFontFamily("Bookman Old Style").setFontSize(12);
           pJab2.setBold(false).setItalic(false);
-          pJab2.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-          if (indStart !== null && indStart !== undefined) pJab2.setIndentStart(indStart);
-          if (indFirst !== null && indFirst !== undefined) pJab2.setIndentFirstLine(indFirst);
-          if (indEnd !== null && indEnd !== undefined) pJab2.setIndentEnd(indEnd);
+          pJab2.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+          pJab2.setIndentStart(sigIndent).setIndentFirstLine(sigIndent).setIndentEnd(sigIndentEnd);
           pJab2.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
         }
       }
@@ -1004,27 +1008,23 @@ function handleSignatoryBlock(body, payload) {
         }
       }
 
-      // Format setiap baris ruang tanda tangan dengan Bookman Old Style 12pt line spacing 1.15
+      // Format setiap baris ruang tanda tangan dengan Bookman Old Style 12pt line spacing 1.15 (rata kiri)
       emptyParagraphs.forEach(ep => {
         try { ep.clear(); } catch (e) {}
         ep.setFontFamily("Bookman Old Style").setFontSize(12);
         ep.setBold(false).setItalic(false);
-        ep.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        if (indStart !== null && indStart !== undefined) ep.setIndentStart(indStart);
-        if (indFirst !== null && indFirst !== undefined) ep.setIndentFirstLine(indFirst);
-        if (indEnd !== null && indEnd !== undefined) ep.setIndentEnd(indEnd);
+        ep.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+        ep.setIndentStart(sigIndent).setIndentFirstLine(sigIndent).setIndentEnd(sigIndentEnd);
         ep.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
       });
 
-      // Format nama penandatangan
+      // Format nama penandatangan (rata kiri sejajar titi mangsa & jabatan)
       if (pNama) {
         pNama.setText(nama);
         pNama.setFontFamily("Bookman Old Style").setFontSize(12);
         pNama.setBold(false).setItalic(false);
-        pNama.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        if (indStart !== null && indStart !== undefined) pNama.setIndentStart(indStart);
-        if (indFirst !== null && indFirst !== undefined) pNama.setIndentFirstLine(indFirst);
-        if (indEnd !== null && indEnd !== undefined) pNama.setIndentEnd(indEnd);
+        pNama.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+        pNama.setIndentStart(sigIndent).setIndentFirstLine(sigIndent).setIndentEnd(sigIndentEnd);
         pNama.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
 
         // Cek paragraf NIP jika ada tepat di bawah nama
@@ -1039,10 +1039,8 @@ function handleSignatoryBlock(body, payload) {
                 nipP.setText("NIP. " + nip);
                 nipP.setFontFamily("Bookman Old Style").setFontSize(12);
                 nipP.setBold(false).setItalic(false);
-                nipP.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-                if (indStart !== null && indStart !== undefined) nipP.setIndentStart(indStart);
-                if (indFirst !== null && indFirst !== undefined) nipP.setIndentFirstLine(indFirst);
-                if (indEnd !== null && indEnd !== undefined) nipP.setIndentEnd(indEnd);
+                nipP.setAlignment(DocumentApp.HorizontalAlignment.LEFT);
+                nipP.setIndentStart(sigIndent).setIndentFirstLine(sigIndent).setIndentEnd(sigIndentEnd);
                 nipP.setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
               } else {
                 try {
@@ -1314,24 +1312,24 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
   pSpTtd1.setFontSize(8).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
 
   const pDate1 = body.appendParagraph(ttdTempat + ", " + ttdTanggal);
-  pDate1.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-        .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+  pDate1.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+        .setIndentStart(305).setIndentFirstLine(305).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
   const pJab1 = body.appendParagraph(ttdJabatan);
-  pJab1.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-       .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+  pJab1.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+       .setIndentStart(305).setIndentFirstLine(305).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
   for (let s = 0; s < 4; s++) {
     const pBlank = body.appendParagraph(" ");
     try { pBlank.clear(); } catch (e) {}
-    pBlank.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-          .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    pBlank.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+          .setIndentStart(305).setIndentFirstLine(305).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
   }
   const pNama1 = body.appendParagraph(ttdNama);
-  pNama1.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-        .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+  pNama1.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+        .setIndentStart(305).setIndentFirstLine(305).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
   if (ttdNip) {
     const pNip1 = body.appendParagraph("NIP. " + ttdNip);
-    pNip1.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-         .setIndentStart(160).setIndentFirstLine(160).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    pNip1.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+         .setIndentStart(305).setIndentFirstLine(305).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
   }
 
   // 8. JIKA KOLEKTIF: BUAT HALAMAN LAMPIRAN
@@ -1393,24 +1391,24 @@ function createDocumentFromScratch(docTitle, targetFolder, payload, nomorData) {
     pSp.setFontSize(6).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.0);
 
     const pDate2 = body.appendParagraph(ttdTempat + ", " + ttdTanggal);
-    pDate2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-          .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    pDate2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+          .setIndentStart(620).setIndentFirstLine(620).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
     const pJab2 = body.appendParagraph(ttdJabatan);
-    pJab2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-         .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    pJab2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+         .setIndentStart(620).setIndentFirstLine(620).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
     for (let s = 0; s < 4; s++) {
       const pBlank2 = body.appendParagraph(" ");
       try { pBlank2.clear(); } catch (e) {}
-      pBlank2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-             .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+      pBlank2.setFontFamily("Bookman Old Style").setFontSize(12).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+             .setIndentStart(620).setIndentFirstLine(620).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
     }
     const pNama2 = body.appendParagraph(ttdNama);
-    pNama2.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-          .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+    pNama2.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+          .setIndentStart(620).setIndentFirstLine(620).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
     if (ttdNip) {
       const pNip2 = body.appendParagraph("NIP. " + ttdNip);
-      pNip2.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-           .setIndentStart(220).setIndentFirstLine(220).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
+      pNip2.setFontFamily("Bookman Old Style").setFontSize(12).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.LEFT)
+           .setIndentStart(620).setIndentFirstLine(620).setIndentEnd(-25).setSpacingBefore(0).setSpacingAfter(0).setLineSpacing(1.15);
     }
   }
 
